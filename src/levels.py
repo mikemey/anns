@@ -14,12 +14,14 @@ LEVELS = [
         'field': (6, 6),
         'player': (2, 4),
         'walls': __walls__['reverse_a'],
-        'boxes': [(2, 3), (4, 2)]
+        'boxes': [(2, 3), (4, 2)],
+        'goal': (4, 4)
     },
     {
         'field': (6, 6),
         'player': (2, 4),
         'walls': __walls__['reverse_a'],
-        'boxes': [(2, 3), (2, 2)]
+        'boxes': [(2, 3), (2, 2)],
+        'goal': (4, 4)
     }
 ]

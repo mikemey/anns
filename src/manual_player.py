@@ -26,13 +26,13 @@ def field_to_position(field_position):
 def append_sprites(sprites_list, positions, sprite_image):
     for field in positions:
         pos = field_to_position(field)
-        sprite = MovingSprite(sprite_image, SPRITE_SCALING)
+        sprite = FieldSprite(sprite_image, SPRITE_SCALING)
         sprite.center_x = pos[0]
         sprite.center_y = pos[1]
         sprites_list.append(sprite)
 
 
-class MovingSprite(Sprite):
+class FieldSprite(Sprite):
     def set_to_field(self, field):
         new_pos = field_to_position(field)
         self.center_x = new_pos[0]
@@ -54,9 +54,13 @@ class BoxPusherWindow(arcade.Window):
 
     def setup(self):
         self.__create_floor__()
-        self.player_sprite = MovingSprite("resources/player.png", SPRITE_SCALING)
-
         self.sprites = arcade.SpriteList()
+
+        goal_sprite = FieldSprite("resources/goal.png", SPRITE_SCALING)
+        goal_sprite.set_to_field(self.engine.goal)
+        self.sprites.append(goal_sprite)
+
+        self.player_sprite = FieldSprite("resources/player.png", SPRITE_SCALING)
         self.sprites.append(self.player_sprite)
 
         append_sprites(self.sprites, self.engine.walls, "resources/wall.png")
@@ -100,10 +104,12 @@ class BoxPusherWindow(arcade.Window):
         self.box_sprites.draw()
 
     def on_update(self, delta_time):
-        self.player_sprite.set_to_field(self.engine.player_pos)
+        self.player_sprite.set_to_field(self.engine.player)
 
         for ix, box_field in enumerate(self.engine.boxes):
             self.box_sprites[ix].set_to_field(box_field)
+        while len(self.box_sprites) > len(self.engine.boxes):
+            self.box_sprites.pop()
 
     def on_key_press(self, key, modifiers):
         player_direction = KEY_MAPPING.get(key)

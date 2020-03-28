@@ -27,23 +27,28 @@ def in_positions(all_pos, pos):
 class BoxPusherEngine:
     def __init__(self, level_config):
         self.field_size = level_config['field']
-        self.player_pos = array(level_config['player'])
+        self.player = array(level_config['player'])
         self.walls = level_config['walls']
         self.boxes = [array(box_pos) for box_pos in level_config['boxes']]
+        self.goal = level_config['goal']
 
     def player_move(self, direction):
         move = MOVE_VECTOR[direction]
-        new_pos = self.player_pos + move
+        new_pos = self.player + move
         if self.__is_wall__(new_pos):
             return
 
         for ix, box in enumerate(self.boxes):
             if (box == new_pos).all():
-                if self.__is_occupied__(box + move):
+                new_box_pos = box + move
+                if self.__is_occupied__(new_box_pos):
                     return
-                self.boxes[ix] += move
+                if self.__is_goal__(new_box_pos):
+                    del self.boxes[ix]
+                else:
+                    self.boxes[ix] += move
 
-        self.player_pos += move
+        self.player += move
 
     def __is_wall__(self, position):
         return in_positions(self.walls, position)
@@ -53,3 +58,6 @@ class BoxPusherEngine:
 
     def __is_occupied__(self, position):
         return self.__is_wall__(position) or self.__is_box__(position)
+
+    def __is_goal__(self, position):
+        return (self.goal == position).all()
