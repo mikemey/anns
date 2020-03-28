@@ -1,6 +1,7 @@
 import arcade
 from arcade import Sprite
 from game_engine import BoxPusherEngine, Direction
+from levels import LEVELS
 
 SCREEN_TITLE = "Box pusher"
 SPRITE_SCALING = 0.5
@@ -22,6 +23,22 @@ def field_to_position(field_position):
     )
 
 
+def append_sprites(sprites_list, positions, sprite_image):
+    for field in positions:
+        pos = field_to_position(field)
+        sprite = MovingSprite(sprite_image, SPRITE_SCALING)
+        sprite.center_x = pos[0]
+        sprite.center_y = pos[1]
+        sprites_list.append(sprite)
+
+
+class MovingSprite(Sprite):
+    def set_to_field(self, field):
+        new_pos = field_to_position(field)
+        self.center_x = new_pos[0]
+        self.center_y = new_pos[1]
+
+
 class BoxPusherWindow(arcade.Window):
     def __init__(self, engine, title):
         field_width = FLOOR_TILE_WIDTH * engine.field_size[0]
@@ -31,22 +48,21 @@ class BoxPusherWindow(arcade.Window):
         self.sprites = None
         self.floor = None
         self.player_sprite = None
+        self.box_sprites = None
 
         arcade.set_background_color(arcade.color.WHEAT)
 
     def setup(self):
-        self.sprites = arcade.SpriteList()
-
         self.__create_floor__()
-        self.player_sprite = Sprite("resources/player.png", SPRITE_SCALING)
+        self.player_sprite = MovingSprite("resources/player.png", SPRITE_SCALING)
+
+        self.sprites = arcade.SpriteList()
         self.sprites.append(self.player_sprite)
 
-        for wall_field in self.engine.walls:
-            wall_pos = field_to_position(wall_field)
-            wall_sprite = Sprite("resources/wall.png", SPRITE_SCALING)
-            wall_sprite.center_x = wall_pos[0]
-            wall_sprite.center_y = wall_pos[1]
-            self.sprites.append(wall_sprite)
+        append_sprites(self.sprites, self.engine.walls, "resources/wall.png")
+
+        self.box_sprites = arcade.SpriteList()
+        append_sprites(self.box_sprites, self.engine.boxes, "resources/box.png")
 
     def __create_floor__(self):
         total_width = self.engine.field_size[0] * FLOOR_TILE_WIDTH
@@ -81,11 +97,13 @@ class BoxPusherWindow(arcade.Window):
 
         self.floor.draw()
         self.sprites.draw()
+        self.box_sprites.draw()
 
     def on_update(self, delta_time):
-        player_pos = field_to_position(self.engine.player_pos)
-        self.player_sprite.center_x = player_pos[0]
-        self.player_sprite.center_y = player_pos[1]
+        self.player_sprite.set_to_field(self.engine.player_pos)
+
+        for ix, box_field in enumerate(self.engine.boxes):
+            self.box_sprites[ix].set_to_field(box_field)
 
     def on_key_press(self, key, modifiers):
         player_direction = KEY_MAPPING.get(key)
@@ -94,7 +112,7 @@ class BoxPusherWindow(arcade.Window):
 
 
 def main():
-    engine = BoxPusherEngine()
+    engine = BoxPusherEngine(LEVELS[0])
     window = BoxPusherWindow(engine, SCREEN_TITLE)
     window.set_location(0, 0)
     window.setup()

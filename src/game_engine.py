@@ -1,4 +1,5 @@
 from enum import Enum
+from numpy import array
 
 
 class Direction(Enum):
@@ -8,35 +9,47 @@ class Direction(Enum):
     RIGHT = 4
 
 
+MOVE_VECTOR = {
+    Direction.UP: array([0, 1]),
+    Direction.DOWN: array([0, -1]),
+    Direction.LEFT: array([-1, 0]),
+    Direction.RIGHT: array([1, 0])
+}
+
+
+def in_positions(all_pos, pos):
+    for p in all_pos:
+        if (p == pos).all():
+            return True
+    return False
+
+
 class BoxPusherEngine:
-    def __init__(self):
-        self.field_size = (6, 6)
-        self.player_pos = (2, 4)
-        self.walls = [
-            (0, 5), (1, 5), (2, 5), (3, 5), (4, 5), (5, 5),
-            (0, 4), (3, 4), (5, 4),
-            (0, 3), (5, 3),
-            (0, 2), (3, 2), (5, 2),
-            (0, 1), (5, 1),
-            (0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)
-        ]
+    def __init__(self, level_config):
+        self.field_size = level_config['field']
+        self.player_pos = array(level_config['player'])
+        self.walls = level_config['walls']
+        self.boxes = [array(box_pos) for box_pos in level_config['boxes']]
 
     def player_move(self, direction):
-        new_x = self.player_pos[0]
-        new_y = self.player_pos[1]
-        if direction == Direction.UP:
-            new_y += 1
-        elif direction == Direction.DOWN:
-            new_y -= 1
-        elif direction == Direction.LEFT:
-            new_x -= 1
-        elif direction == Direction.RIGHT:
-            new_x += 1
+        move = MOVE_VECTOR[direction]
+        new_pos = self.player_pos + move
+        if self.__is_wall__(new_pos):
+            return
 
-        new_pos = (new_x, new_y)
-        for wall in self.walls:
-            if new_pos == wall:
-                new_pos = self.player_pos
-                break
+        for ix, box in enumerate(self.boxes):
+            if (box == new_pos).all():
+                if self.__is_occupied__(box + move):
+                    return
+                self.boxes[ix] += move
 
-        self.player_pos = new_pos
+        self.player_pos += move
+
+    def __is_wall__(self, position):
+        return in_positions(self.walls, position)
+
+    def __is_box__(self, position):
+        return in_positions(self.boxes, position)
+
+    def __is_occupied__(self, position):
+        return self.__is_wall__(position) or self.__is_box__(position)
