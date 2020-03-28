@@ -147,7 +147,7 @@ class BoxPusherWindow(arcade.Window):
 
 
 def main():
-    engine = BoxPusherEngine(LEVELS[0])
+    engine = BoxPusherEngine(LEVELS[1])
     window = BoxPusherWindow(engine, SCREEN_TITLE)
     window.set_location(0, 0)
     arcade.run()
