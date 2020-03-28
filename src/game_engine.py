@@ -39,6 +39,8 @@ class BoxPusherEngine:
     def player_move(self, direction):
         if self.game_won or self.game_lost:
             return
+
+        self.points -= 1
         move = MOVE_VECTOR[direction]
         new_pos = self.player + move
         if self.__is_wall__(new_pos):
@@ -56,7 +58,6 @@ class BoxPusherEngine:
                     self.boxes[ix] += move
 
         self.player += move
-        self.points -= 1
         if self.points <= 0:
             self.game_lost = True
         if len(self.boxes) <= 0:
