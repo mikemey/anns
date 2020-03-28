@@ -1,18 +1,20 @@
 import arcade
+from game_engine import BoxPusherEngine, Direction
 
 SCREEN_TITLE = "Box pusher"
 SPRITE_SCALING = 0.5
 FLOOR_TILE_WIDTH = 50
 FTW_HALF = FLOOR_TILE_WIDTH / 2
 
-MOVEMENT_SPEED = 1
+KEY_MAPPING = {
+    arcade.key.UP: Direction.UP,
+    arcade.key.DOWN: Direction.DOWN,
+    arcade.key.LEFT: Direction.LEFT,
+    arcade.key.RIGHT: Direction.RIGHT,
+}
 
 
 class PlayerSprite(arcade.Sprite):
-    def update(self):
-        self.center_x += self.change_x
-        self.center_y += self.change_y
-
     def set_to_field(self, field_position):
         self.center_x = field_position[0] * FLOOR_TILE_WIDTH + FTW_HALF
         self.center_y = field_position[1] * FLOOR_TILE_WIDTH + FTW_HALF
@@ -74,31 +76,19 @@ class BoxPusherWindow(arcade.Window):
         self.sprites.draw()
 
     def on_update(self, delta_time):
-        self.sprites.update()
+        self.player_sprite.set_to_field(self.engine.player_pos)
 
     def on_key_press(self, key, modifiers):
-        print('key_press')
-        if key == arcade.key.UP:
-            self.player_sprite.change_y = MOVEMENT_SPEED
-        elif key == arcade.key.DOWN:
-            self.player_sprite.change_y = -MOVEMENT_SPEED
-        elif key == arcade.key.LEFT:
-            self.player_sprite.change_x = -MOVEMENT_SPEED
-        elif key == arcade.key.RIGHT:
-            self.player_sprite.change_x = MOVEMENT_SPEED
-
-    def on_key_release(self, key, modifiers):
-        print('key_release')
-        if key == arcade.key.UP or key == arcade.key.DOWN:
-            self.player_sprite.change_y = 0
-        elif key == arcade.key.LEFT or key == arcade.key.RIGHT:
-            self.player_sprite.change_x = 0
-
-
-class BoxPusherEngine:
-    def __init__(self):
-        self.field_size = (8, 6)
-        self.player_pos = (0, 4)
+        player_direction = KEY_MAPPING.get(key)
+        if player_direction:
+            self.engine.player_move(player_direction)
+        # if key == arcade.key.UP:
+        # elif key == arcade.key.DOWN:
+        #     self.engine.player_move(Direction.DOWN)
+        # elif key == arcade.key.LEFT:
+        #     self.engine.player_move(Direction.LEFT)
+        # elif key == arcade.key.RIGHT:
+        #     self.engine.player_move(Direction.RIGHT)
 
 
 def main():
