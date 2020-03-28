@@ -15,6 +15,7 @@ MOVE_VECTOR = {
     Direction.LEFT: array([-1, 0]),
     Direction.RIGHT: array([1, 0])
 }
+BOX_REWARD = 10
 
 
 def in_positions(all_pos, pos):
@@ -31,8 +32,13 @@ class BoxPusherEngine:
         self.walls = level_config['walls']
         self.boxes = [array(box_pos) for box_pos in level_config['boxes']]
         self.goal = level_config['goal']
+        self.points = level_config['max_points']
+        self.game_won = False
+        self.game_lost = False
 
     def player_move(self, direction):
+        if self.game_won or self.game_lost:
+            return
         move = MOVE_VECTOR[direction]
         new_pos = self.player + move
         if self.__is_wall__(new_pos):
@@ -44,11 +50,17 @@ class BoxPusherEngine:
                 if self.__is_occupied__(new_box_pos):
                     return
                 if self.__is_goal__(new_box_pos):
+                    self.points += BOX_REWARD
                     del self.boxes[ix]
                 else:
                     self.boxes[ix] += move
 
         self.player += move
+        self.points -= 1
+        if self.points <= 0:
+            self.game_lost = True
+        if len(self.boxes) <= 0:
+            self.game_won = True
 
     def __is_wall__(self, position):
         return in_positions(self.walls, position)

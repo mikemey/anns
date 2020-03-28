@@ -15,13 +15,15 @@ LEVELS = [
         'player': (2, 4),
         'walls': __walls__['reverse_a'],
         'boxes': [(2, 3), (4, 2)],
-        'goal': (4, 4)
+        'goal': (4, 4),
+        'max_points': 50
     },
     {
         'field': (6, 6),
         'player': (2, 4),
         'walls': __walls__['reverse_a'],
         'boxes': [(2, 3), (2, 2)],
-        'goal': (4, 4)
+        'goal': (4, 4),
+        'max_points': 50
     }
 ]

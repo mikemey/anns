@@ -15,6 +15,10 @@ KEY_MAPPING = {
     arcade.key.RIGHT: Direction.RIGHT,
 }
 
+TEXT_WIDTH = 80
+SCORE_PANEL_HEIGHT = 45
+SCORE_OFFSET = 10
+
 
 def field_to_position(field_position):
     return (
@@ -41,32 +45,46 @@ class FieldSprite(Sprite):
 
 class BoxPusherWindow(arcade.Window):
     def __init__(self, engine, title):
-        field_width = FLOOR_TILE_WIDTH * engine.field_size[0]
-        field_height = FLOOR_TILE_WIDTH * engine.field_size[1]
-        super().__init__(field_width, field_height, title)
+        self.field_width = FLOOR_TILE_WIDTH * engine.field_size[0]
+        self.field_height = FLOOR_TILE_WIDTH * engine.field_size[1]
+        super().__init__(self.field_width, self.field_height + SCORE_PANEL_HEIGHT, title)
         self.engine = engine
-        self.sprites = None
-        self.floor = None
-        self.player_sprite = None
-        self.box_sprites = None
+        self.floor = self.__create_floor__()
+        self.sprites = self.__create_sprites__()
+        self.player_sprite = self.__create_player__()
+        self.sprites.append(self.player_sprite)
+        self.box_sprites = self.__create_box_sprites__()
 
+        self.lost_screen = self.__create_screen__('LOST')
+        self.won_screen = self.__create_screen__('WON')
         arcade.set_background_color(arcade.color.WHEAT)
 
-    def setup(self):
-        self.__create_floor__()
-        self.sprites = arcade.SpriteList()
+    @staticmethod
+    def __create_player__():
+        return FieldSprite("resources/player.png", SPRITE_SCALING)
 
+    def __create_screen__(self, result_msg):
+        overlay_color = (100, 100, 100, 180)
+        overlay = arcade.create_rectangle_filled(self.field_width / 2, self.field_height / 2,
+                                                 self.field_width, self.field_height, overlay_color)
+
+        text = arcade.draw_text("{} !".format(result_msg), 0, 0, arcade.color.RED_ORANGE, 20, bold=True)
+        text.set_position(self.field_width / 2, self.field_height / 2)
+        return overlay, text
+
+    def __create_sprites__(self):
+        sprites = arcade.SpriteList()
         goal_sprite = FieldSprite("resources/goal.png", SPRITE_SCALING)
         goal_sprite.set_to_field(self.engine.goal)
-        self.sprites.append(goal_sprite)
+        sprites.append(goal_sprite)
 
-        self.player_sprite = FieldSprite("resources/player.png", SPRITE_SCALING)
-        self.sprites.append(self.player_sprite)
+        append_sprites(sprites, self.engine.walls, "resources/wall.png")
+        return sprites
 
-        append_sprites(self.sprites, self.engine.walls, "resources/wall.png")
-
-        self.box_sprites = arcade.SpriteList()
-        append_sprites(self.box_sprites, self.engine.boxes, "resources/box.png")
+    def __create_box_sprites__(self):
+        boxes = arcade.SpriteList()
+        append_sprites(boxes, self.engine.boxes, "resources/box.png")
+        return boxes
 
     def __create_floor__(self):
         total_width = self.engine.field_size[0] * FLOOR_TILE_WIDTH
@@ -93,8 +111,9 @@ class BoxPusherWindow(arcade.Window):
 
         lines = arcade.create_lines_with_colors(point_list, color_list)
 
-        self.floor = arcade.ShapeElementList()
-        self.floor.append(lines)
+        grid = arcade.ShapeElementList()
+        grid.append(lines)
+        return grid
 
     def on_draw(self):
         arcade.start_render()
@@ -102,6 +121,16 @@ class BoxPusherWindow(arcade.Window):
         self.floor.draw()
         self.sprites.draw()
         self.box_sprites.draw()
+
+        arcade.draw_text('Score: {}'.format(self.engine.points),
+                         SCORE_OFFSET * 2, self.field_height + SCORE_OFFSET,
+                         arcade.color.DARK_BROWN, 14, bold=True)
+        if self.engine.game_lost:
+            for el in self.lost_screen:
+                el.draw()
+        if self.engine.game_won:
+            for el in self.won_screen:
+                el.draw()
 
     def on_update(self, delta_time):
         self.player_sprite.set_to_field(self.engine.player)
@@ -121,7 +150,6 @@ def main():
     engine = BoxPusherEngine(LEVELS[0])
     window = BoxPusherWindow(engine, SCREEN_TITLE)
     window.set_location(0, 0)
-    window.setup()
     arcade.run()
 
 
