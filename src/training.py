@@ -11,14 +11,13 @@ def run(config_file):
                          config_file)
     pop = neat.Population(config)
 
-    pop.add_reporter(neat.StdOutReporter(True))
+    pop.add_reporter(neat.StdOutReporter(False))
     stats = neat.StatisticsReporter()
     pop.add_reporter(stats)
     # pop.add_reporter(neat.Checkpointer(10, filename_prefix="first-"))
 
     winner = pop.run(eval_genomes, 10)
-    print('\nOutput:')
-    print(str(winner))
+    print('\nWinner fitness:', winner.fitness)
 
 
 def eval_genomes(genomes, config):
