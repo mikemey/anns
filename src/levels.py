@@ -1,4 +1,5 @@
 __walls__ = {
+    'empty': [],
     'reverse_a': [
         (0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6),
         (0, 5), (3, 5), (6, 5),
@@ -8,7 +9,7 @@ __walls__ = {
         (0, 1), (6, 1),
         (0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0)
     ],
-    'empty': [
+    'circle': [
         (0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6),
         (0, 5), (6, 5),
         (0, 4), (6, 4),
@@ -30,16 +31,23 @@ __walls__ = {
 
 LEVELS = [
     {
+        'field': (4, 4),
+        'player': (0, 0),
+        'walls': __walls__['empty'],
+        'boxes': [(1, 1), (2, 2)],
+        'goal': (3, 3),
+        'max_points': 20
+    }, {
         'field': (7, 7),
         'player': (2, 4),
-        'walls': __walls__['empty'],
+        'walls': __walls__['circle'],
         'boxes': [(4, 2)],
         'goal': (5, 5),
         'max_points': 30
     }, {
         'field': (7, 7),
         'player': (4, 5),
-        'walls': __walls__['empty'],
+        'walls': __walls__['circle'],
         'boxes': [(4, 2), (2, 4)],
         'goal': (2, 1),
         'max_points': 40
