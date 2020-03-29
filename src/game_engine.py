@@ -37,8 +37,11 @@ class BoxPusherEngine:
         self.game_won = False
         self.game_lost = False
 
+    def game_over(self):
+        return self.game_won or self.game_lost
+
     def player_move(self, direction):
-        if self.game_won or self.game_lost:
+        if self.game_over():
             return
 
         self.points -= 1
