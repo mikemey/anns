@@ -12,7 +12,6 @@ class GameMaster(GameObserver):
 
     def start(self):
         self.window = BoxPusherWindow(self)
-        self.window.set_location(0, 0)
         self.reset_game()
         arcade.run()
 

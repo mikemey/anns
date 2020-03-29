@@ -1,12 +1,12 @@
-from enum import Enum
+from enum import Enum, auto
 from numpy import array
 
 
 class Direction(Enum):
-    UP = 1
-    DOWN = 2
-    LEFT = 3
-    RIGHT = 4
+    UP = auto()
+    DOWN = auto()
+    LEFT = auto()
+    RIGHT = auto()
 
 
 MOVE_VECTOR = {
@@ -54,8 +54,10 @@ class BoxPusherEngine:
             move = self.__check_boxes__(new_pos, move)
 
         if len(self.boxes) <= 0:
+            print('game won')
             self.game_won = True
         if self.points <= 0:
+            print('game lost')
             self.game_lost = True
 
         self.player += move

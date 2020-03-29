@@ -21,8 +21,13 @@ SCORE_OFFSET = 10
 HELP_TEXT_OFFSET = 25
 END_OVERLAY_COLOR = (100, 100, 100, 180)
 
+AUTOMATIC_MOVES_DELAY = 0.8
+
 
 class GameObserver:
+    def next_move(self):
+        pass
+
     def game_done(self):
         pass
 
@@ -50,10 +55,14 @@ def append_sprites(sprites_list, positions, sprite_image):
 
 
 class BoxPusherWindow(arcade.Window):
-    def __init__(self, game_observer):
+    def __init__(self, game_observer, interactive=True):
         super().__init__(title=SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHEAT)
+        self.set_location(0, 0)
+
         self.game_observer = game_observer
+        self.is_interactive = interactive
+        self.last_move = 0
         self.engine = None
         self.field_width = None
         self.field_height = None
@@ -62,7 +71,7 @@ class BoxPusherWindow(arcade.Window):
         self.player_sprite = None
         self.box_sprites = None
         self.lost_text = None
-        self.won_text = arcade.SpriteList(is_static=True)
+        self.won_text = None
         self.state_text = None
 
     def reset_game(self, engine, state_text):
@@ -80,8 +89,8 @@ class BoxPusherWindow(arcade.Window):
         self.won_text = self.__create_text__('WON')
         self.state_text = state_text
 
-    def __game_ready__(self):
-        return self.engine is not None
+    def __game_not_ready__(self):
+        return self.engine is None
 
     @staticmethod
     def __create_player__():
@@ -151,7 +160,7 @@ class BoxPusherWindow(arcade.Window):
                                      self.field_width, self.field_height, END_OVERLAY_COLOR)
 
     def on_draw(self):
-        if not self.__game_ready__():
+        if self.__game_not_ready__():
             return
         arcade.start_render()
 
@@ -168,9 +177,16 @@ class BoxPusherWindow(arcade.Window):
             if self.engine.game_won:
                 self.won_text.draw()
 
-    def on_update(self, delta_time):
-        if not self.__game_ready__():
+    def on_update(self, delta_seconds):
+        if self.__game_not_ready__() or self.engine.game_over():
             return
+
+        if not self.is_interactive:
+            self.last_move += delta_seconds
+            if self.last_move > AUTOMATIC_MOVES_DELAY:
+                self.last_move = 0
+                self.game_observer.next_move()
+
         self.player_sprite.set_to_field(self.engine.player)
         for ix, box_field in enumerate(self.engine.boxes):
             self.box_sprites[ix].set_to_field(box_field)
@@ -181,7 +197,7 @@ class BoxPusherWindow(arcade.Window):
         if self.engine.game_over():
             if key == arcade.key.N:
                 self.game_observer.game_done()
-        else:
+        elif self.is_interactive:
             player_direction = KEY_MAPPING.get(key)
             if player_direction:
                 self.engine.player_move(player_direction)
