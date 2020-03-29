@@ -17,6 +17,8 @@ class GameMaster(GameObserver):
         arcade.run()
 
     def game_done(self):
+        if self.window.engine.game_won:
+            self.current_level_ix = (self.current_level_ix + 1) % len(LEVELS)
         self.window.reset_game(self.new_game_engine())
 
     def new_game_engine(self):

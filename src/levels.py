@@ -31,11 +31,11 @@ __walls__ = {
 
 LEVELS = [
     {
-        'field': (4, 4),
+        'field': (5, 5),
         'player': (0, 0),
         'walls': __walls__['empty'],
-        'boxes': [(1, 1), (2, 2)],
-        'goal': (3, 3),
+        'boxes': [(1, 1), (3, 3)],
+        'goal': (4, 4),
         'max_points': 20
     }, {
         'field': (7, 7),
