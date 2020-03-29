@@ -54,10 +54,8 @@ class BoxPusherEngine:
             move = self.__check_boxes__(new_pos, move)
 
         if len(self.boxes) <= 0:
-            print('game won')
             self.game_won = True
         if self.points <= 0:
-            print('game lost')
             self.game_lost = True
 
         self.player += move

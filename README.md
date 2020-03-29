@@ -13,3 +13,9 @@ pip3 install -r requirements.txt
 ```bash
 python3 src/manual_player.py
 ```
+
+### Demo auto player
+
+```bash
+python3 src/auto_player.py
+```

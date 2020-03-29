@@ -3,27 +3,39 @@ import arcade
 from game_engine import BoxPusherEngine, Direction
 from game_window import GameObserver, BoxPusherWindow
 
-SOLVE_MOVES = [
-    Direction.UP, Direction.RIGHT, Direction.DOWN, Direction.RIGHT,
-    Direction.UP, Direction.UP
-]
+
+class AutoPlayer:
+    def next_move(self, engine):
+        pass
 
 
-def generate_level():
-    return {
-        'field': (4, 4),
-        'player': (1, 0),
-        'walls': [],
-        'boxes': [(2, 1)],
-        'goal': (3, 3),
-        'max_points': 20
-    }
+DEMO_LEVEL = {
+    'field': (4, 4),
+    'player': (1, 0),
+    'walls': [],
+    'boxes': [(2, 1)],
+    'goal': (3, 3),
+    'max_points': 20
+}
+
+
+class DemoPlayer(AutoPlayer):
+    def __init__(self):
+        self.move_ix = -1
+        self.moves = [
+            Direction.UP, Direction.RIGHT, Direction.DOWN, Direction.RIGHT,
+            Direction.UP, Direction.UP
+        ]
+
+    def next_move(self, engine):
+        self.move_ix += 1
+        engine.player_move(self.moves[self.move_ix])
 
 
 class AutomaticMaster(GameObserver):
-    def __init__(self):
-        self.engine = BoxPusherEngine(generate_level())
-        self.move_ix = 0
+    def __init__(self, level=DEMO_LEVEL, player=DemoPlayer()):
+        self.engine = BoxPusherEngine(level)
+        self.player = player
 
     def start(self):
         window = BoxPusherWindow(self, interactive=False)
@@ -34,8 +46,7 @@ class AutomaticMaster(GameObserver):
         arcade.close_window()
 
     def next_move(self):
-        self.engine.player_move(SOLVE_MOVES[self.move_ix])
-        self.move_ix += 1
+        self.player.next_move(self.engine)
 
 
 if __name__ == "__main__":
