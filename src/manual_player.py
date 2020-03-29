@@ -13,16 +13,17 @@ class GameMaster(GameObserver):
     def start(self):
         self.window = BoxPusherWindow(self)
         self.window.set_location(0, 0)
-        self.window.reset_game(self.new_game_engine())
+        self.reset_game()
         arcade.run()
 
     def game_done(self):
         if self.window.engine.game_won:
             self.current_level_ix = (self.current_level_ix + 1) % len(LEVELS)
-        self.window.reset_game(self.new_game_engine())
+        self.reset_game()
 
-    def new_game_engine(self):
-        return BoxPusherEngine(LEVELS[self.current_level_ix])
+    def reset_game(self):
+        engine = BoxPusherEngine(LEVELS[self.current_level_ix])
+        self.window.reset_game(engine, "Level {}".format(self.current_level_ix + 1))
 
 
 if __name__ == "__main__":
