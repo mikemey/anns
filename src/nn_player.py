@@ -3,7 +3,7 @@ import random
 import neat
 import numpy as np
 
-from auto_player import AutoPlayer
+from auto_player import AutomaticMaster, AutoPlayer
 from game_engine import BoxPusherEngine, Direction
 
 # field-pins: [Wall, Player, Goal, Box]
@@ -47,27 +47,29 @@ class NeuralNetMaster:
         self.level_box_error = distance_error(self.level['goal'], self.level['boxes'])
         self.field_size = self.level['field']
         self.pins_template = [0] * FIELD_PINS_LEN * self.field_size[0] * self.field_size[1]
-        self.print_state = True
 
-    def eval_genome(self, genome, config):
+    def __create_game__(self, genome, config):
         engine = BoxPusherEngine(self.level)
-
         game_state = GameState(engine)
         player = NeuralNetPlayer(game_state, genome, config)
-        if self.print_state:
-            self.print_state = False
-            game_state.print()
+        return engine, player
 
+    def eval_genome(self, genome, config):
+        engine, player = self.__create_game__(genome, config)
         while not engine.game_over():
             player.next_move(engine)
 
         box_error = 10 * (distance_error(engine.goal, engine.boxes) / self.level_box_error)
         genome.fitness = engine.points - box_error
 
-    # def showcase_genome(self, genome, config):
-    #     print('Showcase fitness:', genome.fitness)
-    #     auto_master = AutomaticMaster(self.level, NeuralNetPlayer(genome, config))
-    #     auto_master.start()
+    def print_level(self):
+        GameState(BoxPusherEngine(self.level)).print()
+
+    def showcase_genome(self, genome, config):
+        print('Showcase genome: {}, fitness: {}'.format(genome.key, genome.fitness))
+        engine, player = self.__create_game__(genome, config)
+        auto_master = AutomaticMaster(engine, player, True)
+        auto_master.start()
 
 
 class GameState:

@@ -9,6 +9,26 @@ class AutoPlayer:
         pass
 
 
+class AutomaticMaster(GameObserver):
+    def __init__(self, engine: BoxPusherEngine, player: AutoPlayer, close_automatically=False):
+        self.engine = engine
+        self.player = player
+        self.auto_close = close_automatically
+
+    def start(self):
+        window = BoxPusherWindow(self, interactive=False)
+        window.reset_game(self.engine, "AI run")
+        arcade.run()
+
+    def game_done(self):
+        arcade.close_window()
+
+    def next_move(self):
+        self.player.next_move(self.engine)
+        if self.auto_close and self.engine.game_over():
+            self.game_done()
+
+
 DEMO_LEVEL = {
     'field': (4, 4),
     'player': (1, 0),
@@ -32,22 +52,6 @@ class DemoPlayer(AutoPlayer):
         engine.player_move(self.moves[self.move_ix])
 
 
-class AutomaticMaster(GameObserver):
-    def __init__(self, level=DEMO_LEVEL, player=DemoPlayer()):
-        self.engine = BoxPusherEngine(level)
-        self.player = player
-
-    def start(self):
-        window = BoxPusherWindow(self, interactive=False)
-        window.reset_game(self.engine, "AI run")
-        arcade.run()
-
-    def game_done(self):
-        arcade.close_window()
-
-    def next_move(self):
-        self.player.next_move(self.engine)
-
-
 if __name__ == "__main__":
-    AutomaticMaster().start()
+    demo_engine = BoxPusherEngine(DEMO_LEVEL)
+    AutomaticMaster(demo_engine, DemoPlayer()).start()
