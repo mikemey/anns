@@ -36,6 +36,8 @@ class BoxPusherEngine:
         self.points = level_config['max_points']
         self.game_won = False
         self.game_lost = False
+        self.box_moves = 0
+        self.unnecessary_moves = 0
 
     def game_over(self):
         return self.game_won or self.game_lost
@@ -50,6 +52,7 @@ class BoxPusherEngine:
         new_pos = self.player + move
         if not self.__can_move_to__(new_pos):
             move = MOVE_VECTOR['zero']
+            self.unnecessary_moves += 1
         else:
             move = self.__check_boxes__(new_pos, move)
 
@@ -66,6 +69,9 @@ class BoxPusherEngine:
                 new_box_pos = box + move
                 if self.__is_occupied__(new_box_pos):
                     move = MOVE_VECTOR['zero']
+                    self.unnecessary_moves += 1
+                else:
+                    self.box_moves += 1
                 if self.__is_goal__(new_box_pos):
                     self.points += BOX_REWARD
                     del self.boxes[ix]

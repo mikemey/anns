@@ -17,7 +17,8 @@ BOX_PIN_OFFSET = 3
 def generate_level():
     try:
         occupied = []
-        walls = [find_available_pos(occupied, 0, 5) for _ in range(random.randrange(0, 4))]
+        walls = []
+        # walls = [find_available_pos(occupied, 0, 5) for _ in range(random.randrange(0, 4))]
         player = find_available_pos(occupied, 0, 5)
         goal = find_available_pos(occupied, 0, 5, (2, 2), 1)
         box = find_available_pos(occupied, 1, 4, goal, 3, True)
@@ -65,7 +66,9 @@ class NeuralNetMaster:
             player.next_move(engine)
 
         box_error = 10 * (distance_error(engine.goal, engine.boxes) / self.level_box_error)
-        genome.fitness = engine.points - box_error
+        if engine.box_moves is 0:
+            box_error += 10
+        genome.fitness = engine.points - box_error - engine.unnecessary_moves
 
     def print_level(self):
         GameState(BoxPusherEngine(self.level)).print()
