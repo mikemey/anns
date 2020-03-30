@@ -3,9 +3,8 @@ import random
 import neat
 import numpy as np
 
+from auto_player import AutoPlayer
 from game_engine import BoxPusherEngine, Direction
-
-OUTPUT_DIRECTIONS = [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]
 
 # field-pins: [Wall, Player, Goal, Box]
 FIELD_PINS_LEN = 4
@@ -52,32 +51,77 @@ class NeuralNetMaster:
 
     def eval_genome(self, genome, config):
         engine = BoxPusherEngine(self.level)
+
+        game_state = GameState(engine)
+        player = NeuralNetPlayer(game_state, genome, config)
         if self.print_state:
             self.print_state = False
-            print_game(self.__get_game_state__(engine), self.field_size[0])
+            game_state.print()
 
-        net = neat.nn.FeedForwardNetwork.create(genome, config)
         while not engine.game_over():
-            game_state = self.__get_game_state__(engine)
-            output = net.activate(game_state)
-            direction_ix = output.index(max(output))
-            engine.player_move(OUTPUT_DIRECTIONS[direction_ix])
+            player.next_move(engine)
 
         box_error = 10 * (distance_error(engine.goal, engine.boxes) / self.level_box_error)
         genome.fitness = engine.points - box_error
 
-    def __get_game_state__(self, engine):
+    # def showcase_genome(self, genome, config):
+    #     print('Showcase fitness:', genome.fitness)
+    #     auto_master = AutomaticMaster(self.level, NeuralNetPlayer(genome, config))
+    #     auto_master.start()
+
+
+class GameState:
+    def __init__(self, engine):
+        self.engine = engine
+        self.field_width = self.engine.field_size[0]
+        field_height = self.engine.field_size[1]
+        self.pins_template = [0] * FIELD_PINS_LEN * self.field_width * field_height
+
+    def get_current(self):
         pins = self.pins_template.copy()
 
-        field_width = engine.field_size[0]
-        enable_pin(pins, field_width, engine.player, PLAYER_PIN_OFFSET)
-        enable_pin(pins, field_width, engine.goal, GOAL_PIN_OFFSET)
-        for box in engine.boxes:
-            enable_pin(pins, field_width, box, BOX_PIN_OFFSET)
-        for wall in engine.walls:
-            enable_pin(pins, field_width, wall, WALL_PIN_OFFSET)
+        enable_pin(pins, self.field_width, self.engine.player, PLAYER_PIN_OFFSET)
+        enable_pin(pins, self.field_width, self.engine.goal, GOAL_PIN_OFFSET)
+        for box in self.engine.boxes:
+            enable_pin(pins, self.field_width, box, BOX_PIN_OFFSET)
+        for wall in self.engine.walls:
+            enable_pin(pins, self.field_width, wall, WALL_PIN_OFFSET)
 
         return pins
+
+    def print(self):
+        pins = self.get_current()
+        line = '=============='
+        for i in range(len(pins)):
+            if (i % (FIELD_PINS_LEN * self.field_width)) == 0:
+                print(line)
+                line = ''
+            if (i % FIELD_PINS_LEN) == 0:
+                next_field = pins[i:i + FIELD_PINS_LEN]
+                if next_field[PLAYER_PIN_OFFSET]:
+                    line += ' ¥'
+                elif next_field[GOAL_PIN_OFFSET]:
+                    line += ' @'
+                elif next_field[BOX_PIN_OFFSET]:
+                    line += ' ▭'
+                elif next_field[WALL_PIN_OFFSET]:
+                    line += ' █'
+                else:
+                    line += ' ░'
+        print(line)
+        print('==============')
+
+
+class NeuralNetPlayer(AutoPlayer):
+    def __init__(self, game_state: GameState, genome, config):
+        self.net = neat.nn.FeedForwardNetwork.create(genome, config)
+        self.game_state = game_state
+        self.directions = [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]
+
+    def next_move(self, engine):
+        output = self.net.activate(self.game_state.get_current())
+        direction_ix = output.index(max(output))
+        engine.player_move(self.directions[direction_ix])
 
 
 def distance_error(goal, boxes):
@@ -96,30 +140,7 @@ def enable_pin(pins, width, field_pos, pin_offset):
     pins[pix] = 1
 
 
-def print_game(pins, field_width):
-    line = '=============='
-    for i in range(len(pins)):
-        if (i % (FIELD_PINS_LEN * field_width)) == 0:
-            print(line)
-            line = ''
-        if (i % FIELD_PINS_LEN) == 0:
-            next_field = pins[i:i + FIELD_PINS_LEN]
-            if next_field[PLAYER_PIN_OFFSET]:
-                line += ' ¥'
-            elif next_field[GOAL_PIN_OFFSET]:
-                line += ' @'
-            elif next_field[BOX_PIN_OFFSET]:
-                line += ' ▭'
-            elif next_field[WALL_PIN_OFFSET]:
-                line += ' █'
-            else:
-                line += ' ░'
-    print(line)
-    print('==============')
-
-
 if __name__ == '__main__':
     master = NeuralNetMaster()
     print('Level:', master.level)
-    state = master.__get_game_state__(BoxPusherEngine(master.level))
-    print_game(state, master.field_size[0])
+    GameState(BoxPusherEngine(master.level)).print()
