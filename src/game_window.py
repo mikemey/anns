@@ -55,14 +55,17 @@ def append_sprites(sprites_list, positions, sprite_image):
 
 
 class BoxPusherWindow(arcade.Window):
-    def __init__(self, game_observer, interactive=True):
+    def __init__(self, game_observer, interactive=True, disable_text=False):
         super().__init__(title=SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHEAT)
         self.set_location(0, 0)
 
         self.game_observer = game_observer
         self.is_interactive = interactive
-        self.last_move = 0
+        self.disable_text = disable_text
+
+        self.last_move_secs = 0
+        self.should_stop = False
         self.engine = None
         self.field_width = None
         self.field_height = None
@@ -79,6 +82,8 @@ class BoxPusherWindow(arcade.Window):
         self.field_height = FLOOR_TILE_WIDTH * engine.field_size[1]
         self.set_size(self.field_width, self.field_height + SCORE_PANEL_HEIGHT)
 
+        self.last_move_secs = 0
+        self.should_stop = False
         self.engine = engine
         self.floor = self.__create_floor__()
         self.static_sprites = self.__create_static_sprites__()
@@ -89,6 +94,24 @@ class BoxPusherWindow(arcade.Window):
         self.won_text = self.__create_text__('WON')
         self.state_text = state_text
 
+    @staticmethod
+    def start():
+        arcade.run()
+
+    def stop(self):
+        self.should_stop = True
+
+    def __shutdown__(self):
+        self.engine = None
+        self.floor = None
+        self.static_sprites = None
+        self.player_sprite = None
+        self.box_sprites = None
+        self.lost_text = None
+        self.won_text = None
+
+        self.close()
+
     def __game_not_ready__(self):
         return self.engine is None
 
@@ -97,13 +120,15 @@ class BoxPusherWindow(arcade.Window):
         return FieldSprite("resources/player.png", SPRITE_SCALING)
 
     def __create_text__(self, result_msg):
-        result_text = arcade.draw_text("{} !".format(result_msg), 0, 0, arcade.color.RED_ORANGE, 20, bold=True)
-        result_text.set_position(self.field_width / 2, self.field_height / 2)
-        help_text = arcade.draw_text("Press 'n' to continue...", 0, 0, arcade.color.DARK_BLUE_GRAY)
-        help_text.set_position(self.field_width / 2, self.field_height / 2 - HELP_TEXT_OFFSET)
         sprites = arcade.SpriteList(is_static=True)
-        sprites.append(result_text)
-        sprites.append(help_text)
+        if not self.disable_text:
+            result_text = arcade.draw_text("{} !".format(result_msg), 0, 0, arcade.color.RED_ORANGE, 20, bold=True)
+            result_text.set_position(self.field_width / 2, self.field_height / 2)
+            sprites.append(result_text)
+
+            help_text = arcade.draw_text("Press 'n' to continue...", 0, 0, arcade.color.DARK_BLUE_GRAY)
+            help_text.set_position(self.field_width / 2, self.field_height / 2 - HELP_TEXT_OFFSET)
+            sprites.append(help_text)
         return sprites
 
     def __create_static_sprites__(self):
@@ -148,12 +173,13 @@ class BoxPusherWindow(arcade.Window):
         return grid
 
     def __draw_stats__(self):
-        arcade.draw_text('Score: {}'.format(self.engine.points),
-                         SCORE_OFFSET * 2, self.field_height + SCORE_OFFSET,
-                         arcade.color.DARK_BROWN, 14, bold=True)
-        arcade.draw_text(self.state_text,
-                         SCORE_OFFSET * 15, self.field_height + SCORE_OFFSET,
-                         arcade.color.DARK_BROWN, 14, bold=False)
+        if not self.disable_text:
+            arcade.draw_text('Score: {}'.format(self.engine.points),
+                             SCORE_OFFSET * 2, self.field_height + SCORE_OFFSET,
+                             arcade.color.DARK_BROWN, 14, bold=True)
+            arcade.draw_text(self.state_text,
+                             SCORE_OFFSET * 15, self.field_height + SCORE_OFFSET,
+                             arcade.color.DARK_BROWN, 14, bold=False)
 
     def __draw_overlay__(self):
         arcade.draw_rectangle_filled(self.field_width / 2, self.field_height / 2,
@@ -178,13 +204,16 @@ class BoxPusherWindow(arcade.Window):
                 self.won_text.draw()
 
     def on_update(self, delta_seconds):
+        if self.should_stop:
+            self.__shutdown__()
+
         if self.__game_not_ready__() or self.engine.game_over():
             return
 
         if not self.is_interactive:
-            self.last_move += delta_seconds
-            if self.last_move > AUTOMATIC_MOVES_DELAY:
-                self.last_move = 0
+            self.last_move_secs += delta_seconds
+            if self.last_move_secs > AUTOMATIC_MOVES_DELAY:
+                self.last_move_secs = 0
                 self.game_observer.next_move()
 
         self.player_sprite.set_to_field(self.engine.player)

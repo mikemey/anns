@@ -26,7 +26,7 @@ def generate_level():
         'walls': walls,
         'boxes': [box],
         'goal': goal,
-        'max_points': 50
+        'max_points': 20
     }
 
 
@@ -70,7 +70,7 @@ class NeuralNetMaster:
     def showcase_genome(self, genome, config):
         print('Showcase genome: {}, fitness: {}'.format(genome.key, genome.fitness))
         engine, player = self.__create_game__(genome, config)
-        auto_master = AutomaticMaster(engine, player, True)
+        auto_master = AutomaticMaster(engine, player, True, True)
         auto_master.start()
 
 

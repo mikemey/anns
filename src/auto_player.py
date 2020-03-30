@@ -1,5 +1,3 @@
-import arcade
-
 from game_engine import BoxPusherEngine, Direction
 from game_window import GameObserver, BoxPusherWindow
 
@@ -10,23 +8,26 @@ class AutoPlayer:
 
 
 class AutomaticMaster(GameObserver):
-    def __init__(self, engine: BoxPusherEngine, player: AutoPlayer, close_automatically=False):
+    def __init__(self, engine: BoxPusherEngine, player: AutoPlayer,
+                 close_automatically=False, disable_text=False):
+        self.window = None
         self.engine = engine
         self.player = player
         self.auto_close = close_automatically
+        self.disable_text = disable_text
 
     def start(self):
-        window = BoxPusherWindow(self, interactive=False)
-        window.reset_game(self.engine, "AI run")
-        arcade.run()
+        self.window = BoxPusherWindow(self, False, self.disable_text)
+        self.window.reset_game(self.engine, "AI run")
+        self.window.start()
 
     def game_done(self):
-        arcade.close_window()
+        self.window.stop()
 
     def next_move(self):
         self.player.next_move(self.engine)
         if self.auto_close and self.engine.game_over():
-            self.game_done()
+            self.window.stop()
 
 
 DEMO_LEVEL = {
