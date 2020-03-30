@@ -19,7 +19,7 @@ def generate_level():
     walls = [find_available_pos(occupied, 0, 5) for _ in range(random.randrange(0, 4))]
     player = find_available_pos(occupied, 0, 5)
     goal = find_available_pos(occupied, 0, 5, (2, 2), 1)
-    box = find_available_pos(occupied, 1, 4, goal, 3)
+    box = find_available_pos(occupied, 1, 4, goal, 3, True)
     return {
         'field': (5, 5),
         'player': player,
@@ -30,12 +30,14 @@ def generate_level():
     }
 
 
-def find_available_pos(occupied, start, exclusive_end, avoid_pos=None, min_dist=0):
+def find_available_pos(occupied, start, exclusive_end, avoid_pos=None, min_dist=0, avoid_same_line=False):
     new_pos = (random.randrange(start, exclusive_end, 1), random.randrange(start, exclusive_end, 1))
     if new_pos in occupied:
-        return find_available_pos(occupied, start, exclusive_end, avoid_pos, min_dist)
+        return find_available_pos(occupied, start, exclusive_end, avoid_pos, min_dist, avoid_same_line)
     elif avoid_pos is not None and distance_between(new_pos, avoid_pos) < min_dist:
-        return find_available_pos(occupied, start, exclusive_end, avoid_pos, min_dist)
+        return find_available_pos(occupied, start, exclusive_end, avoid_pos, min_dist, avoid_same_line)
+    elif avoid_same_line and (new_pos[0] == avoid_pos[0] or new_pos[1] == avoid_pos[1]):
+        return find_available_pos(occupied, start, exclusive_end, avoid_pos, min_dist, avoid_same_line)
     else:
         occupied.append(new_pos)
         return new_pos
