@@ -4,7 +4,7 @@ import neat
 import numpy as np
 
 from auto_player import AutomaticMaster, AutoPlayer
-from game_engine import BoxPusherEngine, Direction
+from game_engine import BoxPusherEngine, Direction, GameListener, positions_contains
 
 # field-pins: [Wall, Player, Goal, Box]
 FIELD_PINS_LEN = 4
@@ -47,6 +47,32 @@ def find_available_pos(occupied, start, exclusive_end, avoid_pos=None, min_dist=
         return new_pos
 
 
+class PenaltyCalculator(GameListener):
+    def __init__(self, verbose=False):
+        self.verbose = verbose
+        self.unmoved_box_penalty = 10
+        self.penalty = self.unmoved_box_penalty
+        self.covered_positions = []
+
+    def __log__(self, *data):
+        if self.verbose:
+            print(*data)
+
+    def new_position(self, pos):
+        self.__log__(' new pos:', pos)
+        if positions_contains(self.covered_positions, pos):
+            self.__log__('path pen: 1')
+            self.penalty += 1
+        else:
+            self.covered_positions.append(pos.copy())
+
+    def box_move(self):
+        if self.unmoved_box_penalty:
+            self.__log__(' BOX move')
+            self.penalty -= self.unmoved_box_penalty
+            self.unmoved_box_penalty = False
+
+
 class NeuralNetMaster:
     def __init__(self):
         self.level = generate_level()
@@ -62,13 +88,13 @@ class NeuralNetMaster:
 
     def eval_genome(self, genome, config):
         engine, player = self.__create_game__(genome, config)
+        calculator = PenaltyCalculator()
+        engine.listeners.add(calculator)
         while not engine.game_over():
             player.next_move(engine)
 
         box_error = 10 * (distance_error(engine.goal, engine.boxes) / self.level_box_error)
-        if engine.box_moves is 0:
-            box_error += 10
-        genome.fitness = engine.points - box_error - engine.unnecessary_moves
+        genome.fitness = engine.points - box_error - calculator.penalty
 
     def print_level(self):
         GameState(BoxPusherEngine(self.level)).print()
