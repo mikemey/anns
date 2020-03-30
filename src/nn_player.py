@@ -17,13 +17,14 @@ BOX_PIN_OFFSET = 3
 
 def generate_level():
     occupied = []
+    walls = [find_available_pos(occupied, 0, 5) for _ in range(random.randrange(0, 4))]
     player = find_available_pos(occupied, 0, 5)
     goal = find_available_pos(occupied, 0, 5, (2, 2), 1)
     box = find_available_pos(occupied, 1, 4, goal, 3)
     return {
         'field': (5, 5),
         'player': player,
-        'walls': [],
+        'walls': walls,
         'boxes': [box],
         'goal': goal,
         'max_points': 50
