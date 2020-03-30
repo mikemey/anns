@@ -49,6 +49,7 @@ def find_available_pos(occupied, start, exclusive_end, avoid_pos=None, min_dist=
 
 class PenaltyCalculator(GameListener):
     def __init__(self, verbose=False):
+        super().__init__()
         self.verbose = verbose
         self.unmoved_box_penalty = 10
         self.penalty = self.unmoved_box_penalty
@@ -114,6 +115,13 @@ class GameState:
         self.pins_template = [0] * FIELD_PINS_LEN * self.field_width * field_height
 
     def get_current(self):
+        return [
+            self.engine.player[0], self.engine.player[1],
+            self.engine.goal[0], self.engine.goal[1],
+            self.engine.boxes[0][0], self.engine.boxes[0][1]
+        ]
+
+    def get_pins(self):
         pins = self.pins_template.copy()
 
         enable_pin(pins, self.field_width, self.engine.player, PLAYER_PIN_OFFSET)
@@ -127,7 +135,7 @@ class GameState:
 
     def print(self):
         field = list()
-        pins = self.get_current()
+        pins = self.get_pins()
         line = '=============='
         for i in range(len(pins)):
             if (i % (FIELD_PINS_LEN * self.field_width)) == 0:
@@ -153,7 +161,7 @@ class GameState:
 
 class NeuralNetPlayer(AutoPlayer):
     def __init__(self, game_state: GameState, genome, config):
-        self.net = neat.nn.FeedForwardNetwork.create(genome, config)
+        self.net = neat.nn.RecurrentNetwork.create(genome, config)
         self.game_state = game_state
         self.directions = [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]
 

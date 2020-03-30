@@ -5,7 +5,7 @@ import neat
 
 from nn_player import NeuralNetMaster
 
-SHOWCASE_EVERY_GEN = 100
+SHOWCASE_EVERY_GEN = 1000
 
 
 class Trainer:
@@ -18,7 +18,7 @@ class Trainer:
                              config_file)
         pop = neat.Population(config)
         pop.add_reporter(neat.StdOutReporter(False))
-        winner = pop.run(self.eval_genomes, 10000)
+        winner = pop.run(self.eval_genomes, 100000)
         print('\nWinner fitness:', winner.fitness)
 
     def eval_genomes(self, genomes, config: neat.config.Config):
