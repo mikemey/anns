@@ -15,19 +15,22 @@ BOX_PIN_OFFSET = 3
 
 
 def generate_level():
-    occupied = []
-    walls = [find_available_pos(occupied, 0, 5) for _ in range(random.randrange(0, 4))]
-    player = find_available_pos(occupied, 0, 5)
-    goal = find_available_pos(occupied, 0, 5, (2, 2), 1)
-    box = find_available_pos(occupied, 1, 4, goal, 3, True)
-    return {
-        'field': (5, 5),
-        'player': player,
-        'walls': walls,
-        'boxes': [box],
-        'goal': goal,
-        'max_points': 20
-    }
+    try:
+        occupied = []
+        walls = [find_available_pos(occupied, 0, 5) for _ in range(random.randrange(0, 4))]
+        player = find_available_pos(occupied, 0, 5)
+        goal = find_available_pos(occupied, 0, 5, (2, 2), 1)
+        box = find_available_pos(occupied, 1, 4, goal, 3, True)
+        return {
+            'field': (5, 5),
+            'player': player,
+            'walls': walls,
+            'boxes': [box],
+            'goal': goal,
+            'max_points': 20
+        }
+    except RecursionError:
+        return generate_level()
 
 
 def find_available_pos(occupied, start, exclusive_end, avoid_pos=None, min_dist=0, avoid_same_line=False):
