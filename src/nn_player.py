@@ -92,11 +92,12 @@ class GameState:
         return pins
 
     def print(self):
+        field = list()
         pins = self.get_current()
         line = '=============='
         for i in range(len(pins)):
             if (i % (FIELD_PINS_LEN * self.field_width)) == 0:
-                print(line)
+                field.append(line)
                 line = ''
             if (i % FIELD_PINS_LEN) == 0:
                 next_field = pins[i:i + FIELD_PINS_LEN]
@@ -110,8 +111,10 @@ class GameState:
                     line += ' █'
                 else:
                     line += ' ░'
-        print(line)
-        print('==============')
+        field.append(line)
+        field.append('==============')
+        for line in reversed(field):
+            print(line)
 
 
 class NeuralNetPlayer(AutoPlayer):
