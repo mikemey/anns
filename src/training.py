@@ -1,5 +1,6 @@
 import math
 import os
+from datetime import datetime
 from statistics import mean
 
 import neat
@@ -41,6 +42,7 @@ class BPReporter(BaseReporter):
         self.batch_fitness = []
         self.batch_best = -math.inf
         self.batch_best_size = None
+        self.__report__('--- START ---')
 
     def start_generation(self, generation):
         self.gens_collected += 1
@@ -55,13 +57,18 @@ class BPReporter(BaseReporter):
 
         if (self.gens_collected % SUMMARIZE_GENS) == 0:
             fit_mean = mean(self.batch_fitness)
-            print('[{:5}] {:4} / {:2}  --  avg/best  {:4.0f} / {:4.0f}  {}'.format(
+            self.__report__('{:5} gens {:4} / {:2}  --  avg/best  {:4.0f} / {:4.0f}  {}'.format(
                 self.gens_collected, len(population), len(species_set.species),
                 fit_mean, self.batch_best, self.batch_best_size)
             )
 
             self.batch_fitness = []
             self.batch_best = -math.inf
+
+    @staticmethod
+    def __report__(msg):
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print('[{}] {}'.format(ts, msg))
 
 
 def eval_generation(nn_master, genomes, config):
