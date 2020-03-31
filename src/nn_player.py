@@ -36,23 +36,24 @@ class GameState:
         self.norm_height = self.engine.field_size[1] - 1
 
     def get_current(self):
-        engine = self.engine
-        pl = self.engine.player
-
         allowed_moves = [
-            engine.can_move_to(pl + MOVE_VECTOR[Direction.UP]),
-            engine.can_move_to(pl + MOVE_VECTOR[Direction.DOWN]),
-            engine.can_move_to(pl + MOVE_VECTOR[Direction.LEFT]),
-            engine.can_move_to(pl + MOVE_VECTOR[Direction.RIGHT])
+            self.__norm_direction__(Direction.UP),
+            self.__norm_direction__(Direction.DOWN),
+            self.__norm_direction__(Direction.LEFT),
+            self.__norm_direction__(Direction.RIGHT)
         ]
         return \
             allowed_moves + \
-            self.__norm_pos__(pl) + \
-            self.__norm_pos__(engine.goal) + \
-            self.__norm_pos__(engine.boxes[0])
+            self.__norm_position__(self.engine.player) + \
+            self.__norm_position__(self.engine.goal) + \
+            self.__norm_position__(self.engine.boxes[0])
 
-    def __norm_pos__(self, pos):
+    def __norm_position__(self, pos):
         return [pos[0] / self.norm_width, pos[1] / self.norm_height]
+
+    def __norm_direction__(self, direction):
+        return 1.0 if self.engine.can_move_to(self.engine.player + MOVE_VECTOR[direction]) \
+            else 0.0
 
 
 class NeuralNetPlayer(AutoPlayer):
@@ -112,3 +113,4 @@ if __name__ == '__main__':
     test_level = Level.generate_level()
     print('Level:', test_level.as_game_config())
     test_level.print()
+    print(GameState(BoxPusherEngine(test_level.as_game_config())).get_current())
