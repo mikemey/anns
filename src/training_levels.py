@@ -39,12 +39,6 @@ class Level:
             occupied.append(new_pos)
             return new_pos
 
-    def as_game_config(self):
-        return {
-            'field': self.field_size, 'player': self.player, 'walls': self.walls,
-            'boxes': self.boxes, 'goal': self.goal, 'max_points': self.max_points
-        }
-
     def print(self):
         intend = '>>'
         separator = intend + '─' * (2 * self.field_size[0] + 2)

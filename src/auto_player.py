@@ -1,5 +1,6 @@
 from game_engine import BoxPusherEngine, Direction
 from game_window import GameWindowObserver, BoxPusherWindow
+from training_levels import Level
 
 
 class AutoPlayer:
@@ -28,14 +29,14 @@ class AutomaticMaster(GameWindowObserver):
             self.window.stop()
 
 
-DEMO_LEVEL = {
-    'field': (4, 4),
-    'player': (1, 0),
-    'walls': [],
-    'boxes': [(2, 1)],
-    'goal': (3, 3),
-    'max_points': 20
-}
+DEMO_LEVEL = Level(
+    field_size=(4, 4),
+    player=(1, 0),
+    walls=[],
+    boxes=[(2, 1)],
+    goal=(3, 3),
+    max_points=20
+)
 
 
 class DemoPlayer(AutoPlayer):

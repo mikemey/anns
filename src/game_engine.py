@@ -2,6 +2,8 @@ from enum import Enum, auto
 
 from numpy import array
 
+from training_levels import Level
+
 
 class Direction(Enum):
     UP = auto()
@@ -45,13 +47,13 @@ class GameListener:
 
 
 class BoxPusherEngine:
-    def __init__(self, level_config):
-        self.field_size = level_config['field']
-        self.player = array(level_config['player'])
-        self.walls = level_config['walls']
-        self.boxes = [array(box_pos) for box_pos in level_config['boxes']]
-        self.goal = level_config['goal']
-        self.points = level_config['max_points']
+    def __init__(self, level: Level):
+        self.field_size = level.field_size
+        self.player = array(level.player)
+        self.walls = level.walls
+        self.boxes = [array(box_pos) for box_pos in level.boxes]
+        self.goal = level.goal
+        self.points = level.max_points
         self.game_won = False
         self.game_lost = False
         self.listeners = GameListener()

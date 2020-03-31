@@ -10,7 +10,7 @@ class NeuralNetMaster:
         self.level = Level.generate_level()
 
     def __create_game__(self, genome, config):
-        engine = BoxPusherEngine(self.level.as_game_config())
+        engine = BoxPusherEngine(self.level)
         game_state = GameState(engine)
         player = NeuralNetPlayer(game_state, genome, config)
         return engine, player
@@ -111,6 +111,6 @@ class FitnessCalculator(GameListener):
 
 if __name__ == '__main__':
     test_level = Level.generate_level()
-    print('Level:', test_level.as_game_config())
+    print('Level:', test_level)
     test_level.print()
-    print(GameState(BoxPusherEngine(test_level.as_game_config())).get_current())
+    print(GameState(BoxPusherEngine(test_level)).get_current())
