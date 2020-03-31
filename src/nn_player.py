@@ -78,7 +78,7 @@ class FitnessCalculator(GameListener):
 
         self.level_box_error = self.__current_box_error__()
         self.engine.listeners.add(self)
-        self.__log__('start score:', self.score)
+        self.__log__('-- start --')
 
     def __current_box_error__(self):
         err = 0
@@ -88,23 +88,27 @@ class FitnessCalculator(GameListener):
 
     def __log__(self, *data):
         if self.verbose:
-            print(*data)
+            print('score: {:4}'.format(self.score), *data)
 
     def new_position(self, pos):
-        self.__log__(' new pos:', pos)
         self.score -= 1
+        self.__log__('new pos:', pos)
         if positions_contains(self.covered_positions, pos):
-            self.__log__('path penalty: 1')
             self.score -= 1
+            self.__log__('field covered')
         else:
             self.covered_positions.append(pos.copy())
 
     def box_move(self):
-        self.__log__(' BOX move')
         self.score += 5
+        self.__log__('box move')
+
+    def box_in_goal(self):
+        self.score += 10
+        self.__log__('box in goal')
 
     def get_fitness(self):
-        box_error = 15 * self.__current_box_error__() / self.level_box_error
+        box_error = 20 * (self.__current_box_error__() / self.level_box_error) ** 2
         self.__log__('BOX penalty:', box_error)
         return self.score - box_error
 

@@ -45,6 +45,10 @@ class GameListener:
         for listener in self.listener:
             listener.box_move()
 
+    def box_in_goal(self):
+        for listener in self.listener:
+            listener.box_in_goal()
+
 
 class BoxPusherEngine:
     def __init__(self, level: Level):
@@ -92,6 +96,7 @@ class BoxPusherEngine:
                     self.listeners.box_move()
                 if self.__is_goal__(new_box_pos):
                     self.points += BOX_REWARD
+                    self.listeners.box_in_goal()
                     del self.boxes[ix]
                 else:
                     self.boxes[ix] += move
