@@ -1,4 +1,4 @@
-from game_engine import BoxPusherEngine, GameListener, positions_contains
+from game_engine import BoxPusherEngine, GameListener
 from training_levels import Level, distance_between
 
 
@@ -27,11 +27,11 @@ class FitnessCalculator(GameListener):
     def new_position(self, pos):
         self.score -= 1
         self.__log__('new pos:', pos)
-        if positions_contains(self.covered_positions, pos):
-            self.score -= 2
-            self.__log__('field covered')
-        else:
-            self.covered_positions.append(pos.copy())
+        for p in self.covered_positions:
+            if (p == pos).all():
+                self.score -= 1
+                self.__log__('field covered')
+        self.covered_positions.append(pos.copy())
 
     def box_move(self):
         self.score += 5

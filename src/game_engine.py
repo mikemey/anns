@@ -23,13 +23,6 @@ MOVE_VECTOR = {
 BOX_REWARD = 10
 
 
-def positions_contains(all_pos, pos):
-    for p in all_pos:
-        if (p == pos).all():
-            return True
-    return False
-
-
 class GameListener:
     def __init__(self):
         self.listener = []
@@ -109,12 +102,19 @@ class BoxPusherEngine:
         return move
 
     def can_move_to(self, position):
-        return not positions_contains(self.walls, position) \
+        return not self.positions_contains(self.walls, position) \
                and 0 <= position[0] < self.field_size[0] \
                and 0 <= position[1] < self.field_size[1]
 
     def __is_occupied__(self, position):
-        return not self.can_move_to(position) or positions_contains(self.boxes, position)
+        return not self.can_move_to(position) or self.positions_contains(self.boxes, position)
 
     def __is_goal__(self, position):
         return (self.goal == position).all()
+
+    @staticmethod
+    def positions_contains(all_pos, pos):
+        for p in all_pos:
+            if (p == pos).all():
+                return True
+        return False
