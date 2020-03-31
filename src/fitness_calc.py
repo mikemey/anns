@@ -28,7 +28,7 @@ class FitnessCalculator(GameListener):
         self.score -= 1
         self.__log__('new pos:', pos)
         if positions_contains(self.covered_positions, pos):
-            self.score -= 1
+            self.score -= 2
             self.__log__('field covered')
         else:
             self.covered_positions.append(pos.copy())
@@ -46,6 +46,6 @@ class FitnessCalculator(GameListener):
         self.__log__('invalid move')
 
     def get_fitness(self):
-        box_error = 20 * (self.__current_box_error__() / self.level_box_error) ** 2
+        box_error = 40 * (self.__current_box_error__() / self.level_box_error) ** 2
         self.__log__('BOX penalty:', box_error)
         return self.score - box_error
