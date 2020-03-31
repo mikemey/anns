@@ -28,7 +28,7 @@ class GameObserver:
     def next_move(self):
         pass
 
-    def game_done(self):
+    def game_done(self, quit_game: bool):
         pass
 
 
@@ -55,7 +55,7 @@ def append_sprites(sprites_list, positions, sprite_image):
 
 
 class BoxPusherWindow(arcade.Window):
-    def __init__(self, game_observer, interactive=True, disable_text=False):
+    def __init__(self, game_observer: GameObserver, interactive=True, disable_text=False):
         super().__init__(title=SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHEAT)
         self.set_location(0, 0)
@@ -126,9 +126,13 @@ class BoxPusherWindow(arcade.Window):
             result_text.set_position(self.field_width / 2, self.field_height / 2)
             sprites.append(result_text)
 
-            help_text = arcade.draw_text("Press 'n' to continue...", 0, 0, arcade.color.DARK_BLUE_GRAY)
-            help_text.set_position(self.field_width / 2, self.field_height / 2 - HELP_TEXT_OFFSET)
-            sprites.append(help_text)
+            next_text = arcade.draw_text("Press 'n' to continue...", 0, 0, arcade.color.DARK_BLUE_GRAY)
+            next_text.set_position(self.field_width / 2, self.field_height / 2 - HELP_TEXT_OFFSET)
+            sprites.append(next_text)
+
+            quit_text = arcade.draw_text("Press 'q' to quit...", 0, 0, arcade.color.DARK_BLUE_GRAY)
+            quit_text.set_position(self.field_width / 2, self.field_height / 2 - (HELP_TEXT_OFFSET * 2))
+            sprites.append(quit_text)
         return sprites
 
     def __create_static_sprites__(self):
@@ -223,9 +227,11 @@ class BoxPusherWindow(arcade.Window):
             self.box_sprites.pop()
 
     def on_key_press(self, key, modifiers):
+        if key == arcade.key.Q:
+            self.game_observer.game_done(True)
         if self.engine.game_over():
             if key == arcade.key.N:
-                self.game_observer.game_done()
+                self.game_observer.game_done(False)
         elif self.is_interactive:
             player_direction = KEY_MAPPING.get(key)
             if player_direction:

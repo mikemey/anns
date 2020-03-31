@@ -10,18 +10,16 @@ class AutoPlayer:
 class AutomaticMaster(GameObserver):
     def __init__(self, engine: BoxPusherEngine, player: AutoPlayer,
                  close_automatically=False, disable_text=False):
-        self.window = None
         self.engine = engine
         self.player = player
         self.auto_close = close_automatically
-        self.disable_text = disable_text
+        self.window = BoxPusherWindow(self, False, disable_text)
 
     def start(self):
-        self.window = BoxPusherWindow(self, False, self.disable_text)
         self.window.reset_game(self.engine, "AI run")
         self.window.start()
 
-    def game_done(self):
+    def game_done(self, quit_game):
         self.window.stop()
 
     def next_move(self):

@@ -6,14 +6,16 @@ from manual_levels import LEVELS
 class GameMaster(GameObserver):
     def __init__(self):
         self.current_level_ix = 0
-        self.window = None
+        self.window = BoxPusherWindow(self)
 
     def start(self):
-        self.window = BoxPusherWindow(self)
         self.create_game()
         self.window.start()
 
-    def game_done(self):
+    def game_done(self, quit_game):
+        if quit_game:
+            self.window.stop()
+            return
         if self.window.engine.game_won:
             self.current_level_ix = (self.current_level_ix + 1) % len(LEVELS)
         self.create_game()
