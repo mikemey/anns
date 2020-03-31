@@ -41,6 +41,10 @@ class FitnessCalculator(GameListener):
         self.score += 10
         self.__log__('box in goal')
 
+    def invalid_move(self):
+        self.score -= 10
+        self.__log__('invalid move')
+
     def get_fitness(self):
         box_error = 20 * (self.__current_box_error__() / self.level_box_error) ** 2
         self.__log__('BOX penalty:', box_error)

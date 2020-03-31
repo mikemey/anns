@@ -49,6 +49,10 @@ class GameListener:
         for listener in self.listener:
             listener.box_in_goal()
 
+    def invalid_move(self):
+        for listener in self.listener:
+            listener.invalid_move()
+
 
 class BoxPusherEngine:
     def __init__(self, level: Level):
@@ -75,6 +79,7 @@ class BoxPusherEngine:
         new_pos = self.player + move
         if not self.can_move_to(new_pos):
             move = MOVE_VECTOR[Direction.HALT]
+            self.listeners.invalid_move()
         else:
             move = self.__check_boxes__(new_pos, move)
 
@@ -92,6 +97,7 @@ class BoxPusherEngine:
                 new_box_pos = box + move
                 if self.__is_occupied__(new_box_pos):
                     move = MOVE_VECTOR[Direction.HALT]
+                    self.listeners.invalid_move()
                 else:
                     self.listeners.box_move()
                 if self.__is_goal__(new_box_pos):
