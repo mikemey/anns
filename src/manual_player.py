@@ -1,6 +1,6 @@
 from game_engine import BoxPusherEngine
 from game_window import GameObserver, BoxPusherWindow
-from levels import LEVELS
+from manual_levels import LEVELS
 
 
 class GameMaster(GameObserver):
