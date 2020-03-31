@@ -4,7 +4,7 @@ import neat
 import numpy as np
 
 from auto_player import AutomaticMaster, AutoPlayer
-from game_engine import BoxPusherEngine, Direction, GameListener, positions_contains
+from game_engine import BoxPusherEngine, Direction, MOVE_VECTOR, GameListener, positions_contains
 
 # field-pins: [Wall, Player, Goal, Box]
 FIELD_PINS_LEN = 4
@@ -108,18 +108,32 @@ class NeuralNetMaster:
 
 
 class GameState:
-    def __init__(self, engine):
+    def __init__(self, engine: BoxPusherEngine):
         self.engine = engine
         self.field_width = self.engine.field_size[0]
-        field_height = self.engine.field_size[1]
-        self.pins_template = [0] * FIELD_PINS_LEN * self.field_width * field_height
+        self.field_height = self.engine.field_size[1]
+        self.norm_width = self.field_width - 1
+        self.norm_height = self.field_height - 1
+        self.pins_template = [0] * FIELD_PINS_LEN * self.field_width * self.field_height
 
     def get_current(self):
-        return [
-            self.engine.player[0], self.engine.player[1],
-            self.engine.goal[0], self.engine.goal[1],
-            self.engine.boxes[0][0], self.engine.boxes[0][1]
+        engine = self.engine
+        pl = self.engine.player
+
+        allowed_moves = [
+            engine.can_move_to(pl + MOVE_VECTOR[Direction.UP]),
+            engine.can_move_to(pl + MOVE_VECTOR[Direction.DOWN]),
+            engine.can_move_to(pl + MOVE_VECTOR[Direction.LEFT]),
+            engine.can_move_to(pl + MOVE_VECTOR[Direction.RIGHT])
         ]
+        return \
+            allowed_moves + \
+            self.__norm_pos__(pl) + \
+            self.__norm_pos__(engine.goal) + \
+            self.__norm_pos__(engine.boxes[0])
+
+    def __norm_pos__(self, pos):
+        return [pos[0] / self.norm_width, pos[1] / self.norm_height]
 
     def get_pins(self):
         pins = self.pins_template.copy()

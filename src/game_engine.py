@@ -67,7 +67,7 @@ class BoxPusherEngine:
 
         move = MOVE_VECTOR[direction]
         new_pos = self.player + move
-        if not self.__can_move_to__(new_pos):
+        if not self.can_move_to(new_pos):
             move = MOVE_VECTOR[Direction.HALT]
         else:
             move = self.__check_boxes__(new_pos, move)
@@ -95,13 +95,13 @@ class BoxPusherEngine:
                     self.boxes[ix] += move
         return move
 
-    def __can_move_to__(self, position):
+    def can_move_to(self, position):
         return not positions_contains(self.walls, position) \
                and 0 <= position[0] < self.field_size[0] \
                and 0 <= position[1] < self.field_size[1]
 
     def __is_occupied__(self, position):
-        return not self.__can_move_to__(position) or positions_contains(self.boxes, position)
+        return not self.can_move_to(position) or positions_contains(self.boxes, position)
 
     def __is_goal__(self, position):
         return (self.goal == position).all()
