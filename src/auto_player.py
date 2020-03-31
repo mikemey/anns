@@ -1,5 +1,5 @@
 from game_engine import BoxPusherEngine, Direction
-from game_window import GameObserver, BoxPusherWindow
+from game_window import GameWindowObserver, BoxPusherWindow
 
 
 class AutoPlayer:
@@ -7,7 +7,7 @@ class AutoPlayer:
         pass
 
 
-class AutomaticMaster(GameObserver):
+class AutomaticMaster(GameWindowObserver):
     def __init__(self, engine: BoxPusherEngine, player: AutoPlayer,
                  close_automatically=False, disable_text=False):
         self.engine = engine

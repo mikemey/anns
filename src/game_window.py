@@ -24,7 +24,7 @@ END_OVERLAY_COLOR = (100, 100, 100, 180)
 AUTOMATIC_MOVES_DELAY = 0.7
 
 
-class GameObserver:
+class GameWindowObserver:
     def next_move(self):
         pass
 
@@ -55,7 +55,7 @@ def append_sprites(sprites_list, positions, sprite_image):
 
 
 class BoxPusherWindow(arcade.Window):
-    def __init__(self, game_observer: GameObserver, interactive=True, disable_text=False):
+    def __init__(self, game_observer: GameWindowObserver, interactive=True, disable_text=False):
         super().__init__(title=SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHEAT)
         self.set_location(0, 0)

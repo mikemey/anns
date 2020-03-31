@@ -1,9 +1,9 @@
 from game_engine import BoxPusherEngine
-from game_window import GameObserver, BoxPusherWindow
+from game_window import GameWindowObserver, BoxPusherWindow
 from manual_levels import LEVELS
 
 
-class GameMaster(GameObserver):
+class GameMaster(GameWindowObserver):
     def __init__(self):
         self.current_level_ix = 0
         self.window = BoxPusherWindow(self)
