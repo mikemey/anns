@@ -23,11 +23,11 @@ class Trainer:
 
     def eval_genomes(self, genomes, config: neat.config.Config):
         nn_master = NeuralNetMaster()
-        nn_master.print_level()
 
         self.gen_count += 1
         if (self.gen_count % SHOWCASE_EVERY_GEN) == 0:
-            eval_and_show_generation(nn_master, genomes, config)
+            nn_master.level.print()
+            eval_generation_and_showcase_winner(nn_master, genomes, config)
         else:
             eval_generation(nn_master, genomes, config)
 
@@ -37,7 +37,7 @@ def eval_generation(nn_master, genomes, config):
         nn_master.eval_genome(genome, config)
 
 
-def eval_and_show_generation(nn_master, genomes, config):
+def eval_generation_and_showcase_winner(nn_master, genomes, config):
     best, best_genome = -math.inf, None
     for genome_id, genome in genomes:
         nn_master.eval_genome(genome, config)
