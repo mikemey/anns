@@ -7,7 +7,7 @@ from neat.reporting import BaseReporter
 
 from nn_player import NeuralNetMaster
 
-SHOWCASE_EVERY_GEN = 1000
+SHOWCASE_EVERY_GEN = 500
 SUMMARIZE_GENS = 10
 
 
