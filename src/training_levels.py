@@ -60,6 +60,3 @@ class Level:
 def distance_between(pos_a, pos_b):
     return sum(np.absolute(np.array(pos_a) - np.array(pos_b)))
 
-
-if __name__ == '__main__':
-    pass
