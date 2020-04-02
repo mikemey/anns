@@ -9,6 +9,7 @@ from signal import signal, SIGINT
 
 import neat
 import numpy as np
+from neat.population import CompleteExtinctionException
 from neat.reporting import BaseReporter
 
 ALLOWED_LETTERS = string.ascii_lowercase + ' '
@@ -74,7 +75,7 @@ class ChatterBox:
             self.genome.fitness -= sum(np.abs(np.array(actual_output) - expected_out)) ** 2
 
     def chat(self, enable_save=True):
-        print("Wie ist dein Name? (beenden mit 'exit')")
+        print("Wer bist du? (beenden mit 'exit')")
         wait_for_input = True
         while wait_for_input:
             in_text = input('>> ', )
@@ -114,26 +115,28 @@ class Trainer:
         gen_config = self.config.genome_config
         self.max_fitness = gen_config.num_outputs * len(self.training_set)
         if self.max_fitness != self.config.fitness_threshold:
-            shutdown(msg='\nConfig fitness_threshold != max-fitnesse: {} != {}'.format(
+            shutdown(msg='Config fitness_threshold != max-fitnesse: {} != {}'.format(
                 self.config.fitness_threshold, self.max_fitness
             ))
 
         ts_input_len = len(self.training_set[0][0])
         if ts_input_len != gen_config.num_inputs:
-            shutdown(msg='\nTraining set input length not matching input-nodes: {} != {}'.format(
+            shutdown(msg='Training set input length not matching input-nodes: {} != {}'.format(
                 ts_input_len, gen_config.num_inputs
             ))
 
         print('Maximum fitness:', self.max_fitness)
-        self.chat_percentiles = [0.95, 0.98, 0.99, 0.995]
+        self.chat_percentiles = [0.96, 0.98, 0.99, 0.995]
 
     def run(self):
         pop = neat.Population(self.config)
         pop.add_reporter(Reporter())
-        winner = pop.run(self.eval_genomes, 100000)
-
-        print('\nWinner fitness:', winner.fitness)
-        ChatterBox.from_genome(winner, self.config).chat()
+        try:
+            winner = pop.run(self.eval_genomes, 100000)
+            print('\nWinner fitness:', winner.fitness)
+            ChatterBox.from_genome(winner, self.config).chat()
+        except CompleteExtinctionException:
+            shutdown(msg='Complete extinction')
 
     def eval_genomes(self, genomes, config):
         self.training_set = create_training_set()
@@ -196,8 +199,8 @@ class Reporter(BaseReporter):
         print('[{}] {}'.format(ts, msg))
 
 
-def shutdown(signal_received=None, frame=None, msg='\nexit'):
-    print(msg)
+def shutdown(signal_received=None, frame=None, msg='exit'):
+    print('\n', msg)
     exit(0)
 
 
