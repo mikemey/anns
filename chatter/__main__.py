@@ -16,13 +16,14 @@ CONSIDER_CHARS = 4
 PINS_TEMPLATE = [0.0] * CONSIDER_CHARS
 
 ANSWERS = [
-    'Hallo Susanne, mein Mäuschen! Ich hab dich lieb! Bussi!',
-    'Hallo Madelaine, mein Schätzchen! Ich hab dich soooo viel lieb! Bussi!',
-    'Tut mir leid, das versteh\' ich nicht :('
+    'Hallo Susanne, mein Mäuschen! Ich hab dich lieb! Bussi!\n',
+    'Hallo Madelaine, mein Schätzchen! Ich hab dich soooo viel lieb! Bussi!\n',
+    'Tut mir leid, das versteh\' ich nicht :(\n'
 ]
 fixed_train_data = [
     ('susanne', (1, 0, 0, 0)), ('madelaine', (0, 1, 0, 0)),
-    ('exit', (0, 0, 0, 1)), ('', (0, 0, 1, 0))
+    ('exit', (0, 0, 0, 1)),
+    ('', (0, 0, 1, 0)), ('     ', (0, 0, 1, 0)), ('bla', (0, 0, 1, 0))
 ]
 
 
@@ -51,9 +52,6 @@ def text_to_pins(text):
     for ix, ch in enumerate(filtered):
         pins[ix] = (ALLOWED_LETTERS.index(ch) + 1) / len(ALLOWED_LETTERS)
     return pins
-
-
-default_train_set = create_training_set()
 
 
 class ChatterBox:
@@ -106,13 +104,31 @@ class ChatterBox:
 
 
 class Trainer:
-    def __init__(self):
+    def __init__(self, alt_config):
+        cfg_file_name = 'chatter_top.cfg' if alt_config else 'chatter.cfg'
+        print('use config file:', cfg_file_name)
+
         local_dir = os.path.dirname(__file__)
-        config_file = os.path.join(local_dir, 'chatter.cfg')
+        config_file = os.path.join(local_dir, cfg_file_name)
         self.config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                                   neat.DefaultSpeciesSet, neat.DefaultStagnation,
                                   config_file)
-        self.chat_with_fit = [22, 22.5, 23, 23.3]
+        self.training_set = create_training_set()
+        gen_config = self.config.genome_config
+        self.max_fitness = gen_config.num_outputs * len(self.training_set)
+        if self.max_fitness != self.config.fitness_threshold:
+            shutdown(msg='\nConfig fitness_threshold != max-fitnesse: {} != {}'.format(
+                self.config.fitness_threshold, self.max_fitness
+            ))
+
+        ts_input_len = len(self.training_set[0][0])
+        if ts_input_len != gen_config.num_inputs:
+            shutdown(msg='\nTraining set input length not matching input-nodes: {} != {}'.format(
+                ts_input_len, gen_config.num_inputs
+            ))
+
+        print('Maximum fitness:', self.max_fitness)
+        self.chat_percentiles = [0.95, 0.98, 0.99, 0.995]
 
     def run(self):
         pop = neat.Population(self.config)
@@ -123,20 +139,23 @@ class Trainer:
         ChatterBox.from_genome(winner, self.config).chat()
 
     def eval_genomes(self, genomes, config):
-        training_set = default_train_set
-        max_fitness = config.genome_config.num_outputs * len(training_set)
+        self.training_set = create_training_set()
+        max_fitness = config.genome_config.num_outputs * len(self.training_set)
 
         best_fit = -math.inf
         best_genome = None
         for genome_id, genome in genomes:
-            ChatterBox.from_genome(genome, config).train(training_set, max_fitness)
+            ChatterBox.from_genome(genome, config).train(self.training_set, max_fitness)
             if genome.fitness > best_fit:
                 best_fit = genome.fitness
                 best_genome = genome
 
-        if len(self.chat_with_fit) and best_fit > self.chat_with_fit[0]:
-            ChatterBox.from_genome(best_genome, config).chat()
-            self.chat_with_fit = self.chat_with_fit[1:]
+        if len(self.chat_percentiles):
+            demo_fitness = self.chat_percentiles[0] * max_fitness
+            if best_fit > demo_fitness:
+                print('\nDEMO chat percent {}, fitness: {:2.2f}'.format(self.chat_percentiles[0], best_fit))
+                ChatterBox.from_genome(best_genome, config).chat()
+                self.chat_percentiles = self.chat_percentiles[1:]
 
 
 def keep_max_gen(current_max, new_val, gen):
@@ -180,8 +199,8 @@ class Reporter(BaseReporter):
         print('[{}] {}'.format(ts, msg))
 
 
-def shutdown(signal_received, frame):
-    print('\nexit')
+def shutdown(signal_received=None, frame=None, msg='\nexit'):
+    print(msg)
     exit(0)
 
 
@@ -190,7 +209,8 @@ if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'run':
         ChatterBox.from_fs().chat(False)
     else:
-        Trainer().run()
+        use_alt_config = len(sys.argv) > 1 and sys.argv[1] == 'alt'
+        Trainer(use_alt_config).run()
 
     # for v in create_training_set():
     #     print(v)
