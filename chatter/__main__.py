@@ -1,7 +1,9 @@
 import math
 import os
+import pickle
 import random
 import string
+import sys
 from datetime import datetime
 from signal import signal, SIGINT
 
@@ -55,37 +57,37 @@ default_train_set = create_training_set()
 
 
 class ChatterBox:
-    def __init__(self, genome, config):
-        self.net = neat.nn.FeedForwardNetwork.create(genome, config)
+    NET_FILE = 'brain.net'
+
+    @staticmethod
+    def from_genome(genome, config):
+        net = neat.nn.FeedForwardNetwork.create(genome, config)
+        return ChatterBox(net, genome)
+
+    @staticmethod
+    def from_fs():
+        with open(ChatterBox.NET_FILE, 'rb') as f:
+            return ChatterBox(pickle.load(f))
+
+    def __init__(self, net, genome=None):
+        self.net = net
         self.genome = genome
 
     def train(self, training_set, max_fitness):
         self.genome.fitness = max_fitness
-        # fit_sq = max_fitness
-
-        # print('g[{}] MAX fit: {:3.2f}'.format(self.genome.key, max_fitness))
         for pins_in, expected_out in training_set:
             actual_output = self.net.activate(pins_in)
             self.genome.fitness -= sum(np.abs(np.array(actual_output) - expected_out)) ** 2
-            # for actual_pin, expected_pin in zip(actual_output, expected_out):
-            #     bef = self.genome.fitness
-            #     bef_sq = fit_sq
-            #     self.genome.fitness -= abs(actual_pin - expected_pin) ** 2
-            #     fit_sq -= abs(actual_pin - expected_pin) * 2
-            #     print('\t\t{:3.3f} >> {:3.3f} \t\t{:3.3f} >> {:3.3f}'.format(
-            #         bef, self.genome.fitness,
-            #         bef_sq, fit_sq,
-            #     ))
-            # print('\t fit: {:3.3f} (sq: {:3.3f}) IN -> EXP: {} \t> {}   OUT {}'.format(
-            #     self.genome.fitness, fit_sq, list(map(lambda o: round(o, 3), pins_in)),
-            #     expected_out, list(map(lambda o: round(o, 3), actual_output))
-            # ))
 
-    def chat(self):
+    def chat(self, enable_save=True):
         print("Wie ist dein Name? (beenden mit 'exit')")
         wait_for_input = True
         while wait_for_input:
             in_text = input('>> ', )
+            if enable_save and in_text == 'save':
+                self.save_net()
+                print('net saved.')
+                continue
             output = self.net.activate(text_to_pins(in_text.lower()))
             answer_ix = output.index(max(output))
             if answer_ix < 3:
@@ -93,9 +95,14 @@ class ChatterBox:
             else:
                 wait_for_input = False
             if wait_for_input and in_text == 'exit':
-                print('save-guard exit')
+                print('SAVE GUARD EXIT')
                 wait_for_input = False
         print('\nBussi! Baba!')
+        return False
+
+    def save_net(self):
+        with open(ChatterBox.NET_FILE, 'wb') as f:
+            pickle.dump(self.net, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 class Trainer:
@@ -113,7 +120,7 @@ class Trainer:
         winner = pop.run(self.eval_genomes, 100000)
 
         print('\nWinner fitness:', winner.fitness)
-        ChatterBox(winner, self.config).chat()
+        ChatterBox.from_genome(winner, self.config).chat()
 
     def eval_genomes(self, genomes, config):
         training_set = default_train_set
@@ -122,13 +129,13 @@ class Trainer:
         best_fit = -math.inf
         best_genome = None
         for genome_id, genome in genomes:
-            ChatterBox(genome, config).train(training_set, max_fitness)
+            ChatterBox.from_genome(genome, config).train(training_set, max_fitness)
             if genome.fitness > best_fit:
                 best_fit = genome.fitness
                 best_genome = genome
 
         if len(self.chat_with_fit) and best_fit > self.chat_with_fit[0]:
-            ChatterBox(best_genome, config).chat()
+            ChatterBox.from_genome(best_genome, config).chat()
             self.chat_with_fit = self.chat_with_fit[1:]
 
 
@@ -180,7 +187,10 @@ def shutdown(signal_received, frame):
 
 if __name__ == '__main__':
     signal(SIGINT, shutdown)
-    Trainer().run()
+    if len(sys.argv) > 1 and sys.argv[1] == 'run':
+        ChatterBox.from_fs().chat(False)
+    else:
+        Trainer().run()
 
     # for v in create_training_set():
     #     print(v)
