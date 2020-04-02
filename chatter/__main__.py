@@ -1,3 +1,4 @@
+import math
 import os
 import random
 import string
@@ -5,11 +6,12 @@ from datetime import datetime
 from signal import signal, SIGINT
 
 import neat
+import numpy as np
 from neat.reporting import BaseReporter
 
 ALLOWED_LETTERS = string.ascii_lowercase + ' '
-CONSIDER_CHARS = 5
-PINS_TEMPLATE = [0.0]
+CONSIDER_CHARS = 4
+PINS_TEMPLATE = [0.0] * CONSIDER_CHARS
 
 ANSWERS = [
     'Hallo Susanne, mein Mäuschen! Ich hab dich lieb! Bussi!',
@@ -28,21 +30,28 @@ def random_string():
 
 
 def create_training_set():
-    neg_cases = [(random_string(), (0, 0, 1, 0)) for _ in range(CONSIDER_CHARS)]
+    neg_cases = [(random_string(), (0, 0, 1, 0)), (random_string(), (0, 0, 1, 0))]
+    # neg_cases = [(random_string(), (0, 0, 1, 0)) for _ in range(10)]
     return [(text_to_pins(t), r) for t, r in fixed_train_data + neg_cases]
 
 
+MAX_CHAR_VAL = 270
+
+
 def text_to_pins(text):
-    pins = PINS_TEMPLATE.copy()
     filtered = filter(lambda c: c in ALLOWED_LETTERS, text[:CONSIDER_CHARS])
+    # total = 0
+    # for char_ix, ch in enumerate(filtered):
+    #     char_val = (char_ix * len(ALLOWED_LETTERS)) + (ALLOWED_LETTERS.index(ch) + 1)
+    #     total += char_val
+    # return [total / MAX_CHAR_VAL]
+    pins = PINS_TEMPLATE.copy()
     for ix, ch in enumerate(filtered):
         pins[ix] = (ALLOWED_LETTERS.index(ch) + 1) / len(ALLOWED_LETTERS)
     return pins
 
 
-default_train_set = []
-for _ in range(25):
-    default_train_set += create_training_set()
+default_train_set = create_training_set()
 
 
 class ChatterBox:
@@ -50,65 +59,113 @@ class ChatterBox:
         self.net = neat.nn.FeedForwardNetwork.create(genome, config)
         self.genome = genome
 
-    def train(self, training_set):
-        self.genome.fitness = len(PINS_TEMPLATE) * len(training_set)
+    def train(self, training_set, max_fitness):
+        self.genome.fitness = max_fitness
+        # fit_sq = max_fitness
+
+        # print('g[{}] MAX fit: {:3.2f}'.format(self.genome.key, max_fitness))
         for pins_in, expected_out in training_set:
             actual_output = self.net.activate(pins_in)
-            for actual_pin, expected_pin in zip(actual_output, expected_out):
-                self.genome.fitness -= (actual_pin - expected_pin) ** 2
+            self.genome.fitness -= sum(np.abs(np.array(actual_output) - expected_out)) ** 2
+            # for actual_pin, expected_pin in zip(actual_output, expected_out):
+            #     bef = self.genome.fitness
+            #     bef_sq = fit_sq
+            #     self.genome.fitness -= abs(actual_pin - expected_pin) ** 2
+            #     fit_sq -= abs(actual_pin - expected_pin) * 2
+            #     print('\t\t{:3.3f} >> {:3.3f} \t\t{:3.3f} >> {:3.3f}'.format(
+            #         bef, self.genome.fitness,
+            #         bef_sq, fit_sq,
+            #     ))
+            # print('\t fit: {:3.3f} (sq: {:3.3f}) IN -> EXP: {} \t> {}   OUT {}'.format(
+            #     self.genome.fitness, fit_sq, list(map(lambda o: round(o, 3), pins_in)),
+            #     expected_out, list(map(lambda o: round(o, 3), actual_output))
+            # ))
 
     def chat(self):
         print("Wie ist dein Name? (beenden mit 'exit')")
-        wait_for_questions = True
-        while wait_for_questions:
+        wait_for_input = True
+        while wait_for_input:
             in_text = input('>> ', )
             output = self.net.activate(text_to_pins(in_text.lower()))
             answer_ix = output.index(max(output))
             if answer_ix < 3:
                 print(ANSWERS[answer_ix])
             else:
-                shutdown(None, None)
+                wait_for_input = False
+            if wait_for_input and in_text == 'exit':
+                print('save-guard exit')
+                wait_for_input = False
+        print('\nBussi! Baba!')
 
 
-def run(config_file):
-    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                         config_file)
-    pop = neat.Population(config)
-    pop.add_reporter(Reporter())
-    winner = pop.run(eval_genomes, 100000)
+class Trainer:
+    def __init__(self):
+        local_dir = os.path.dirname(__file__)
+        config_file = os.path.join(local_dir, 'chatter.cfg')
+        self.config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                  neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                  config_file)
+        self.chat_with_fit = [22, 22.5, 23, 23.3]
 
-    print('\nWinner fitness:', winner.fitness)
-    config.save('winner.genome')
-    ChatterBox(winner, config).chat()
+    def run(self):
+        pop = neat.Population(self.config)
+        pop.add_reporter(Reporter())
+        winner = pop.run(self.eval_genomes, 100000)
+
+        print('\nWinner fitness:', winner.fitness)
+        ChatterBox(winner, self.config).chat()
+
+    def eval_genomes(self, genomes, config):
+        training_set = default_train_set
+        max_fitness = config.genome_config.num_outputs * len(training_set)
+
+        best_fit = -math.inf
+        best_genome = None
+        for genome_id, genome in genomes:
+            ChatterBox(genome, config).train(training_set, max_fitness)
+            if genome.fitness > best_fit:
+                best_fit = genome.fitness
+                best_genome = genome
+
+        if len(self.chat_with_fit) and best_fit > self.chat_with_fit[0]:
+            ChatterBox(best_genome, config).chat()
+            self.chat_with_fit = self.chat_with_fit[1:]
 
 
-def eval_genomes(genomes, config):
-    # training_set = create_training_set()
-    for genome_id, genome in genomes:
-        ChatterBox(genome, config).train(default_train_set)
+def keep_max_gen(current_max, new_val, gen):
+    if new_val > current_max[0]:
+        current_max[0] = new_val
+        current_max[1] = gen
 
 
 class Reporter(BaseReporter):
     def __init__(self):
         self.generations, self.total_fit, self.total_pop = 0, 0, 0
         self.__report__('--- START ---')
+        self.max_avg = [-math.inf, 0]
+        self.max_fit = [-math.inf, 0]
 
     def start_generation(self, generation):
         self.generations += 1
 
     def post_evaluate(self, config, population, species_set, best_genome):
         gen_fitness = [genome.fitness for genome in population.values()]
-        gen_sum = sum(gen_fitness)
+        gen_fit_sum = sum(gen_fitness)
         gen_count = len(gen_fitness)
-        self.total_fit += gen_sum
+        self.total_fit += gen_fit_sum
         self.total_pop += gen_count
         rolling_fit_mean = self.total_fit / self.total_pop
-        self.__report__('{:5} gens, {:2} spc, avg tot/gen {:1.2f} / {:1.2f}, best: {:1.2f} {}'.format(
-            self.generations, len(species_set.species),
-            rolling_fit_mean, gen_sum / gen_count,
-            best_genome.fitness, best_genome.size())
-        )
+
+        keep_max_gen(self.max_avg, rolling_fit_mean, self.generations)
+        keep_max_gen(self.max_fit, best_genome.fitness, self.generations)
+        self.__report__(
+            '{:5}:{:2}, avg: {:2.2f} max a/f {:2.2f}[{:4}] / {:2.2f}[{:4}], gen a/b: {:2.2f} ({:2.2f} {:2}-{:2})'.format(
+                self.generations, len(species_set.species), rolling_fit_mean,
+                self.max_avg[0], self.max_avg[1],
+                self.max_fit[0], self.max_fit[1],
+                gen_fit_sum / gen_count,
+                best_genome.fitness, best_genome.size()[0], best_genome.size()[1]
+            ))
 
     @staticmethod
     def __report__(msg):
@@ -117,17 +174,17 @@ class Reporter(BaseReporter):
 
 
 def shutdown(signal_received, frame):
-    print('\nBussi! Baba!')
+    print('\nexit')
     exit(0)
 
 
 if __name__ == '__main__':
     signal(SIGINT, shutdown)
-    local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, 'chatter.cfg')
-    run(config_path)
-    # for tr in create_training_set():
-    #     print(tr)
-    while True:
-        in_text = input('text: ', )
-        print(text_to_pins(in_text))
+    Trainer().run()
+
+    # for v in create_training_set():
+    #     print(v)
+    # print('"{}"\t{}'.format(v, text_to_pins(v)))
+    # while True:
+    #     in_text = input('text: ', )
+    #     print(text_to_pins(in_text))
