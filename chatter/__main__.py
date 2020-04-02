@@ -12,8 +12,7 @@ import numpy as np
 from neat.reporting import BaseReporter
 
 ALLOWED_LETTERS = string.ascii_lowercase + ' '
-CONSIDER_CHARS = 4
-PINS_TEMPLATE = [0.0] * CONSIDER_CHARS
+CONSIDER_CHARS = 3
 
 ANSWERS = [
     'Hallo Susanne, mein Mäuschen! Ich hab dich lieb! Bussi!\n',
@@ -38,20 +37,13 @@ def create_training_set():
     return [(text_to_pins(t), r) for t, r in fixed_train_data + neg_cases]
 
 
-MAX_CHAR_VAL = 270
-
-
 def text_to_pins(text):
-    filtered = filter(lambda c: c in ALLOWED_LETTERS, text[:CONSIDER_CHARS])
-    # total = 0
-    # for char_ix, ch in enumerate(filtered):
-    #     char_val = (char_ix * len(ALLOWED_LETTERS)) + (ALLOWED_LETTERS.index(ch) + 1)
-    #     total += char_val
-    # return [total / MAX_CHAR_VAL]
-    pins = PINS_TEMPLATE.copy()
-    for ix, ch in enumerate(filtered):
-        pins[ix] = (ALLOWED_LETTERS.index(ch) + 1) / len(ALLOWED_LETTERS)
-    return pins
+    filtered = filter(lambda c: c in ALLOWED_LETTERS, text.lower()[:CONSIDER_CHARS])
+    total = 0
+    for char_ix, ch in enumerate(filtered):
+        char_val = (char_ix * len(ALLOWED_LETTERS)) + (ALLOWED_LETTERS.index(ch) + 1)
+        total += char_val
+    return [1 if total & (1 << n) else 0 for n in range(8)]
 
 
 class ChatterBox:
