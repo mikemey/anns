@@ -46,8 +46,12 @@ def text_to_pins(text):
     return [1 if total & (1 << n) else 0 for n in range(8)]
 
 
+def get_net_file(name):
+    return name + '.net'
+
+
 class ChatterBox:
-    NET_FILE = 'brain.net'
+    SAVE_CMD = 'save '
 
     @staticmethod
     def from_genome(genome, config):
@@ -55,8 +59,8 @@ class ChatterBox:
         return ChatterBox(net, genome)
 
     @staticmethod
-    def from_fs():
-        with open(ChatterBox.NET_FILE, 'rb') as f:
+    def from_fs(name):
+        with open(get_net_file(name), 'rb') as f:
             return ChatterBox(pickle.load(f))
 
     def __init__(self, net, genome=None):
@@ -74,8 +78,9 @@ class ChatterBox:
         wait_for_input = True
         while wait_for_input:
             in_text = input('>> ', )
-            if enable_save and in_text == 'save':
-                self.save_net()
+            if enable_save and in_text.startswith(ChatterBox.SAVE_CMD):
+                name = in_text[len(ChatterBox.SAVE_CMD):]
+                self.save_net(name)
                 print('net saved.')
                 continue
             output = self.net.activate(text_to_pins(in_text.lower()))
@@ -90,8 +95,8 @@ class ChatterBox:
         print('\nBussi! Baba!')
         return False
 
-    def save_net(self):
-        with open(ChatterBox.NET_FILE, 'wb') as f:
+    def save_net(self, name):
+        with open(get_net_file(name), 'wb') as f:
             pickle.dump(self.net, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
@@ -198,8 +203,8 @@ def shutdown(signal_received=None, frame=None, msg='\nexit'):
 
 if __name__ == '__main__':
     signal(SIGINT, shutdown)
-    if len(sys.argv) > 1 and sys.argv[1] == 'run':
-        ChatterBox.from_fs().chat(False)
+    if len(sys.argv) == 3 and sys.argv[1] == 'run':
+        ChatterBox.from_fs(sys.argv[2]).chat(False)
     else:
         use_alt_config = len(sys.argv) > 1 and sys.argv[1] == 'alt'
         Trainer(use_alt_config).run()
