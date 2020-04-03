@@ -34,7 +34,6 @@ def random_string():
 
 def create_training_set():
     neg_cases = [(random_string(), (0, 0, 1, 0)), (random_string(), (0, 0, 1, 0))]
-    # neg_cases = [(random_string(), (0, 0, 1, 0)) for _ in range(10)]
     return [(text_to_pins(t), r) for t, r in fixed_train_data + neg_cases] * 5
 
 
@@ -101,12 +100,9 @@ class ChatterBox:
 
 
 class Trainer:
-    def __init__(self, alt_config):
-        cfg_file_name = 'chatter_top.cfg' if alt_config else 'chatter.cfg'
-        print('use config file:', cfg_file_name)
-
+    def __init__(self):
         local_dir = os.path.dirname(__file__)
-        config_file = os.path.join(local_dir, cfg_file_name)
+        config_file = os.path.join(local_dir, 'chatter.cfg')
         self.config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                                   neat.DefaultSpeciesSet, neat.DefaultStagnation,
                                   config_file)
@@ -208,12 +204,4 @@ if __name__ == '__main__':
     if len(sys.argv) == 3 and sys.argv[1] == 'run':
         ChatterBox.from_fs(sys.argv[2]).chat(False)
     else:
-        use_alt_config = len(sys.argv) > 1 and sys.argv[1] == 'alt'
-        Trainer(use_alt_config).run()
-
-    # for v in create_training_set():
-    #     print(v)
-    # print('"{}"\t{}'.format(v, text_to_pins(v)))
-    # while True:
-    #     in_text = input('text: ', )
-    #     print(text_to_pins(in_text))
+        Trainer().run()
