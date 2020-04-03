@@ -3,7 +3,7 @@ from datetime import datetime
 
 from neat.reporting import BaseReporter
 
-LOG_TEMPLATE = '{{:5}}:{{:2}}, avg: {0} max a/f {0}[{{:4}}] / {0}[{{:4}}], gen a/b: {0} ({0} {{:2}}-{{:2}})'
+LOG_TEMPLATE = 'g:{{:5}}, p/s: {{}}/{{:2}}, avg: {0} max a/f {0}[{{:4}}] / {0}[{{:4}}], gen a/b: {0} ({0} {{:2}}-{{:2}})'
 
 
 class TrainingReporter(BaseReporter):
@@ -29,7 +29,7 @@ class TrainingReporter(BaseReporter):
         self.keep_max_gen(self.max_avg, rolling_fit_mean, self.generations)
         self.keep_max_gen(self.max_fit, best_genome.fitness, self.generations)
         self.__report__(self.log_format.format(
-            self.generations, len(species_set.species), rolling_fit_mean,
+            self.generations, gen_count, len(species_set.species), rolling_fit_mean,
             self.max_avg[0], self.max_avg[1],
             self.max_fit[0], self.max_fit[1],
             gen_fit_sum / gen_count,

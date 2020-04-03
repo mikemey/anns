@@ -27,6 +27,7 @@ class Trainer:
         nn_master = NeuralNetMaster()
         self.gen_count += 1
         if (self.gen_count % SHOWCASE_EVERY_GEN) == 0:
+            nn_master.level.print()
             eval_generation_and_showcase_winner(nn_master, genomes, config)
         else:
             eval_generation(nn_master, genomes, config)
