@@ -1,6 +1,10 @@
 # Box pusher game
 
-Required:
+<p align="center">
+    <img src="resources/bpe_modes.png" width="750px" />
+</p>
+
+Requires:
 - Python >3.5
 
 Libraries used:
