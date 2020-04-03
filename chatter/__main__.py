@@ -79,9 +79,10 @@ class ChatterBox:
         while wait_for_input:
             in_text = input('>> ', )
             if enable_save and in_text.startswith(ChatterBox.SAVE_CMD):
-                name = in_text[len(ChatterBox.SAVE_CMD):]
-                self.save_net(name)
-                print('net saved.')
+                name_param = in_text[len(ChatterBox.SAVE_CMD):]
+                file_name = get_net_file(name_param)
+                self.save_net(file_name)
+                print('net saved:', file_name)
                 continue
             output = self.net.activate(text_to_pins(in_text.lower()))
             answer_ix = output.index(max(output))
