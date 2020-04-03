@@ -11,6 +11,7 @@ class FitnessCalculator(GameListener):
         self.covered_positions = []
 
         self.level_box_error = self.__current_box_error_to__(self.engine.goal)
+        self.level_player_error = self.__current_box_error_to__(self.engine.player)
         self.engine.listeners.add(self)
         self.__log__('-- start --')
 
@@ -46,8 +47,12 @@ class FitnessCalculator(GameListener):
         self.__log__('invalid move')
 
     def get_fitness(self):
-        box_error = 50 * (self.__current_box_error_to__(self.engine.goal) / self.level_box_error) ** 2
-        player_error = 50 * (self.__current_box_error_to__(self.engine.player) - len(self.engine.boxes)) ** 2
+        box_error = self.__get_box_error__(self.engine.goal, self.level_box_error)
+        player_error = self.__get_box_error__(self.engine.player, self.level_player_error)
         self.__log__('box    error:', box_error)
         self.__log__('player error:', player_error)
         return self.score - box_error - player_error
+
+    def __get_box_error__(self, pos, level_error):
+        error_ratio = self.__current_box_error_to__(pos) / level_error
+        return 30 * error_ratio ** 2
