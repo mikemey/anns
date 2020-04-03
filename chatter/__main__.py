@@ -14,6 +14,7 @@ from neat.reporting import BaseReporter
 
 ALLOWED_LETTERS = string.ascii_lowercase + ' '
 CONSIDER_CHARS = 3
+NET_FILE_SUFFIX = '.net'
 
 ANSWERS = [
     'Hallo Susanne, mein Mäuschen! Ich hab dich lieb! Bussi!\n',
@@ -22,8 +23,7 @@ ANSWERS = [
 ]
 fixed_train_data = [
     ('susanne', (1, 0, 0, 0)), ('madelaine', (0, 1, 0, 0)),
-    ('exit', (0, 0, 0, 1)),
-    ('', (0, 0, 1, 0)), ('     ', (0, 0, 1, 0)), ('bla', (0, 0, 1, 0))
+    ('exit', (0, 0, 0, 1)), ('', (0, 0, 1, 0)), ('bla', (0, 0, 1, 0))
 ]
 
 
@@ -35,7 +35,7 @@ def random_string():
 def create_training_set():
     neg_cases = [(random_string(), (0, 0, 1, 0)), (random_string(), (0, 0, 1, 0))]
     # neg_cases = [(random_string(), (0, 0, 1, 0)) for _ in range(10)]
-    return [(text_to_pins(t), r) for t, r in fixed_train_data + neg_cases]
+    return [(text_to_pins(t), r) for t, r in fixed_train_data + neg_cases] * 5
 
 
 def text_to_pins(text):
@@ -48,7 +48,7 @@ def text_to_pins(text):
 
 
 def get_net_file(name):
-    return name + '.net'
+    return name if name.endswith(NET_FILE_SUFFIX) else name + '.net'
 
 
 class ChatterBox:
@@ -94,7 +94,6 @@ class ChatterBox:
                 print('SAVE GUARD EXIT')
                 wait_for_input = False
         print('\nBussi! Baba!')
-        return False
 
     def save_net(self, name):
         with open(get_net_file(name), 'wb') as f:
