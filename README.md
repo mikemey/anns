@@ -1,8 +1,21 @@
 # Box pusher game
 
-<p align="center">
-    <img src="resources/bpe_modes.png" width="750px" />
-</p>
+<table style="width: 100%;">
+    <thead>
+        <tr>
+            <th>Manual play</th>
+            <th>AI Demo</th>
+            <th>Trained network</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><img src="resources/manual-run.png" width="250"/></td>
+            <td><img src="resources/ai-run.gif" width="200" /></td>
+            <td><img src="resources/train-run.gif" width="250" /></td>
+        </tr>
+    </tbody>
+</table>
 
 Requires:
 - Python >3.5
@@ -31,7 +44,7 @@ python3 src/manual_player.py
 python3 src/auto_player.py
 ```
 
-### Train NEAT net
+### Train NEAT network
 
 ```bash
 python3 src/training.py
