@@ -5,10 +5,19 @@ from fitness_calc import FitnessCalculator
 from game_engine import BoxPusherEngine, Direction, MOVE_VECTOR
 from training_levels import Level
 
+first_training_level = Level(
+    field_size=(5, 5),
+    player=(4, 1),
+    walls=[],
+    boxes=[(1, 3)],
+    goal=(0, 1),
+    max_points=20
+)
+
 
 class NeuralNetMaster:
     def __init__(self):
-        self.level = Level.generate_level()
+        self.level = first_training_level
 
     def __create_game__(self, genome, config):
         engine = BoxPusherEngine(self.level)
@@ -38,7 +47,7 @@ class GameState:
         self.grid_template = [0.0] * engine.field_size[0] * engine.field_size[1]
 
     def get_current(self):
-        return self.__grid_state__()
+        return self.__positional_state__()
 
     def __positional_state__(self):
         # allowed_moves = [
@@ -83,8 +92,8 @@ class NeuralNetPlayer(AutoPlayer):
 
 
 if __name__ == '__main__':
-    test_level = Level.generate_level()
-    print('Level:', test_level)
+    test_level = first_training_level
+    print('Level:', vars(test_level))
     test_level.print()
     state = GameState(BoxPusherEngine(test_level))
     raw_state = state.get_current()
