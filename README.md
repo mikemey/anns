@@ -1,45 +1,55 @@
 # Box pusher game
 
-<table style="width: 100%;">
-    <thead>
-        <tr>
-            <th>Manual play</th>
-            <th>AI Demo</th>
-            <th>Trained network</th>
-        </tr>
-    </thead>
+<table>
     <tbody>
+        <tr></tr>
         <tr>
-            <td><img src="resources/manual-run.png" width="250"/></td>
-            <td><img src="resources/ai-run.gif" width="200" /></td>
-            <td><img src="resources/train-run.gif" width="250" /></td>
+          <th colspan="3" align="left">Play manually</th>
+          <th colspan="3" align="left">Auto player demo</th>
+        </tr>
+        <tr>
+            <td colspan="3" align="center"><img src="resources/manual-run.png" height="320"/></td>
+            <td colspan="3" align="center"><img src="resources/ai-run.gif" height="320" /></td>
+        </tr>
+        <tr><th colspan="6" align="left">Train NEAT network</th></tr>
+        <tr>
+            <td colspan="2" align="center">
+                <p>Beginner</p>
+                <img src="resources/train-beginner.gif" width="250"/>
+            </td>
+            <td colspan="2" align="center">
+                <p>Advanced</p>
+                <img src="resources/train-advanced.gif" width="250"/>
+            </td>
+            <td colspan="2" align="center">
+                <p>Expert</p>
+                <img src="resources/train-expert.gif" width="250"/>
+            </td>
         </tr>
     </tbody>
 </table>
 
-Requires:
-- Python >3.5
+#### Requirements
+Python 3, 
+[NumPy](https://pypi.org/project/numpy/), 
+[NEAT-Python](https://pypi.org/project/neat-python/), 
+[Arcade](https://pypi.org/project/arcade/)
 
-Libraries used:
-- [arcade](https://pypi.org/project/arcade/)
-- [neat-python](https://pypi.org/project/neat-python/)
-- [numpy](https://pypi.org/project/numpy/)
-
-
-### Install dependencies
+#### Install dependencies
 
 ```bash
 pip3 install -r requirements.txt
 ```
 
-### Run game manually
+#### Run game manually
 
 ```bash
 python3 src/manual_player.py
 ```
 
-### Demo auto player
+#### Demo auto player
 
+A demonstration of `AutoPlayer`, mainly used during development.
 ```bash
 python3 src/auto_player.py
 ```

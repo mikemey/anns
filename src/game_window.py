@@ -58,7 +58,7 @@ class BoxPusherWindow(arcade.Window):
     def __init__(self, game_observer: GameWindowObserver, interactive=True, disable_text=False):
         super().__init__(title=SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHEAT)
-        self.set_location(0, 0)
+        self.set_location(2, 2)
 
         self.game_observer = game_observer
         self.is_interactive = interactive
