@@ -14,8 +14,6 @@ SHOWCASE_EVERY_GEN = 100
 class Trainer:
     def __init__(self):
         self.gen_count = 0
-        self.best = -math.inf
-        self.best_genome = None
 
     def run(self, config_file):
         config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -34,19 +32,15 @@ class Trainer:
         batch_best, batch_best_genome = -math.inf, None
         for _, genome in genomes:
             nn_master.eval_genome(genome, config)
-            if genome.fitness > self.best:
-                self.best = genome.fitness
-                self.best_genome = genome
             if genome.fitness > batch_best:
                 batch_best = genome.fitness
                 batch_best_genome = genome
 
         self.gen_count += 1
         if (self.gen_count % SHOWCASE_EVERY_GEN) == 0:
+            print('Showcase generation:', self.gen_count)
             nn_master.level.print()
-            showcase_genome = batch_best_genome if batch_best >= self.best \
-                else self.best_genome
-            nn_master.showcase_genome(showcase_genome, config)
+            nn_master.showcase_genome(batch_best_genome, config)
 
 
 def shutdown(signal_received=None, frame=None, msg='exit'):
