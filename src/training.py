@@ -1,7 +1,9 @@
 import math
 import os
+from signal import signal, SIGINT
 
 import neat
+from neat.population import CompleteExtinctionException
 
 from nn_player import NeuralNetMaster
 from training_reporter import TrainingReporter
@@ -21,8 +23,11 @@ class Trainer:
                              config_file)
         pop = neat.Population(config)
         pop.add_reporter(TrainingReporter())
-        winner = pop.run(self.eval_genomes, 100000)
-        print('\nWinner fitness:', winner.fitness)
+        try:
+            winner = pop.run(self.eval_genomes, 100000)
+            print('\nWinner fitness:', winner.fitness)
+        except CompleteExtinctionException:
+            shutdown(msg='Complete extinction')
 
     def eval_genomes(self, genomes, config: neat.config.Config):
         nn_master = NeuralNetMaster()
@@ -44,7 +49,13 @@ class Trainer:
             nn_master.showcase_genome(showcase_genome, config)
 
 
+def shutdown(signal_received=None, frame=None, msg='exit'):
+    print('\n{}'.format(msg))
+    exit(0)
+
+
 if __name__ == '__main__':
+    signal(SIGINT, shutdown)
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, 'training.cfg')
     Trainer().run(config_path)
