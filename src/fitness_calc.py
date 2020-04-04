@@ -35,11 +35,11 @@ class FitnessCalculator(GameListener):
         self.covered_positions.append(pos.copy())
 
     def box_move(self):
-        self.score += 10
+        # self.score += 10
         self.__log__('box move')
 
     def box_in_goal(self):
-        self.score += 30
+        self.score += 50
         self.__log__('box in goal')
 
     def invalid_move(self):
@@ -51,6 +51,8 @@ class FitnessCalculator(GameListener):
         player_error = self.__get_box_error__(self.engine.player, self.level_player_error)
         self.__log__('box    error:', box_error)
         self.__log__('player error:', player_error, 20)
+
+        self.score += 100 if self.engine.game_won else 0
         return self.score - box_error - player_error
 
     def __get_box_error__(self, pos, level_error, potential=50):

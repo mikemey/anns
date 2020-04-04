@@ -43,6 +43,6 @@ class TrainingReporter(BaseReporter):
 
     @staticmethod
     def keep_max_gen(current_max, new_val, gen):
-        if new_val >= current_max[0]:
+        if new_val > current_max[0]:
             current_max[0] = new_val
             current_max[1] = gen
