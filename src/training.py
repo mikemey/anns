@@ -7,12 +7,13 @@ from nn_player import NeuralNetMaster
 from training_reporter import TrainingReporter
 
 SHOWCASE_EVERY_GEN = 100
-SUMMARIZE_GENS = 10
 
 
 class Trainer:
     def __init__(self):
         self.gen_count = 0
+        self.best = -math.inf
+        self.best_genome = None
 
     def run(self, config_file):
         config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -25,27 +26,22 @@ class Trainer:
 
     def eval_genomes(self, genomes, config: neat.config.Config):
         nn_master = NeuralNetMaster()
+        batch_best, batch_best_genome = -math.inf, None
+        for _, genome in genomes:
+            nn_master.eval_genome(genome, config)
+            if genome.fitness > self.best:
+                self.best = genome.fitness
+                self.best_genome = genome
+            if genome.fitness > batch_best:
+                batch_best = genome.fitness
+                batch_best_genome = genome
+
         self.gen_count += 1
         if (self.gen_count % SHOWCASE_EVERY_GEN) == 0:
             nn_master.level.print()
-            eval_generation_and_showcase_winner(nn_master, genomes, config)
-        else:
-            eval_generation(nn_master, genomes, config)
-
-
-def eval_generation(nn_master, genomes, config):
-    for genome_id, genome in genomes:
-        nn_master.eval_genome(genome, config)
-
-
-def eval_generation_and_showcase_winner(nn_master, genomes, config):
-    best, best_genome = -math.inf, None
-    for genome_id, genome in genomes:
-        nn_master.eval_genome(genome, config)
-        if genome.fitness > best:
-            best = genome.fitness
-            best_genome = genome
-    nn_master.showcase_genome(best_genome, config)
+            showcase_genome = batch_best_genome if batch_best >= self.best \
+                else self.best_genome
+            nn_master.showcase_genome(showcase_genome, config)
 
 
 if __name__ == '__main__':
