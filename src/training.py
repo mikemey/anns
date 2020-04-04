@@ -12,6 +12,10 @@ from training_reporter import TrainingReporter
 SHOWCASE_EVERY_GEN = 100
 
 
+def generate_training_levels():
+    return [Level.generate_level() for _ in range(10)]
+
+
 class Trainer:
     def __init__(self):
         self.gen_count = 0
@@ -29,7 +33,7 @@ class Trainer:
             shutdown(msg='Complete extinction')
 
     def eval_genomes(self, genomes, config: neat.config.Config):
-        nn_master = NeuralNetMaster(Level.generate_level())
+        nn_master = NeuralNetMaster(generate_training_levels())
         batch_best, batch_best_genome = -math.inf, None
         for _, genome in genomes:
             nn_master.eval_genome(genome, config)
@@ -40,7 +44,6 @@ class Trainer:
         self.gen_count += 1
         if (self.gen_count % SHOWCASE_EVERY_GEN) == 0:
             print('Showcase generation:', self.gen_count)
-            nn_master.level.print()
             nn_master.showcase_genome(batch_best_genome, config)
 
 

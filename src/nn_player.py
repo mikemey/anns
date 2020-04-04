@@ -16,25 +16,32 @@ first_training_level = Level(
 
 
 class NeuralNetMaster:
-    def __init__(self, level=first_training_level):
-        self.level = level
+    def __init__(self, training_levels=[first_training_level]):
+        assert len(training_levels) > 0, "at least one level required"
+        self.levels = training_levels
 
-    def __create_game__(self, genome, config):
-        engine = BoxPusherEngine(self.level)
+    @staticmethod
+    def create_game(genome, config, level):
+        engine = BoxPusherEngine(level)
         game_state = GameState(engine)
         player = NeuralNetPlayer(game_state, genome, config)
         return engine, player
 
     def eval_genome(self, genome, config):
-        engine, player = self.__create_game__(genome, config)
-        calculator = FitnessCalculator(engine, self.level)
-        while not engine.game_over():
-            player.next_move(engine)
-        genome.fitness = calculator.get_fitness()
+        fitness_sum = 0
+        for level in self.levels:
+            engine, player = self.create_game(genome, config, level)
+            calculator = FitnessCalculator(engine, level)
+            while not engine.game_over():
+                player.next_move(engine)
+            fitness_sum += calculator.get_fitness()
+        genome.fitness = fitness_sum / len(self.levels)
 
     def showcase_genome(self, genome, config):
-        print('Showcase genome: {}, fitness: {:.0f}'.format(genome.key, genome.fitness))
-        engine, player = self.__create_game__(genome, config)
+        print('Genome: {}, fitness: {:.0f}'.format(genome.key, genome.fitness))
+        showcase_level = self.levels[0]
+        showcase_level.print()
+        engine, player = self.create_game(genome, config, showcase_level)
         auto_master = AutomaticMaster(engine, player, True, True)
         auto_master.start()
 
