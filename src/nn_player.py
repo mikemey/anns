@@ -16,8 +16,8 @@ first_training_level = Level(
 
 
 class NeuralNetMaster:
-    def __init__(self):
-        self.level = first_training_level
+    def __init__(self, level=first_training_level):
+        self.level = level
 
     def __create_game__(self, genome, config):
         engine = BoxPusherEngine(self.level)

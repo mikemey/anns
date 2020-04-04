@@ -6,6 +6,7 @@ import neat
 from neat.population import CompleteExtinctionException
 
 from nn_player import NeuralNetMaster
+from training_levels import Level
 from training_reporter import TrainingReporter
 
 SHOWCASE_EVERY_GEN = 100
@@ -28,7 +29,7 @@ class Trainer:
             shutdown(msg='Complete extinction')
 
     def eval_genomes(self, genomes, config: neat.config.Config):
-        nn_master = NeuralNetMaster()
+        nn_master = NeuralNetMaster(Level.generate_level())
         batch_best, batch_best_genome = -math.inf, None
         for _, genome in genomes:
             nn_master.eval_genome(genome, config)
