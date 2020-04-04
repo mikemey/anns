@@ -3,7 +3,7 @@ from datetime import datetime
 
 from neat.reporting import BaseReporter
 
-LOG_TEMPLATE = 'g:{{:5}}, p/s: {{}}/{{:2}}, avg: {0} max a/f {0}[{{:4}}] / {0}[{{:4}}], gen a/b: {0} ({0} {{:2}}-{{:2}})'
+LOG_TEMPLATE = 'g:{{:5}}, p/s: {{}}/{{:2}}, avg: {0} max a/f: {0}[{{:4}}] / {0}[{{:4}}], gen a/b: {0} / {0} ({{:2}}-{{:2}})'
 
 
 class TrainingReporter(BaseReporter):

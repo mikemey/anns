@@ -48,7 +48,23 @@ python3 src/auto_player.py
 
 ```bash
 python3 src/training.py
+[2020-04-04 09:07:32] --- START ---
+[2020-04-04 09:21:40] g:    1, p/s: 350/ 1, avg: -40.5 max a/f: -40.5[   1] / -40.5[   1], gen a/b: -40.5 / -40.5 ( 4-28)
+[2020-04-04 09:21:40] g:    2, p/s: 350/ 1, avg: -40.7 max a/f: -40.5[   1] / -36.4[   2], gen a/b: -40.9 / -36.4 ( 4-27)
+[2020-04-04 09:21:41] g:    3, p/s: 350/ 1, avg: -40.6 max a/f: -40.5[   1] / -36.4[   2], gen a/b: -40.5 / -36.4 ( 4-25)
+[2020-04-04 09:21:41] g:    4, p/s: 350/ 1, avg: -39.8 max a/f: -39.8[   4] / -14.9[   4], gen a/b: -37.2 / -14.9 ( 4-25)
+...
 ```
+
+#### Log message details:
+
+| Key | Description |
+|---:|---|
+| **g:** | generation counter |
+| **p/s:** | generation population count / species count |
+| **avg:** | rolling average fitness for all generations |
+| **max a/f:** | **maximum** rolling average fitness / best genome fitness <br> (with the generation # when the maximum occurred in square brackets) |
+| **gen a/b:** | **current** generation average fitness / best genome fitness <br> (node - connection count of best genome in brackets) |
 
 ---
 <br>
