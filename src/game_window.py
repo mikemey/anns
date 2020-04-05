@@ -189,6 +189,15 @@ class BoxPusherWindow(arcade.Window):
         arcade.draw_rectangle_filled(self.field_width / 2, self.field_height / 2,
                                      self.field_width, self.field_height, END_OVERLAY_COLOR)
 
+    # def __draw_box_pref_positions__(self):
+    #     side = FLOOR_TILE_WIDTH * 0.7
+    #     for box_pref in self.engine.box_push_positions:
+    #         pref_pos = field_to_position(box_pref)
+    #         arcade.draw_rectangle_filled(pref_pos[0], pref_pos[1], side, side, arcade.color.LIGHT_GREEN)
+    #     for box_pref in self.engine.box_goal_positions:
+    #         pref_pos = field_to_position(box_pref)
+    #         arcade.draw_rectangle_filled(pref_pos[0], pref_pos[1], side, side, arcade.color.LIGHT_RED_OCHRE)
+
     def on_draw(self):
         if self.__game_not_ready__():
             return

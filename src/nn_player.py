@@ -1,7 +1,7 @@
 import neat
 
 from auto_player import AutomaticMaster, AutoPlayer
-from fitness_calc import FitnessCalculator
+from fitness_calc import create_fitness_calculator
 from game_engine import BoxPusherEngine, Direction, MOVE_VECTOR
 from training_levels import Level
 
@@ -31,7 +31,7 @@ class NeuralNetMaster:
         fitness_sum = 0
         for level in self.levels:
             engine, player = self.create_game(genome, config, level)
-            calculator = FitnessCalculator(engine, level)
+            calculator = create_fitness_calculator(engine, level)
             while not engine.game_over():
                 player.next_move(engine)
             fitness_sum += calculator.get_fitness()
@@ -42,6 +42,7 @@ class NeuralNetMaster:
         showcase_level = self.levels[0]
         showcase_level.print()
         engine, player = self.create_game(genome, config, showcase_level)
+        calculator = create_fitness_calculator(engine, showcase_level, True)
         auto_master = AutomaticMaster(engine, player, True, True)
         auto_master.start()
 

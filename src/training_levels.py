@@ -60,3 +60,9 @@ class Level:
 def distance_between(pos_a, pos_b):
     return sum(np.absolute(np.array(pos_a) - np.array(pos_b)))
 
+
+def distance_sum_between(positions, pos):
+    total_distance = 0
+    for p in positions:
+        total_distance += distance_between(p, pos)
+    return total_distance

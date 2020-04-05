@@ -1,4 +1,4 @@
-from fitness_calc import FitnessCalculator
+from fitness_calc import create_fitness_calculator
 from game_engine import BoxPusherEngine
 from game_window import GameWindowObserver, BoxPusherWindow
 from manual_levels import LEVELS
@@ -27,7 +27,7 @@ class GameMaster(GameWindowObserver):
     def create_game(self):
         level = LEVELS[self.current_level_ix]
         engine = BoxPusherEngine(level)
-        self.calculator = FitnessCalculator(engine, level, True)
+        self.calculator = create_fitness_calculator(engine, level, True)
         self.window.reset_game(engine, "Level {}".format(self.current_level_ix + 1))
 
 
