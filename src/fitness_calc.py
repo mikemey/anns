@@ -49,6 +49,7 @@ class StepFitnessCalculator(FitnessCalculator):
     def __init__(self, engine: BoxPusherEngine, verbose):
         super().__init__(engine, 0, verbose)
         self.last_distances = self.__pref_pos_distances__()
+        self.covered_positions = CoveredPositions()
 
     def __pref_pos_distances__(self):
         push_positions = []
@@ -74,20 +75,25 @@ class StepFitnessCalculator(FitnessCalculator):
         )
 
     def new_position(self, pos):
+        covered_count = self.covered_positions.count_on(pos)
+        if covered_count > 0:
+            self.score -= covered_count
+            self.__log__('field covered')
+
         new_distances = self.__pref_pos_distances__()
-        push_pos_reward = False
-        for last_push_distance, current in zip(self.last_distances[0], new_distances[0]):
-            if last_push_distance - current > 0:
-                push_pos_reward = True
-        self.score += 1 if push_pos_reward else -1
-
-        for last_box_distance, current in zip(self.last_distances[1], new_distances[1]):
-            diff = last_box_distance - current
-            if diff != 0:
-                self.score += 2 if diff > 0 else -2
-
+        self.score += self.closer_to_positions(self.last_distances[0], new_distances[0])
+        self.score += 3 * self.closer_to_positions(self.last_distances[1], new_distances[1])
         self.last_distances = new_distances
         super().new_position(pos)
+
+    @staticmethod
+    def closer_to_positions(last_distances, new_distances):
+        diffs = [last - current for last, current in zip(last_distances, new_distances)]
+        if all([diff == 0 for diff in diffs]):
+            return 0
+        if any([diff > 0 for diff in diffs]):
+            return 1
+        return -1
 
     def box_move(self):
         self.score += 1
@@ -105,7 +111,7 @@ class StepFitnessCalculator(FitnessCalculator):
 class DistanceFitnessCalculator(FitnessCalculator):
     def __init__(self, engine: BoxPusherEngine, level: Level, verbose):
         super().__init__(engine, level.max_points, verbose)
-        self.covered_positions = []
+        self.covered_positions = CoveredPositions()
         self.level_box_error = self.__current_box_error_to__(self.engine.goal)
         self.level_player_error = self.__current_box_error_to__(self.engine.player)
 
@@ -115,11 +121,10 @@ class DistanceFitnessCalculator(FitnessCalculator):
     def new_position(self, pos):
         super().new_position(pos)
         self.score -= 1
-        for p in self.covered_positions:
-            if (p == pos).all():
-                self.score -= 2
-                self.__log__('field covered')
-        self.covered_positions.append(pos.copy())
+        covered_count = self.covered_positions.count_on(pos)
+        if covered_count > 0:
+            self.score -= 2 * covered_count
+            self.__log__('field covered')
 
     def box_move(self):
         self.score += 20
@@ -145,3 +150,16 @@ class DistanceFitnessCalculator(FitnessCalculator):
     def __get_box_error__(self, pos, level_error, potential=50):
         error_ratio = self.__current_box_error_to__(pos) / level_error
         return potential * error_ratio ** 2
+
+
+class CoveredPositions:
+    def __init__(self):
+        self.covered_positions = []
+
+    def count_on(self, pos):
+        count = 0
+        for p in self.covered_positions:
+            if (p == pos).all():
+                count += 1
+        self.covered_positions.append(pos.copy())
+        return count
