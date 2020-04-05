@@ -1,5 +1,6 @@
 import math
 import os
+from multiprocessing import Pool
 from signal import signal, SIGINT
 
 import neat
@@ -10,15 +11,18 @@ from training_levels import Level
 from training_reporter import TrainingReporter
 
 SHOWCASE_EVERY_GEN = 100
+EVAL_PROCESSES = 4
 
 
 def generate_training_levels():
-    return [Level.generate_level() for _ in range(10)]
+    return [Level.generate_level() for _ in range(20)]
 
 
 class Trainer:
     def __init__(self):
         self.gen_count = 0
+        self.pool = None
+        signal(SIGINT, self.stop)
 
     def run(self, config_file):
         config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -26,17 +30,32 @@ class Trainer:
                              config_file)
         pop = neat.Population(config)
         pop.add_reporter(TrainingReporter())
+        self.pool = Pool(processes=EVAL_PROCESSES)
         try:
-            winner = pop.run(self.eval_genomes, 100000)
+            winner = pop.run(self.eval_population, 100000)
             print('\nWinner fitness:', winner.fitness)
+        except ValueError:
+            shutdown()
         except CompleteExtinctionException:
             shutdown(msg='Complete extinction')
 
-    def eval_genomes(self, genomes, config: neat.config.Config):
-        nn_master = NeuralNetMaster(generate_training_levels())
+    def stop(self, signal_received=None, frame=None):
+        if self.pool:
+            self.pool.close()
+            self.pool.join()
+            print('process pool closed.')
+
+    def eval_population(self, population_genomes, config: neat.config.Config):
+        train_levels = generate_training_levels()
+        genome_configs = [(genome, config) for _, genome in population_genomes]
+        nn_master = NeuralNetMaster(train_levels)
+
+        pop_fitness = self.pool.starmap(nn_master.eval_genome, genome_configs)
+        for fitness, (genome, _) in zip(pop_fitness, genome_configs):
+            genome.fitness = fitness
+
         batch_best, batch_best_genome = -math.inf, None
-        for _, genome in genomes:
-            genome.fitness = nn_master.eval_genome(genome, config)
+        for _, genome in population_genomes:
             if genome.fitness > batch_best:
                 batch_best = genome.fitness
                 batch_best_genome = genome
