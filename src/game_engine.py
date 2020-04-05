@@ -54,6 +54,9 @@ class BoxPusherEngine:
         self.walls = level.walls
         self.boxes = [array(box_pos) for box_pos in level.boxes]
         self.goal = level.goal
+        for box in self.boxes:
+            assert not (box == self.goal).all(), "box cannot have same position as goal: {}".format(box)
+
         self.points = level.max_points
         self.game_won = False
         self.game_lost = False
