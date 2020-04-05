@@ -38,13 +38,14 @@ class NeuralNetMaster:
         return fitness_sum / len(self.levels)
 
     def showcase_genome(self, genome, config):
-        print('Genome: {}, fitness: {:.0f}'.format(genome.key, genome.fitness))
         showcase_level = self.levels[0]
         showcase_level.print()
         engine, player = self.create_game(genome, config, showcase_level)
         calculator = create_fitness_calculator(engine, showcase_level, True)
         auto_master = AutomaticMaster(engine, player, True, True)
         auto_master.start()
+        print('Showcase genome: {}, average fitness: {:.0f}, showcase-level fitness: {:.0f}'
+              .format(genome.key, genome.fitness, calculator.get_fitness()))
 
 
 class GameState:
