@@ -36,7 +36,7 @@ class Trainer:
         nn_master = NeuralNetMaster(generate_training_levels())
         batch_best, batch_best_genome = -math.inf, None
         for _, genome in genomes:
-            nn_master.eval_genome(genome, config)
+            genome.fitness = nn_master.eval_genome(genome, config)
             if genome.fitness > batch_best:
                 batch_best = genome.fitness
                 batch_best_genome = genome

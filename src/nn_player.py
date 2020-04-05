@@ -35,7 +35,7 @@ class NeuralNetMaster:
             while not engine.game_over():
                 player.next_move(engine)
             fitness_sum += calculator.get_fitness()
-        genome.fitness = fitness_sum / len(self.levels)
+        return fitness_sum / len(self.levels)
 
     def showcase_genome(self, genome, config):
         print('Genome: {}, fitness: {:.0f}'.format(genome.key, genome.fitness))
