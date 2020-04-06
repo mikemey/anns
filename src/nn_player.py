@@ -1,4 +1,5 @@
 import neat
+import numpy as np
 
 from auto_player import AutomaticMaster, AutoPlayer
 from fitness_calc import create_fitness_calculator
@@ -53,10 +54,20 @@ class GameState:
         self.engine = engine
         self.norm_width = engine.field_size[0] - 1
         self.norm_height = engine.field_size[1] - 1
-        self.grid_template = [0.0] * engine.field_size[0] * engine.field_size[1]
+        self.grid_template = [0.0]  # * engine.field_size[0] * engine.field_size[1]
 
     def get_current(self):
-        return self.__positional_state__()
+        return self.__relative_state__()
+
+    def __relative_state__(self):
+        return np.concatenate((
+            self.__player_distance_ratios__(self.engine.goal),
+            self.__player_distance_ratios__(self.engine.boxes[0])
+        ))
+
+    def __player_distance_ratios__(self, pos):
+        diff = pos - self.engine.player
+        return diff[0] / self.norm_width, diff[1] / self.norm_height
 
     def __positional_state__(self):
         # allowed_moves = [

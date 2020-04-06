@@ -15,7 +15,7 @@ EVAL_PROCESSES = 4
 
 
 def generate_training_levels():
-    return [Level.generate_level() for _ in range(20)]
+    return [Level.generate_level() for _ in range(10)]
 
 
 class Trainer:

@@ -17,6 +17,9 @@ class TrainingReporter(BaseReporter):
     def start_generation(self, generation):
         self.generations += 1
 
+    def complete_extinction(self):
+        self.__report__('Complete extinction.')
+
     def post_evaluate(self, config, population, species_set, best_genome):
         gen_fitness = [genome.fitness for genome in population.values()]
         gen_fit_sum = sum(gen_fitness)
