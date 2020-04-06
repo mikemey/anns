@@ -29,20 +29,26 @@ class NeuralNetMaster:
         return engine, player
 
     def eval_genome(self, genome, config):
-        fitness_sum = 0
+        fitness_sum, box_moves, goals, wins, lost = 0, 0, 0, 0, 0
         for level in self.levels:
             engine, player = self.create_game(genome, config, level)
             calculator = create_fitness_calculator(engine, level)
             while not engine.game_over():
                 player.next_move(engine)
             fitness_sum += calculator.get_fitness()
-        return fitness_sum / len(self.levels)
+            box_moves += calculator.box_moves
+            goals += calculator.box_in_goals
+            if engine.game_won:
+                wins += 1
+            if engine.game_lost:
+                lost += 1
+        return fitness_sum / len(self.levels), box_moves, goals, wins, lost
 
     def showcase_genome(self, genome, config):
         showcase_level = self.levels[0]
         showcase_level.print()
         engine, player = self.create_game(genome, config, showcase_level)
-        calculator = create_fitness_calculator(engine, showcase_level, True)
+        calculator = create_fitness_calculator(engine, showcase_level, False)
         auto_master = AutomaticMaster(engine, player, True, True)
         auto_master.start()
         print('Showcase genome: {}, average fitness: {:.0f}, showcase-level fitness: {:.0f}'
@@ -101,7 +107,7 @@ class GameState:
 
 class NeuralNetPlayer(AutoPlayer):
     def __init__(self, game_state: GameState, genome, config):
-        self.net = neat.nn.FeedForwardNetwork.create(genome, config)
+        self.net = neat.nn.RecurrentNetwork.create(genome, config)
         self.game_state = game_state
         self.directions = [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]
 

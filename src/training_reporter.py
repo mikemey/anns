@@ -7,7 +7,7 @@ LOG_TEMPLATE = 'g:{{:5}}, p/s: {{}}/{{:2}}, avg: {0} max a/f: {0}[{{:4}}] / {0}[
 
 
 class TrainingReporter(BaseReporter):
-    def __init__(self, fitness_log_format="{:4.0f}"):
+    def __init__(self, fitness_log_format="{:2.1f}"):
         self.generations, self.total_fit, self.total_pop = 0, 0, 0
         self.__report__('--- START ---')
         self.max_avg = [-math.inf, 0]
@@ -18,7 +18,8 @@ class TrainingReporter(BaseReporter):
         self.generations += 1
 
     def complete_extinction(self):
-        self.__report__('Complete extinction.')
+        self.__report__('--------------------')
+        self.__report__('Complete extinction!')
 
     def post_evaluate(self, config, population, species_set, best_genome):
         gen_fitness = [genome.fitness for genome in population.values()]

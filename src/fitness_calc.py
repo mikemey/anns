@@ -24,6 +24,8 @@ class FitnessCalculator(GameListener):
         self.verbose = verbose
         self.score = start_score
         self.__log__('-- start --')
+        self.box_moves = 0
+        self.box_in_goals = 0
 
     def __log__(self, *data):
         if self.verbose:
@@ -33,9 +35,11 @@ class FitnessCalculator(GameListener):
         self.__log__('new pos:', pos)
 
     def box_move(self):
+        self.box_moves += 1
         self.__log__('box move')
 
     def box_in_goal(self):
+        self.box_in_goals += 1
         self.__log__('box in goal')
 
     def invalid_move(self):
@@ -77,12 +81,15 @@ class StepFitnessCalculator(FitnessCalculator):
     def new_position(self, pos):
         covered_count = self.covered_positions.count_on(pos)
         if covered_count > 0:
-            self.score -= covered_count
-            self.__log__('field covered')
+            self.score -= 0.6 * covered_count
+            self.__log__('fields covered:', covered_count)
 
         new_distances = self.__pref_pos_distances__()
-        self.score += self.closer_to_positions(self.last_distances[0], new_distances[0])
-        self.score += 3 * self.closer_to_positions(self.last_distances[1], new_distances[1])
+        # player_closer = self.closer_to_positions(self.last_distances[0], new_distances[0])
+        # self.score += player_closer * 3
+        box_closer = self.closer_to_positions(self.last_distances[1], new_distances[1])
+        self.score += box_closer * 2
+
         self.last_distances = new_distances
         super().new_position(pos)
 
@@ -96,16 +103,25 @@ class StepFitnessCalculator(FitnessCalculator):
         return -1
 
     def box_move(self):
-        self.score += 1
+        self.score += 0.1
         super().box_move()
 
     def box_in_goal(self):
-        self.score += 5
+        self.score += 0.2
         super().box_in_goal()
 
     def invalid_move(self):
-        self.score -= 5
+        self.score -= 0.05
         super().invalid_move()
+
+    def get_fitness(self):
+        if self.engine.game_won:
+            self.score += 50
+            self.__log__('winning bonus')
+        if self.box_moves > 0:
+            self.score += 5
+            self.__log__('box moved bonus')
+        return self.score
 
 
 class DistanceFitnessCalculator(FitnessCalculator):
