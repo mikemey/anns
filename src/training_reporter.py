@@ -4,7 +4,7 @@ from datetime import datetime
 from neat.reporting import BaseReporter
 
 FITNESS_FORMAT = '{:5.1f}'
-POP_GAME_STATS_TEMPLATE = 'g:{:5}, bm: {:6,}, w/l: {:6,} / {:6,}'
+POP_GAME_STATS_TEMPLATE = 'g:[{:5}], bm: {:6,}, w/l: {:6,} / {:6,}'
 TRAINING_STATS_TEMPLATE = \
     ' ───  p/s: {{}}/{{:2}}, avg: {0} max a/f: {0}[{{:4}}] / {0}[{{:4}}], gen a/b: {0} / {0} ({{:2}}-{{:2}})'.format(FITNESS_FORMAT)
 BATCH_GAME_STATS_TEMPLATE = '_' * 50 + '▏batch bm: {:8,}, w/l: {:7,} / {:7,}'
