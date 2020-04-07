@@ -3,16 +3,28 @@ from datetime import datetime
 
 from neat.reporting import BaseReporter
 
-LOG_TEMPLATE = 'g:{{:5}}, p/s: {{}}/{{:2}}, avg: {0} max a/f: {0}[{{:4}}] / {0}[{{:4}}], gen a/b: {0} / {0} ({{:2}}-{{:2}})'
+FITNESS_FORMAT = "{:5.1f}"
+TRAINING_STATS_TEMPLATE = \
+    'g:{{:5}}, p/s: {{}}/{{:2}}, avg: {0} max a/f: {0}[{{:4}}] / {0}[{{:4}}], gen a/b: {0} / {0} ({{:2}}-{{:2}})'.format(FITNESS_FORMAT)
+POP_GAME_STATS_TEMPLATE = '►    box moves: {:5}, goals: {:5}, won/lost: {:5}/{:5}'
+BATCH_GAME_STATS_TEMPLATE = '_' * 60 + '▏batch moves: {:6}, won/lost: {:6}/{:6}'
 
 
 class TrainingReporter(BaseReporter):
-    def __init__(self, fitness_log_format="{:2.1f}"):
-        self.generations, self.total_fit, self.total_pop = 0, 0, 0
-        self.__report__('--- START ---')
+    def __init__(self, batch_size, fitness_log_format="{:5.1f}"):
+        self.batch_size = batch_size
+
+        self.generations = self.total_fit = self.total_pop = 0
+        self.pop_stats = GameStats()
+        self.batch_stats = GameStats()
         self.max_avg = [-math.inf, 0]
         self.max_fit = [-math.inf, 0]
-        self.log_format = LOG_TEMPLATE.format(fitness_log_format)
+        self.post_batch_hook = None
+        self.__report__('--- START ---')
+
+    def add_pop_game_stats(self, *game_stats):
+        self.pop_stats.add(*game_stats)
+        self.batch_stats.add(*game_stats)
 
     def start_generation(self, generation):
         self.generations += 1
@@ -22,23 +34,44 @@ class TrainingReporter(BaseReporter):
         self.__report__('Complete extinction!')
 
     def post_evaluate(self, config, population, species_set, best_genome):
-        gen_fitness = [genome.fitness for genome in population.values()]
-        gen_fit_sum = sum(gen_fitness)
-        gen_count = len(gen_fitness)
+        pop_fitness = [genome.fitness for genome in population.values()]
+        pop_fit_sum = sum(pop_fitness)
+        pop_count = len(pop_fitness)
 
-        self.total_fit += gen_fit_sum
-        self.total_pop += gen_count
+        self.total_fit += pop_fit_sum
+        self.total_pop += pop_count
         rolling_fit_mean = self.total_fit / self.total_pop
 
         self.keep_max_gen(self.max_avg, rolling_fit_mean, self.generations)
         self.keep_max_gen(self.max_fit, best_genome.fitness, self.generations)
-        self.__report__(self.log_format.format(
-            self.generations, gen_count, len(species_set.species), rolling_fit_mean,
+
+        self.__dump_pop_game_stats__()
+        self.__report__(TRAINING_STATS_TEMPLATE.format(
+            self.generations, pop_count, len(species_set.species), rolling_fit_mean,
             self.max_avg[0], self.max_avg[1],
             self.max_fit[0], self.max_fit[1],
-            gen_fit_sum / gen_count,
+            pop_fit_sum / pop_count,
             best_genome.fitness, best_genome.size()[0], best_genome.size()[1]
         ))
+        if (self.generations % self.batch_size) == 0:
+            self.__dump_batch_game_stats__()
+            if self.post_batch_hook:
+                self.post_batch_hook()
+
+    def __dump_pop_game_stats__(self):
+        print(POP_GAME_STATS_TEMPLATE.format(
+            self.pop_stats.box_moves, self.pop_stats.goals, self.pop_stats.wins, self.pop_stats.lost
+        ))
+        self.pop_stats = GameStats()
+
+    def __dump_batch_game_stats__(self):
+        print(BATCH_GAME_STATS_TEMPLATE.format(
+            self.batch_stats.box_moves, self.batch_stats.wins, self.batch_stats.lost
+        ))
+        self.batch_stats = GameStats()
+
+    def run_post_batch(self, post_batch_hook):
+        self.post_batch_hook = post_batch_hook
 
     @staticmethod
     def __report__(msg):
@@ -50,3 +83,14 @@ class TrainingReporter(BaseReporter):
         if new_val > current_max[0]:
             current_max[0] = new_val
             current_max[1] = gen
+
+
+class GameStats:
+    def __init__(self):
+        self.box_moves = self.goals = self.wins = self.lost = 0
+
+    def add(self, box_moves, goals, wins, lost):
+        self.box_moves += box_moves
+        self.goals += goals
+        self.wins += wins
+        self.lost += lost

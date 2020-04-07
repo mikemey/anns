@@ -10,7 +10,7 @@ from nn_player import NeuralNetMaster
 from training_levels import Level
 from training_reporter import TrainingReporter
 
-SHOWCASE_EVERY_GEN = 15
+SHOWCASE_EVERY_GEN = 20
 EVAL_PROCESSES = 4
 
 
@@ -20,7 +20,7 @@ def generate_training_levels():
 
 class Trainer:
     def __init__(self):
-        self.gen_count = 0
+        self.reporter = TrainingReporter(SHOWCASE_EVERY_GEN)
         self.pool = None
         signal(SIGINT, self.stop)
 
@@ -29,7 +29,7 @@ class Trainer:
                              neat.DefaultSpeciesSet, neat.DefaultStagnation,
                              config_file)
         pop = neat.Population(config)
-        pop.add_reporter(TrainingReporter())
+        pop.add_reporter(self.reporter)
         self.pool = Pool(processes=EVAL_PROCESSES)
         try:
             winner = pop.run(self.eval_population, 100000)
@@ -51,31 +51,18 @@ class Trainer:
         nn_master = NeuralNetMaster(train_levels)
 
         pop_fitness = self.pool.starmap(nn_master.eval_genome, genome_configs)
-        total_box_moves = 0
-        total_goals = 0
-        total_wins = 0
-        total_lost = 0
-        for (fitness, box_moves, goals, wins, lost), (genome, _) in zip(pop_fitness, genome_configs):
+        for (fitness, *pop_stats), (genome, _) in zip(pop_fitness, genome_configs):
             genome.fitness = fitness
-            total_box_moves += box_moves
-            total_goals += goals
-            total_wins += wins
-            total_lost += lost
+            self.reporter.add_pop_game_stats(*pop_stats)
 
-        batch_best, batch_best_genome = -math.inf, None
+        pop_best, pop_best_genome = -math.inf, None
         for _, genome in population_genomes:
-            if genome.fitness > batch_best:
-                batch_best = genome.fitness
-                batch_best_genome = genome
+            if genome.fitness > pop_best:
+                pop_best = genome.fitness
+                pop_best_genome = genome
 
-        self.gen_count += 1
-        sep = '▔' * 20
-        print('{} box moves: {:5}, goals: {:5}, win/lose: {:5}/{:5} {}'.format(
-            sep, total_box_moves, total_goals, total_wins, total_lost, sep
-        ))
-        if (self.gen_count % SHOWCASE_EVERY_GEN) == 0:
-            print('Showcase generation:', self.gen_count)
-            nn_master.showcase_genome(batch_best_genome, config)
+        self.reporter.run_post_batch(lambda: nn_master.showcase_genome(pop_best_genome, config))
+        # if (self.stats.generation % SHOWCASE_EVERY_GEN) == 0:
 
 
 def shutdown(signal_received=None, frame=None, msg='exit'):
