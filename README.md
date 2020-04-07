@@ -58,11 +58,17 @@ python3 src/auto_player.py
 
 ```bash
 python3 src/training.py
-[2020-04-04 09:07:32] --- START ---
-[2020-04-04 09:21:40] g:    1, p/s: 350/ 1, avg: -40.5 max a/f: -40.5[   1] / -40.5[   1], gen a/b: -40.5 / -40.5 ( 4-28)
-[2020-04-04 09:21:40] g:    2, p/s: 350/ 1, avg: -40.7 max a/f: -40.5[   1] / -36.4[   2], gen a/b: -40.9 / -36.4 ( 4-27)
-[2020-04-04 09:21:41] g:    3, p/s: 350/ 1, avg: -40.6 max a/f: -40.5[   1] / -36.4[   2], gen a/b: -40.5 / -36.4 ( 4-25)
-[2020-04-04 09:21:41] g:    4, p/s: 350/ 1, avg: -39.8 max a/f: -39.8[   4] / -14.9[   4], gen a/b: -37.2 / -14.9 ( 4-25)
+[2020-04-07 12:57:53] --- START ---
+[2020-04-07 12:57:54] g:    1, bm:   357, w/l:     0/ 2000
+ ───  p/s: 250/ 2, avg: -86.3 max a/f: -86.3[   1] / -40.5[   1], gen a/b: -86.3 / -40.5 ( 4-20)
+[2020-04-07 12:57:56] g:    2, bm:   502, w/l:     0/ 2000
+ ───  p/s: 250/ 2, avg: -76.0 max a/f: -76.0[   2] / -34.5[   2], gen a/b: -65.7 / -34.5 ( 4-20)
+[2020-04-07 12:57:57] g:    3, bm:   426, w/l:     1/ 1999
+ ───  p/s: 250/ 2, avg: -67.2 max a/f: -67.2[   3] / -34.5[   2], gen a/b: -49.6 / -39.5 ( 4-20)
+[2020-04-07 12:57:59] g:    4, bm:   601, w/l:     3/ 1997
+ ───  p/s: 250/ 2, avg: -61.8 max a/f: -61.8[   4] / -34.5[   2], gen a/b: -45.9 / -34.9 ( 5-19)
+[2020-04-07 12:58:00] g:    5, bm:   927, w/l:     1/ 1999
+ ───  p/s: 250/ 2, avg: -57.5 max a/f: -57.5[   5] / -26.9[   5], gen a/b: -40.1 / -26.9 ( 6-21)
 ...
 ```
 
@@ -71,6 +77,8 @@ python3 src/training.py
 | Key | Description |
 |---:|---|
 | **g:** | generation counter |
+| **bm:** | # of box moves in generation |
+| **w/l:** | # of won/lost games in generation |
 | **p/s:** | generation population count / species count |
 | **avg:** | rolling average fitness for all generations |
 | **max a/f:** | **maximum** rolling average fitness / best genome fitness <br> (with the generation # when the maximum occurred in square brackets) |

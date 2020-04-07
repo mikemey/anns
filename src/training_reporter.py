@@ -3,15 +3,15 @@ from datetime import datetime
 
 from neat.reporting import BaseReporter
 
-FITNESS_FORMAT = "{:5.1f}"
+FITNESS_FORMAT = '{:5.1f}'
+POP_GAME_STATS_TEMPLATE = 'g:{:5}, bm: {:5}, w/l: {:5}/{:5}'
 TRAINING_STATS_TEMPLATE = \
-    'g:{{:5}}, p/s: {{}}/{{:2}}, avg: {0} max a/f: {0}[{{:4}}] / {0}[{{:4}}], gen a/b: {0} / {0} ({{:2}}-{{:2}})'.format(FITNESS_FORMAT)
-POP_GAME_STATS_TEMPLATE = '►    box moves: {:5}, goals: {:5}, won/lost: {:5}/{:5}'
-BATCH_GAME_STATS_TEMPLATE = '_' * 60 + '▏batch moves: {:6}, won/lost: {:6}/{:6}'
+    ' ───  p/s: {{}}/{{:2}}, avg: {0} max a/f: {0}[{{:4}}] / {0}[{{:4}}], gen a/b: {0} / {0} ({{:2}}-{{:2}})'.format(FITNESS_FORMAT)
+BATCH_GAME_STATS_TEMPLATE = '_' * 50 + '▏batch bm: {:6}, w/l: {:6}/{:6}'
 
 
 class TrainingReporter(BaseReporter):
-    def __init__(self, batch_size, fitness_log_format="{:5.1f}"):
+    def __init__(self, batch_size):
         self.batch_size = batch_size
 
         self.generations = self.total_fit = self.total_pop = 0
@@ -46,8 +46,8 @@ class TrainingReporter(BaseReporter):
         self.keep_max_gen(self.max_fit, best_genome.fitness, self.generations)
 
         self.__dump_pop_game_stats__()
-        self.__report__(TRAINING_STATS_TEMPLATE.format(
-            self.generations, pop_count, len(species_set.species), rolling_fit_mean,
+        print(TRAINING_STATS_TEMPLATE.format(
+            pop_count, len(species_set.species), rolling_fit_mean,
             self.max_avg[0], self.max_avg[1],
             self.max_fit[0], self.max_fit[1],
             pop_fit_sum / pop_count,
@@ -59,8 +59,8 @@ class TrainingReporter(BaseReporter):
                 self.post_batch_hook()
 
     def __dump_pop_game_stats__(self):
-        print(POP_GAME_STATS_TEMPLATE.format(
-            self.pop_stats.box_moves, self.pop_stats.goals, self.pop_stats.wins, self.pop_stats.lost
+        self.__report__(POP_GAME_STATS_TEMPLATE.format(
+            self.generations, self.pop_stats.box_moves, self.pop_stats.wins, self.pop_stats.lost
         ))
         self.pop_stats = GameStats()
 
@@ -75,7 +75,7 @@ class TrainingReporter(BaseReporter):
 
     @staticmethod
     def __report__(msg):
-        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         print('[{}] {}'.format(ts, msg))
 
     @staticmethod
