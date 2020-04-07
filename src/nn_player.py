@@ -5,7 +5,9 @@ from auto_player import AutomaticMaster, AutoPlayer
 from fitness_calc import create_fitness_calculator
 from game_engine import BoxPusherEngine, Direction, MOVE_VECTOR
 from training_levels import Level
+from training_reporter import FITNESS_FORMAT
 
+SHOWCASE_TEMPLATE = 'Showcase genome: {{}}, average fitness: {0}, showcase-level fitness: {0}'.format(FITNESS_FORMAT)
 first_training_level = Level(
     field_size=(5, 5),
     player=(4, 1),
@@ -31,10 +33,7 @@ class NeuralNetMaster:
     def eval_genome(self, genome, config):
         fitness_sum, box_moves, goals, wins, lost = 0, 0, 0, 0, 0
         for level in self.levels:
-            engine, player = self.create_game(genome, config, level)
-            calculator = create_fitness_calculator(engine, level)
-            while not engine.game_over():
-                player.next_move(engine)
+            engine, calculator = self.__play_game__(genome, config, level)
             fitness_sum += calculator.get_fitness()
             box_moves += calculator.box_moves
             goals += calculator.box_in_goals
@@ -44,15 +43,23 @@ class NeuralNetMaster:
                 lost += 1
         return fitness_sum / len(self.levels), box_moves, goals, wins, lost
 
+    def __play_game__(self, genome, config, level):
+        engine, player = self.create_game(genome, config, level)
+        calculator = create_fitness_calculator(engine, level)
+        while not engine.game_over():
+            player.next_move(engine)
+        return engine, calculator
+
     def showcase_genome(self, genome, config):
         showcase_level = self.levels[0]
+        _, calculator = self.__play_game__(genome, config, showcase_level)
+        print(SHOWCASE_TEMPLATE.format(genome.key, genome.fitness, calculator.get_fitness()))
         showcase_level.print()
+
         engine, player = self.create_game(genome, config, showcase_level)
-        calculator = create_fitness_calculator(engine, showcase_level, False)
+        # create_fitness_calculator(engine, showcase_level, False)  # print fitness calculation details
         auto_master = AutomaticMaster(engine, player, True, True)
         auto_master.start()
-        print('Showcase genome: {}, average fitness: {:.0f}, showcase-level fitness: {:.0f}'
-              .format(genome.key, genome.fitness, calculator.get_fitness()))
 
 
 class GameState:
