@@ -92,6 +92,8 @@ def load_config(file_name='training.cfg'):
     print('loading config file: <{}>'.format(file_name))
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, file_name)
+    with open(config_path, 'r') as f:
+        print(f.read())
     return neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                        neat.DefaultSpeciesSet, neat.DefaultStagnation,
                        config_path)
