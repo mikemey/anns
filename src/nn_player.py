@@ -70,12 +70,18 @@ class GameState:
         self.grid_template = [0.0]  # * engine.field_size[0] * engine.field_size[1]
 
     def get_current(self):
-        return self.__relative_state__()
+        return self.__all_relative_state__()
 
-    def __relative_state__(self):
+    def __player_relative_state__(self):
         return np.concatenate((
-            self.__player_distance_ratios__(self.engine.goal),
-            self.__player_distance_ratios__(self.engine.boxes[0])
+            self.__norm_distance__(self.engine.player, self.engine.goal),
+            self.__norm_distance__(self.engine.player, self.engine.boxes[0])
+        ))
+
+    def __all_relative_state__(self):
+        return np.concatenate((
+            self.__norm_distance__(self.engine.player, self.engine.boxes[0]),
+            self.__norm_distance__(self.engine.boxes[0], self.engine.goal)
         ))
 
     def __player_distance_ratios__(self, pos):
@@ -110,6 +116,10 @@ class GameState:
     def __norm_direction__(self, direction):
         return 1.0 if self.engine.can_move_to(self.engine.player + MOVE_VECTOR[direction]) \
             else 0.0
+
+    def __norm_distance__(self, pos_a, pos_b):
+        diff = pos_b - pos_a
+        return diff[0] / self.norm_width, diff[1] / self.norm_height
 
 
 class NeuralNetPlayer(AutoPlayer):
