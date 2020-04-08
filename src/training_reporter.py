@@ -27,7 +27,7 @@ class TrainingReporter(BaseReporter):
         self.batch_stats.add(*game_stats)
 
     def start_generation(self, generation):
-        self.generations += 1
+        self.generations = generation + 1
 
     def complete_extinction(self):
         self.__report__('--------------------')
@@ -72,6 +72,9 @@ class TrainingReporter(BaseReporter):
 
     def run_post_batch(self, post_batch_hook):
         self.post_batch_hook = post_batch_hook
+
+    def clear_post_batch_hook(self):
+        self.post_batch_hook = None
 
     @staticmethod
     def __report__(msg):
