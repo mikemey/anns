@@ -19,13 +19,12 @@ first_training_level = Level(
 
 
 def generate_training_levels():
-    return [Level.generate_level() for _ in range(100)]
+    return [Level.generate_level() for _ in range(30)]
 
 
 class NeuralNetMaster:
-    def __init__(self, training_levels=generate_training_levels()):
-        assert len(training_levels) > 0, "at least one level required"
-        self.levels = training_levels
+    def __init__(self):
+        self.levels = generate_training_levels()
 
     @staticmethod
     def create_game(genome, config, level):
@@ -74,7 +73,7 @@ class GameState:
         self.grid_template = [0.0]  # * engine.field_size[0] * engine.field_size[1]
 
     def get_current(self):
-        return self.__player_relative_state__()
+        return self.__all_relative_state__()
 
     def __player_relative_state__(self):
         return np.concatenate((
@@ -87,10 +86,6 @@ class GameState:
             self.__norm_distance__(self.engine.player, self.engine.boxes[0]),
             self.__norm_distance__(self.engine.boxes[0], self.engine.goal)
         ))
-
-    def __player_distance_ratios__(self, pos):
-        diff = pos - self.engine.player
-        return diff[0] / self.norm_width, diff[1] / self.norm_height
 
     def __positional_state__(self):
         # allowed_moves = [
