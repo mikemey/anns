@@ -25,7 +25,7 @@ def generate_training_levels():
 class Trainer:
     def __init__(self, population: neat.Population = None):
         self.population = population if population is not None else neat.Population(load_config())
-        self.reporter = TrainingReporter(SHOWCASE_EVERY_GEN)
+        self.reporter = TrainingReporter(self.population.config, SHOWCASE_EVERY_GEN)
         self.population.add_reporter(self.reporter)
         self.best_fitness = -math.inf
         self.eval_counter = 0
