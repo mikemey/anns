@@ -67,10 +67,10 @@ class GameState:
         self.engine = engine
         self.norm_width = engine.field_size[0] - 1
         self.norm_height = engine.field_size[1] - 1
-        self.grid_template = [0.0]  # * engine.field_size[0] * engine.field_size[1]
+        self.grid_template = [0.0] * engine.field_size[0] * engine.field_size[1]
 
     def get_current(self):
-        return self.__all_relative_state__()
+        return self.__grid_state__()
 
     def __player_relative_state__(self):
         return np.concatenate((
@@ -103,8 +103,8 @@ class GameState:
     def __grid_state__(self):
         grid = self.grid_template.copy()
         grid[self.__position_ix__(self.engine.player)] = 0.25
-        grid[self.__position_ix__(self.engine.goal)] = 0.5
-        grid[self.__position_ix__(self.engine.boxes[0])] = 0.75
+        grid[self.__position_ix__(self.engine.boxes[0])] = 0.5
+        grid[self.__position_ix__(self.engine.goal)] += 0.75
         return grid
 
     def __position_ix__(self, pos):
