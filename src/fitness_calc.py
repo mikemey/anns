@@ -29,7 +29,7 @@ class FitnessCalculator(GameListener):
 
     def __log__(self, *data):
         if self.verbose:
-            print('score: {:4}'.format(self.score), *data)
+            print('score: {:8.2f}'.format(self.score), *data)
 
     def new_position(self, pos):
         self.__log__('new pos:', pos)
@@ -52,8 +52,14 @@ class FitnessCalculator(GameListener):
 class StepFitnessCalculator(FitnessCalculator):
     def __init__(self, engine: BoxPusherEngine, verbose):
         super().__init__(engine, 0, verbose)
-        self.last_distances = self.__pref_pos_distances__()
+        self.last_distances = self.__position_distances__()
         self.covered_positions = CoveredPositions()
+
+    def __position_distances__(self):
+        return (
+            distance_between(self.engine.player, self.engine.boxes[0]),
+            distance_sum_between(self.engine.boxes, self.engine.goal)
+        )
 
     def __pref_pos_distances__(self):
         push_positions = []
@@ -84,13 +90,20 @@ class StepFitnessCalculator(FitnessCalculator):
             self.score -= 0.6 * covered_count
             self.__log__('fields covered:', covered_count)
 
-        new_distances = self.__pref_pos_distances__()
-        # player_closer = self.closer_to_positions(self.last_distances[0], new_distances[0])
-        # self.score += player_closer * 3
-        box_closer = self.closer_to_positions(self.last_distances[1], new_distances[1])
-        self.score += box_closer * 2
+        if len(self.engine.boxes) > 0:
+            new_distances = self.__position_distances__()
+            player_closer = self.last_distances[0] - new_distances[0]
+            if player_closer != 0:
+                amp = 2 if player_closer > 0 else 3
+                self.score += player_closer * amp
+                self.__log__('player closer:', player_closer)
+            box_closer = self.last_distances[1] - new_distances[1]
+            if box_closer != 0:
+                amp = 3 if box_closer > 0 else 5
+                self.score += box_closer * amp
+                self.__log__('box closer:', box_closer)
+            self.last_distances = new_distances
 
-        self.last_distances = new_distances
         super().new_position(pos)
 
     @staticmethod
@@ -103,15 +116,15 @@ class StepFitnessCalculator(FitnessCalculator):
         return -1
 
     def box_move(self):
-        self.score += 0.1
+        self.score += 1
         super().box_move()
 
     def box_in_goal(self):
-        self.score += 0.2
+        self.score += 5
         super().box_in_goal()
 
     def invalid_move(self):
-        self.score -= 0.05
+        self.score -= 0.2
         super().invalid_move()
 
     def get_fitness(self):
@@ -119,7 +132,7 @@ class StepFitnessCalculator(FitnessCalculator):
             self.score += 50
             self.__log__('winning bonus')
         if self.box_moves > 0:
-            self.score += 5
+            self.score += 3
             self.__log__('box moved bonus')
         return self.score
 
