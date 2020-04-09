@@ -67,10 +67,10 @@ class GameState:
         self.engine = engine
         self.norm_width = engine.field_size[0] - 1
         self.norm_height = engine.field_size[1] - 1
-        self.grid_template = [0.0] * engine.field_size[0] * engine.field_size[1]
+        self.grid_template = [0.0] # * engine.field_size[0] * engine.field_size[1]
 
     def get_current(self):
-        return self.__grid_state__()
+        return self.__player_relative_state__()
 
     def __player_relative_state__(self):
         return np.concatenate((
