@@ -10,16 +10,11 @@ import neat
 from neat.population import CompleteExtinctionException
 
 from nn_player import NeuralNetMaster
-from training_levels import Level
 from training_reporter import TrainingReporter
 
 SHOWCASE_EVERY_GEN = 20
 EVAL_PROCESSES = 4
 RECORD_BEST_AFTER_GEN = 100
-
-
-def generate_training_levels():
-    return [Level.generate_level() for _ in range(100)]
 
 
 class Trainer:
@@ -51,9 +46,8 @@ class Trainer:
 
     def eval_population(self, population_genomes, config: neat.config.Config):
         self.eval_counter += 1
-        train_levels = generate_training_levels()
         genome_configs = [(genome, config) for _, genome in population_genomes]
-        nn_master = NeuralNetMaster(train_levels)
+        nn_master = NeuralNetMaster()
 
         pop_fitness = self.pool.starmap(nn_master.eval_genome, genome_configs)
         for (fitness, *pop_stats), (genome, _) in zip(pop_fitness, genome_configs):

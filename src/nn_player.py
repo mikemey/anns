@@ -18,8 +18,12 @@ first_training_level = Level(
 )
 
 
+def generate_training_levels():
+    return [Level.generate_level() for _ in range(100)]
+
+
 class NeuralNetMaster:
-    def __init__(self, training_levels=[first_training_level]):
+    def __init__(self, training_levels=generate_training_levels()):
         assert len(training_levels) > 0, "at least one level required"
         self.levels = training_levels
 
@@ -67,7 +71,7 @@ class GameState:
         self.engine = engine
         self.norm_width = engine.field_size[0] - 1
         self.norm_height = engine.field_size[1] - 1
-        self.grid_template = [0.0] # * engine.field_size[0] * engine.field_size[1]
+        self.grid_template = [0.0]  # * engine.field_size[0] * engine.field_size[1]
 
     def get_current(self):
         return self.__player_relative_state__()
