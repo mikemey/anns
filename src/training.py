@@ -102,9 +102,9 @@ def load_config(file_name='training.cfg'):
 def load_training(file_name):
     print('loading training file: <{}>'.format(file_name))
     with open(file_name, 'rb') as f:
-        stored_config, *population_state = pickle.load(f)
-        config = load_config()
-        return neat.Population(config, population_state)
+        config, *population_state = pickle.load(f)
+        pop = neat.Population(config, population_state)
+        return pop
 
 
 def create_population_file_name(generation, fitness):
