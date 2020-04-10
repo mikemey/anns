@@ -13,7 +13,7 @@ def get_axis_neighbours(goal_coord, box_coord):
 
 
 def create_fitness_calculator(engine, level, verbose=False):
-    return StepFitnessCalculator(engine, verbose)
+    return FinalDistanceFitnessCalculator(engine, verbose)
 
 
 class FitnessCalculator(GameListener):
