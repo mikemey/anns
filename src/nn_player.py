@@ -57,7 +57,6 @@ class NeuralNetMaster:
         showcase_level = self.levels[0]
         _, calculator = self.__play_game__(genome, config, showcase_level)
         print(SHOWCASE_TEMPLATE.format(genome.key, genome.fitness, calculator.get_fitness()))
-        showcase_level.print()
 
         engine, player = self.create_game(genome, config, showcase_level)
         # create_fitness_calculator(engine, showcase_level, False)  # print fitness calculation details
