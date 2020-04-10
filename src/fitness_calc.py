@@ -46,6 +46,7 @@ class FitnessCalculator(GameListener):
         self.__log__('invalid move')
 
     def get_fitness(self):
+        self.__log__('final score')
         return self.score
 
 
@@ -87,14 +88,14 @@ class StepFitnessCalculator(FitnessCalculator):
     def new_position(self, pos):
         covered_count = self.covered_positions.count_on(pos)
         if covered_count > 0:
-            self.score -= 0.6 * covered_count
+            self.score -= 0.8 * covered_count
             self.__log__('fields covered:', covered_count)
 
         if len(self.engine.boxes) > 0:
             new_distances = self.__position_distances__()
             player_closer = self.last_distances[0] - new_distances[0]
             if player_closer != 0:
-                amp = 2 if player_closer > 0 else 3
+                amp = 1 if player_closer > 0 else 3
                 self.score += player_closer * amp
                 self.__log__('player closer:', player_closer)
             box_closer = self.last_distances[1] - new_distances[1]
@@ -106,25 +107,12 @@ class StepFitnessCalculator(FitnessCalculator):
 
         super().new_position(pos)
 
-    @staticmethod
-    def closer_to_positions(last_distances, new_distances):
-        diffs = [last - current for last, current in zip(last_distances, new_distances)]
-        if all([diff == 0 for diff in diffs]):
-            return 0
-        if any([diff > 0 for diff in diffs]):
-            return 1
-        return -1
-
     def box_move(self):
         self.score += 1
         super().box_move()
 
-    def box_in_goal(self):
-        self.score += 5
-        super().box_in_goal()
-
     def invalid_move(self):
-        self.score -= 0.2
+        self.score -= 0.5
         super().invalid_move()
 
     def get_fitness(self):
@@ -132,9 +120,53 @@ class StepFitnessCalculator(FitnessCalculator):
             self.score += 50
             self.__log__('winning bonus')
         if self.box_moves > 0:
+            self.score += 5
+            self.__log__('box moved bonus')
+        return super().get_fitness()
+
+
+class FinalDistanceFitnessCalculator(FitnessCalculator):
+    def __init__(self, engine: BoxPusherEngine, verbose):
+        super().__init__(engine, 0, verbose)
+        self.distances = self.__current_distances__()
+
+    def __current_distances__(self):
+        return (
+            distance_sum_between(self.engine.boxes, self.engine.player),
+            distance_sum_between(self.engine.boxes, self.engine.goal)
+        )
+
+    def new_position(self, pos):
+        self.score -= 1
+        super().new_position(pos)
+
+    def box_move(self):
+        self.score += 2
+        super().box_move()
+
+    def box_in_goal(self):
+        self.score += 5
+        super().box_in_goal()
+
+    def invalid_move(self):
+        self.score -= 2
+        super().invalid_move()
+
+    def get_fitness(self):
+        final_distances = self.__current_distances__()
+        self.score += self.__distance_bonus__(self.distances[0], final_distances[0])
+        self.score += self.__distance_bonus__(self.distances[1], final_distances[1], 3)
+        if self.engine.game_won:
+            self.score += 10
+            self.__log__('winning bonus')
+        if self.box_moves > 0:
             self.score += 3
             self.__log__('box moved bonus')
-        return self.score
+        return super().get_fitness()
+
+    @staticmethod
+    def __distance_bonus__(start_distance, final_distance, amp=1):
+        return (start_distance - final_distance) * amp
 
 
 class DistanceFitnessCalculator(FitnessCalculator):
@@ -174,7 +206,8 @@ class DistanceFitnessCalculator(FitnessCalculator):
         self.__log__('player error:', player_error, 10)
 
         self.score += 100 if self.engine.game_won else 0
-        return self.score - box_error - player_error
+        self.score -= box_error - player_error
+        return super().get_fitness()
 
     def __get_box_error__(self, pos, level_error, potential=50):
         error_ratio = self.__current_box_error_to__(pos) / level_error
