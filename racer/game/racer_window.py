@@ -28,6 +28,7 @@ def create_line_graphics(points, color=TRACK_COLOR):
 class RacerWindow(pyglet.window.Window):
     def __init__(self, engine: RacerEngine):
         super().__init__(1000, 700, caption='Racer')
+        self.set_location(10, 10)
         pyglet.gl.glClearColor(0.5, 0.8, 0.4, 1)
         self.engine = engine
         self.batch = pyglet.graphics.Batch()
@@ -60,19 +61,21 @@ class RacerWindow(pyglet.window.Window):
     def on_key_press(self, symbol, modifiers):
         super().on_key_press(symbol, modifiers)
         if symbol == key.UP:
-            self.player_operations.accelerate = True
+            self.player_operations.accelerate()
+        if symbol == key.DOWN:
+            self.player_operations.reverse()
         if symbol == key.LEFT:
-            self.player_operations.left_turn = True
+            self.player_operations.turn_left()
         if symbol == key.RIGHT:
-            self.player_operations.right_turn = True
+            self.player_operations.turn_right()
 
     def on_key_release(self, symbol, modifiers):
-        if symbol == key.UP:
-            self.player_operations.accelerate = False
+        if symbol in (key.UP, key.DOWN):
+            self.player_operations.stop_direction()
         if symbol == key.LEFT:
-            self.player_operations.left_turn = False
+            self.player_operations.stop_left()
         if symbol == key.RIGHT:
-            self.player_operations.right_turn = False
+            self.player_operations.stop_right()
 
     def update(self, dt):
         self.engine.update(dt, self.player_operations)
