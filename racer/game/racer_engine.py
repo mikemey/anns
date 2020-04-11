@@ -81,6 +81,8 @@ class RacerEngine:
         self.player.update(dt, operations)
         if not self.track.contains_points(self.player.boundaries):
             self.game_over = True
+        elif not ignore_speed(self.player.speed):
+            self.score += 1 if self.player.speed > 0 else -2
 
 
 class Player:
