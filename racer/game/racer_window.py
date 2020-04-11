@@ -2,14 +2,12 @@ import numpy as np
 import pyglet
 from pyglet.window import key
 
-from racer_engine import RacerEngine, PlayerOperation, CAR_BOUNDS
-from tracks import OUTER_TRACK, INNER_TRACK
+from racer_engine import RacerEngine, PlayerOperation, CAR_BOUND_POINTS
+from tracks import OUTER_TRACK, INNER_TRACK, WINDOW_SIZE
 
-TRACK_COLOR = (160, 10, 60)
+TRACK_COLOR = 160, 10, 60
 CAR_COLOR = tuple(np.random.randint(0, 255, size=3))
-CAR_BOUND_POINTS = (CAR_BOUNDS[0], CAR_BOUNDS[1], CAR_BOUNDS[2], CAR_BOUNDS[1],
-                    CAR_BOUNDS[2], CAR_BOUNDS[3], CAR_BOUNDS[0], CAR_BOUNDS[3]
-                    )
+WINDOW_POS = 20, 0
 
 pyglet.resource.path = ['resources']
 pyglet.resource.reindex()
@@ -27,12 +25,12 @@ def create_line_graphics(points, color=TRACK_COLOR):
 
 class RacerWindow(pyglet.window.Window):
     def __init__(self, engine: RacerEngine):
-        super().__init__(1000, 700, caption='Racer')
-        self.set_location(10, 10)
+        super().__init__(*WINDOW_SIZE, caption='Racer')
+        self.set_location(*WINDOW_POS)
         pyglet.gl.glClearColor(0.5, 0.8, 0.4, 1)
         self.engine = engine
         self.batch = pyglet.graphics.Batch()
-        self.score_label = pyglet.text.Label(x=10, y=self.height - 25, batch=self.batch)
+        self.score_label = pyglet.text.Label(x=self.width - 100, y=self.height - 25, batch=self.batch)
         self.track_lines = [create_line_graphics(t) for t in (OUTER_TRACK, INNER_TRACK)]
 
         self.car_frame = pyglet.sprite.Sprite(img=car_frame_img, batch=self.batch)
@@ -50,7 +48,6 @@ class RacerWindow(pyglet.window.Window):
         self.batch.draw()
 
     def draw_car_background(self):
-        pyglet.gl.glLineWidth(1)
         pyglet.gl.glPushMatrix()
 
         pyglet.gl.glTranslatef(self.car_frame.x, self.car_frame.y, 0)
