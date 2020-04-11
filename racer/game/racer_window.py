@@ -11,7 +11,7 @@ WINDOW_POS = 20, 0
 
 pyglet.resource.path = ['resources']
 pyglet.resource.reindex()
-car_frame_img = pyglet.resource.image("car-frame.png")
+car_frame_img = pyglet.resource.image('car-frame.png')
 car_frame_img.anchor_x = car_frame_img.width * 2 / 5
 car_frame_img.anchor_y = car_frame_img.height / 2
 
@@ -47,7 +47,8 @@ class RacerWindow(pyglet.window.Window):
         self.car_frame = pyglet.sprite.Sprite(img=car_frame_img, batch=self.batch)
         self.car_frame.scale = 0.5
         self.car_color = create_vertex_list(CAR_BOUND_POINTS, CAR_COLOR)
-        self.pause_overlay = PauseOverlay()
+        self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
+        self.lost_overlay = GameOverlay('Lost!', '')
 
         self.player_operations = PlayerOperation()
         self.game_state = GameState()
@@ -59,6 +60,8 @@ class RacerWindow(pyglet.window.Window):
         self.batch.draw()
         if self.game_state.is_paused:
             self.pause_overlay.draw()
+        if self.game_state.lost:
+            self.lost_overlay.draw()
 
     def draw_car_background(self):
         pyglet.gl.glPushMatrix()
@@ -70,6 +73,10 @@ class RacerWindow(pyglet.window.Window):
 
     def on_key_press(self, symbol, modifiers):
         super().on_key_press(symbol, modifiers)
+        if self.engine.game_over:
+            return
+        if symbol == key.P:
+            self.game_state.is_paused = not self.game_state.is_paused
         if symbol == key.UP:
             self.player_operations.accelerate()
         if symbol == key.DOWN:
@@ -86,8 +93,6 @@ class RacerWindow(pyglet.window.Window):
             self.player_operations.stop_left()
         if symbol == key.RIGHT:
             self.player_operations.stop_right()
-        if symbol == key.P:
-            self.game_state.is_paused = not self.game_state.is_paused
 
     def on_deactivate(self):
         self.game_state.is_paused = True
@@ -96,13 +101,16 @@ class RacerWindow(pyglet.window.Window):
         if self.game_state.is_paused:
             return
         self.engine.update(dt, self.player_operations)
+        if self.engine.game_over:
+            self.game_state.lost = True
+            return
         pl = self.engine.player
         self.car_frame.update(x=pl.position[0], y=pl.position[1], rotation=pl.rotation)
         self.score_label.text = 'Score: {}'.format(self.engine.score)
 
 
-class PauseOverlay:
-    def __init__(self):
+class GameOverlay:
+    def __init__(self, main_txt, support_txt, exit_txt='"Esc" to quit'):
         self.overlay = pyglet.graphics.Batch()
         size = WINDOW_SIZE
         cnt, vertices, color = convert_data(
@@ -111,24 +119,30 @@ class PauseOverlay:
         transparent = ('c4B', color[1])
         self.overlay.add(4, pyglet.gl.GL_POLYGON, None, vertices, transparent)
 
-        self.pause_lbl = pyglet.text.Label('Paused',
-                                           color=(255, 255, 0, 255), font_size=22, bold=True)
-        self.pause_lbl.x = size[0] / 2 - self.pause_lbl.content_width / 2
-        self.pause_lbl.y = size[1] / 2 - self.pause_lbl.content_height / 2
-        self.continue_lbl = pyglet.text.Label('press "P" to continue...',
-                                              color=(255, 255, 150, 255), font_size=16)
-        self.continue_lbl.x = size[0] / 2 - self.continue_lbl.content_width / 2
-        self.continue_lbl.y = size[1] / 2 - self.pause_lbl.content_height - self.continue_lbl.content_height
+        self.main_lbl = pyglet.text.Label(main_txt,
+                                          color=(255, 255, 0, 255), font_size=22, bold=True)
+        self.main_lbl.x = size[0] / 2 - self.main_lbl.content_width / 2
+        self.main_lbl.y = size[1] / 2 - self.main_lbl.content_height / 2
+        self.support_lbl = pyglet.text.Label(support_txt,
+                                             color=(255, 255, 150, 255), font_size=16)
+        self.support_lbl.x = size[0] / 2 - self.support_lbl.content_width / 2
+        self.support_lbl.y = size[1] / 2 - self.main_lbl.content_height - self.support_lbl.content_height
+        self.exit_lbl = pyglet.text.Label(exit_txt,
+                                          color=(255, 255, 150, 255), font_size=16)
+        self.exit_lbl.x = size[0] / 2 - self.exit_lbl.content_width / 2
+        self.exit_lbl.y = size[1] / 2 - self.main_lbl.content_height - self.exit_lbl.content_height * 2.3
 
     def draw(self):
         self.overlay.draw()
-        self.pause_lbl.draw()
-        self.continue_lbl.draw()
+        self.main_lbl.draw()
+        self.support_lbl.draw()
+        self.exit_lbl.draw()
 
 
 class GameState:
     def __init__(self):
         self.is_paused = False
+        self.lost = False
 
 
 if __name__ == '__main__':

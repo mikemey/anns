@@ -75,11 +75,12 @@ class RacerEngine:
         self.player = Player()
         self.track = Track()
         self.score = 0
+        self.game_over = False
 
     def update(self, dt, operations):
         self.player.update(dt, operations)
         if not self.track.contains_points(self.player.boundaries):
-            self.score -= 1
+            self.game_over = True
 
 
 class Player:
