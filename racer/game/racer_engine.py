@@ -5,7 +5,7 @@ import numpy as np
 
 from tracks import *
 
-CAR_BOUNDS = (-20, -11, 29, 11)
+CAR_BOUNDS = (-19, -11, 29, 11)
 CAR_BOUND_POINTS = (CAR_BOUNDS[0], CAR_BOUNDS[1], CAR_BOUNDS[2], CAR_BOUNDS[1],
                     CAR_BOUNDS[2], CAR_BOUNDS[3], CAR_BOUNDS[0], CAR_BOUNDS[3]
                     )
