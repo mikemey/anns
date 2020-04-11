@@ -99,7 +99,7 @@ class Player:
             self.speed = 0
 
         if not ignore_speed(self.speed):
-            turn_fact = operations.get_turn_factor()
+            turn_fact = operations.get_turn_factor() * math.copysign(1, self.speed)
             allowed_rot = MAX_CAR_ROTATION * ((abs(self.speed) / MAX_CAR_SPEED) ** 0.5)
             self.rotation += allowed_rot * dt * turn_fact
 
