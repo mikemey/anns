@@ -8,7 +8,7 @@ from tracks import OUTER_TRACK, INNER_TRACK, WINDOW_SIZE
 pyglet.resource.path = ['resources']
 pyglet.resource.reindex()
 car_frame_img = pyglet.resource.image('car-frame.png')
-car_frame_img.anchor_x = car_frame_img.width * 2 / 5
+car_frame_img.anchor_x = car_frame_img.width / 3
 car_frame_img.anchor_y = car_frame_img.height / 2
 
 
@@ -67,11 +67,18 @@ class RacerWindow(pyglet.window.Window):
 
     def draw_car_background(self):
         pyglet.gl.glPushMatrix()
-
         pyglet.gl.glTranslatef(self.car_frame.x, self.car_frame.y, 0)
         pyglet.gl.glRotatef(-self.car_frame.rotation, 0, 0, 1.0)
         self.car_color.draw(pyglet.gl.GL_POLYGON)
         pyglet.gl.glPopMatrix()
+
+        pyglet.gl.glLineWidth(1)
+        rot = math.radians(self.car_frame.rotation)
+        for pos in find_nearest_points(self.car_frame.position, rot):
+            pyglet.graphics.draw(2, pyglet.gl.GL_LINE_STRIP,
+                                 ('v2f', self.car_frame.position + pos),
+                                 ('c3B', (100, 100, 255) * 2)
+                                 )
 
     def on_key_press(self, symbol, modifiers):
         super().on_key_press(symbol, modifiers)
@@ -169,6 +176,51 @@ class ScoreBox:
     def update_text(self, score):
         self.label.text = 'Score: {}'.format(score)
         self.label.x = self.center_x - self.label.content_width / 2
+
+
+import math
+import shapely
+from shapely.geometry import LineString
+
+INNER_LINE = LineString(np.reshape(INNER_TRACK, (-1, 2)))
+OUTER_LINE = LineString(np.reshape(OUTER_TRACK, (-1, 2)))
+
+TRACE_LEN = WINDOW_SIZE[0]
+DEG_20 = math.pi / 9
+DEG_40 = math.pi / 9 * 2
+DEG_65 = math.pi / 36 * 13
+DEG_90 = math.pi / 2
+
+
+def find_nearest_points(pos, rot):
+    return [
+        closest_on_line(pos, rot),
+        closest_on_line(pos, rot + DEG_20),
+        closest_on_line(pos, rot - DEG_20),
+        closest_on_line(pos, rot + DEG_40),
+        closest_on_line(pos, rot - DEG_40),
+        closest_on_line(pos, rot + DEG_65),
+        closest_on_line(pos, rot - DEG_65),
+        closest_on_line(pos, rot + DEG_90),
+        closest_on_line(pos, rot - DEG_90)
+    ]
+
+
+def closest_on_line(pos, rot):
+    trace_target = (pos[0] + math.cos(rot) * TRACE_LEN, pos[1] - math.sin(rot) * TRACE_LEN)
+    tracer = LineString([pos, trace_target])
+    candidates = INNER_LINE.intersection(tracer).union(OUTER_LINE.intersection(tracer))
+    cross_pts = []
+    if not candidates.is_empty:
+        if isinstance(candidates, shapely.geometry.MultiPoint):
+            for pts in candidates.geoms:
+                cross_pts.append((pts.x, pts.y))
+        else:
+            cross_pts.append((candidates.x, candidates.y))
+
+    np_cross_pts = np.array(cross_pts)
+    sq_distances = np.sum((np_cross_pts - pos) ** 2, axis=1)
+    return cross_pts[np.argmin(sq_distances)]
 
 
 if __name__ == '__main__':
