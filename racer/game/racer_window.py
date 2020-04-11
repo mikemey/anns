@@ -16,36 +16,49 @@ car_frame_img.anchor_x = car_frame_img.width * 2 / 5
 car_frame_img.anchor_y = car_frame_img.height / 2
 
 
-def create_line_graphics(points, color=TRACK_COLOR):
+def convert_data(points, color):
     pts_count = int(len(points) / 2)
     vertices = ('v2i', points)
     color_data = ('c3B', color * pts_count)
-    return pyglet.graphics.vertex_list(pts_count, vertices, color_data)
+    return pts_count, vertices, color_data
+
+
+def create_vertex_list(points, color):
+    return pyglet.graphics.vertex_list(*convert_data(points, color))
+
+
+def add_points_to(batch, points, color):
+    pts_count, vertices, color_data = convert_data(points, color)
+    batch.add(pts_count, pyglet.gl.GL_LINE_STRIP, None, vertices, color_data)
 
 
 class RacerWindow(pyglet.window.Window):
     def __init__(self, engine: RacerEngine):
         super().__init__(*WINDOW_SIZE, caption='Racer')
+        pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
+        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
         self.set_location(*WINDOW_POS)
         pyglet.gl.glClearColor(0.5, 0.8, 0.4, 1)
         self.engine = engine
         self.batch = pyglet.graphics.Batch()
         self.score_label = pyglet.text.Label(x=self.width - 100, y=self.height - 25, batch=self.batch)
-        self.track_lines = [create_line_graphics(t) for t in (OUTER_TRACK, INNER_TRACK)]
-
+        add_points_to(self.batch, OUTER_TRACK, TRACK_COLOR)
+        add_points_to(self.batch, INNER_TRACK, TRACK_COLOR)
         self.car_frame = pyglet.sprite.Sprite(img=car_frame_img, batch=self.batch)
         self.car_frame.scale = 0.5
-        self.car_color = create_line_graphics(CAR_BOUND_POINTS, CAR_COLOR)
+        self.car_color = create_vertex_list(CAR_BOUND_POINTS, CAR_COLOR)
+        self.pause_overlay = PauseOverlay()
+
         self.player_operations = PlayerOperation()
+        self.game_state = GameState()
 
     def on_draw(self):
         self.clear()
-        pyglet.gl.glLineWidth(5)
-        for track_line in self.track_lines:
-            track_line.draw(pyglet.gl.GL_LINE_STRIP)
-
         self.draw_car_background()
+        pyglet.gl.glLineWidth(5)
         self.batch.draw()
+        if self.game_state.is_paused:
+            self.pause_overlay.draw()
 
     def draw_car_background(self):
         pyglet.gl.glPushMatrix()
@@ -73,12 +86,49 @@ class RacerWindow(pyglet.window.Window):
             self.player_operations.stop_left()
         if symbol == key.RIGHT:
             self.player_operations.stop_right()
+        if symbol == key.P:
+            self.game_state.is_paused = not self.game_state.is_paused
+
+    def on_deactivate(self):
+        self.game_state.is_paused = True
 
     def update(self, dt):
+        if self.game_state.is_paused:
+            return
         self.engine.update(dt, self.player_operations)
         pl = self.engine.player
         self.car_frame.update(x=pl.position[0], y=pl.position[1], rotation=pl.rotation)
         self.score_label.text = 'Score: {}'.format(self.engine.score)
+
+
+class PauseOverlay:
+    def __init__(self):
+        self.overlay = pyglet.graphics.Batch()
+        size = WINDOW_SIZE
+        cnt, vertices, color = convert_data(
+            [0, 0, size[0], 0, size[0], size[1], 0, size[1]],
+            (30, 30, 30, 150))
+        transparent = ('c4B', color[1])
+        self.overlay.add(4, pyglet.gl.GL_POLYGON, None, vertices, transparent)
+
+        self.pause_lbl = pyglet.text.Label('Paused',
+                                           color=(255, 255, 0, 255), font_size=22, bold=True)
+        self.pause_lbl.x = size[0] / 2 - self.pause_lbl.content_width / 2
+        self.pause_lbl.y = size[1] / 2 - self.pause_lbl.content_height / 2
+        self.continue_lbl = pyglet.text.Label('press "P" to continue...',
+                                              color=(255, 255, 150, 255), font_size=16)
+        self.continue_lbl.x = size[0] / 2 - self.continue_lbl.content_width / 2
+        self.continue_lbl.y = size[1] / 2 - self.pause_lbl.content_height - self.continue_lbl.content_height
+
+    def draw(self):
+        self.overlay.draw()
+        self.pause_lbl.draw()
+        self.continue_lbl.draw()
+
+
+class GameState:
+    def __init__(self):
+        self.is_paused = False
 
 
 if __name__ == '__main__':
