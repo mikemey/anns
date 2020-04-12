@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 
 from pyglet.window import key
 
@@ -21,6 +21,9 @@ class ManualController(RaceController):
         super().__init__()
         self.engine = RacerEngine()
         self.player_operations = PlayerOperation()
+
+    def get_player_count(self):
+        return 1
 
     def reset(self):
         super().reset()
@@ -57,12 +60,11 @@ class ManualController(RaceController):
     def get_score(self):
         return self.engine.score
 
-    def update_player(self, dt) -> Tuple[float, float, float]:
-        if self.show_paused_screen or self.show_lost_screen:
-            return
-        self.engine.update(dt, self.player_operations)
-        if self.engine.game_over:
-            self.show_lost_screen = True
-            return
-        pl = self.engine.player
-        return pl.position[0], pl.position[1], pl.rotation
+    def update_players(self, dt) -> List[Tuple[float, float, float]]:
+        if not (self.show_paused_screen or self.show_lost_screen):
+            self.engine.update(dt, self.player_operations)
+            if self.engine.game_over:
+                self.show_lost_screen = True
+        return [(self.engine.player.position[0],
+                 self.engine.player.position[1],
+                 self.engine.player.rotation)]

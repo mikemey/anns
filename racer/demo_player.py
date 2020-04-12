@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 
 from pyglet.window import key
 
@@ -55,22 +55,18 @@ MOVES = [
 class DemoController(RaceController):
     def __init__(self):
         super().__init__()
-        self.engine = RacerEngine()
         self.time = 0
-        self.next_step_ix = -1
-        self.next_step = None
-        self.__set_next_step__()
+        self.player1 = DemoPlayer()
+        self.player2 = DemoPlayer(1.5)
+
+    def get_player_count(self):
+        return 2
 
     def reset(self):
         super().reset()
-        self.engine = RacerEngine()
         self.time = 0
-        self.next_step_ix = -1
-        self.__set_next_step__()
-
-    def __set_next_step__(self):
-        self.next_step_ix = min(self.next_step_ix + 1, len(MOVES) - 1)
-        self.next_step = MOVES[self.next_step_ix]
+        self.player1.reset()
+        self.player2.reset()
 
     def on_key_press(self, symbol):
         if self.show_lost_screen:
@@ -78,13 +74,44 @@ class DemoController(RaceController):
                 self.reset()
 
     def get_score(self):
+        return self.player1.get_score() + self.player2.get_score()
+
+    def update_players(self, dt) -> List[Tuple[float, float, float]]:
+        if not self.show_lost_screen:
+            self.time += dt
+            self.player1.update_position(dt, self.time)
+            self.player2.update_position(dt, self.time)
+
+        if self.player1.engine.game_over and self.player2.engine.game_over:
+            self.show_lost_screen = True
+        return [self.player1.get_position(), self.player2.get_position()]
+
+
+class DemoPlayer:
+    def __init__(self, time_delay=0):
+        self.time_delay = time_delay
+        self.engine = RacerEngine()
+        self.next_step_ix = -1
+        self.next_step = None
+        self.__set_next_step__()
+
+    def __set_next_step__(self):
+        self.next_step_ix = min(self.next_step_ix + 1, len(MOVES) - 1)
+        self.next_step = MOVES[self.next_step_ix]
+
+    def reset(self):
+        self.engine = RacerEngine()
+        self.next_step_ix = -1
+        self.next_step = None
+        self.__set_next_step__()
+
+    def get_score(self):
         return self.engine.score
 
-    def update_player(self, dt) -> Tuple[float, float, float]:
-        if self.show_paused_screen or self.show_lost_screen:
+    def update_position(self, dt, time):
+        if self.engine.game_over or time < self.time_delay:
             return
-        self.time += dt
-        if self.next_step[0] < self.time:
+        if self.next_step[0] + self.time_delay < time:
             self.__set_next_step__()
 
         move, turn = self.next_step[1], self.next_step[2]
@@ -98,8 +125,8 @@ class DemoController(RaceController):
         elif turn == RIGHT:
             operation.turn_right()
         self.engine.update(dt, operation)
-        if self.engine.game_over:
-            self.show_lost_screen = True
-            return
-        pl = self.engine.player
-        return pl.position[0], pl.position[1], pl.rotation
+
+    def get_position(self):
+        return self.engine.player.position[0], \
+               self.engine.player.position[1], \
+               self.engine.player.rotation

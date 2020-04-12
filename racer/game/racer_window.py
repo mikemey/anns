@@ -1,5 +1,5 @@
 from os import path
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 import pyglet
@@ -24,7 +24,7 @@ class RaceController:
         self.show_lost_screen = False
         self.show_paused_screen = False
 
-    def interact(self):
+    def get_player_count(self):
         pass
 
     def on_key_press(self, symbol):
@@ -36,7 +36,7 @@ class RaceController:
     def focus_lost(self):
         pass
 
-    def update_player(self, dt) -> Tuple[float, float, float]:
+    def update_players(self, dt) -> List[Tuple[float, float, float]]:
         pass
 
     def get_score(self):
@@ -57,7 +57,7 @@ class RacerWindow(pyglet.window.Window):
 
         self.track = TrackGraphics()
         self.score_box = ScoreBox()
-        self.car = CarGraphics()
+        self.cars = [CarGraphics() for _ in range(self.controller.get_player_count())]
         self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
         self.lost_overlay = GameOverlay('Lost!', '"n" New game')
 
@@ -68,7 +68,8 @@ class RacerWindow(pyglet.window.Window):
     def on_draw(self):
         self.clear()
         self.track.draw()
-        self.car.draw()
+        for car in self.cars:
+            car.draw()
         if self.controller.show_lost_screen:
             self.lost_overlay.draw()
         elif self.controller.show_paused_screen:
@@ -86,10 +87,10 @@ class RacerWindow(pyglet.window.Window):
         self.controller.focus_lost()
 
     def update(self, dt):
-        player_pos = self.controller.update_player(dt)
-        if player_pos:
-            self.car.update(*player_pos)
-            self.score_box.update_text(self.controller.get_score())
+        player_positions = self.controller.update_players(dt)
+        for player_pos, car in zip(player_positions, self.cars):
+            car.update(*player_pos)
+        self.score_box.update_text(self.controller.get_score())
 
 
 class GraphicsElement:
@@ -105,7 +106,6 @@ def random_color():
 
 
 class CarGraphics(GraphicsElement):
-    CAR_COLOR = 'c3B', random_color() + random_color() + random_color() + random_color()
     TRACE_COLOR = 100, 100, 255
 
     def __init__(self, show_traces=True):
@@ -114,7 +114,8 @@ class CarGraphics(GraphicsElement):
         self.car_frame = pyglet.sprite.Sprite(img=car_frame_img, batch=self.batch)
         self.car_frame.scale = 0.5
         pts, vertices, _ = convert_data(CAR_BOUND_POINTS)
-        self.car_color = pyglet.graphics.vertex_list(pts, vertices, vertices, self.CAR_COLOR)
+        color_data = 'c3B', random_color() + random_color() + random_color() + random_color()
+        self.car_color = pyglet.graphics.vertex_list(pts, vertices, vertices, color_data)
 
     def draw(self):
         if self.show_traces:
