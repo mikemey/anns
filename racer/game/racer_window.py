@@ -67,10 +67,10 @@ class RacerWindow(pyglet.window.Window):
         self.draw_car_background()
         pyglet.gl.glLineWidth(5)
         self.batch.draw()
-        if self.game_state.is_paused:
-            self.pause_overlay.draw()
         if self.game_state.lost:
             self.lost_overlay.draw()
+        elif self.game_state.is_paused:
+            self.pause_overlay.draw()
 
     def draw_car_background(self):
         pyglet.gl.glPushMatrix()
