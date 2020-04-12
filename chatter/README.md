@@ -4,8 +4,8 @@ Chat with 4 possible responses and **very** limited character recognition
 
 #### Requirements
 Python 3, 
-[NumPy](https://pypi.org/project/numpy/), 
 [NEAT-Python](https://pypi.org/project/neat-python/), 
+[NumPy](https://pypi.org/project/numpy/) 
 
 ### Start training:
 

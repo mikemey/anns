@@ -17,21 +17,13 @@ Python 3,
 [project-root-dir] $ pip3 install -r requirements.txt
 ```
 
-## Trainings
+### Trainings
 
-### Box pusher
-
-[README.md](src)
-<p align="center">
-    <img src="src/docs/manual-run.png" height="320" />
-</p>
-
-### [Racer](racer)
-
-<p align="center">
-    <img src="racer/docs/manual-run.png" height="400" />
-</p>
-
-### Chatter box
-
-[README.md](chatter)
+| **READMEs** |
+| --- |
+| **[Box pusher](src#readme)** |
+| <p align="center"><img src="src/docs/manual-run.png" height="320" /></p> |
+| **[Racer](racer#readme)** |
+| <p align="center"><img src="racer/docs/manual-run.png" height="320" /></p> |
+| **[Chatter box](chatter#readme)** |
+| Terminal chat with limited responses |

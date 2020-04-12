@@ -8,8 +8,8 @@
 
 #### Requirements
 Python 3, 
-[NumPy](https://pypi.org/project/numpy/), 
 [NEAT-Python](https://pypi.org/project/neat-python/), 
+[NumPy](https://pypi.org/project/numpy/), 
 [pyglet](http://pyglet.org/),
 [Shapely](https://pypi.org/project/Shapely/)
 

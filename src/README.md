@@ -31,9 +31,9 @@
 
 #### Requirements
 Python 3, 
-[NumPy](https://pypi.org/project/numpy/), 
+[Arcade](https://pypi.org/project/arcade/),
 [NEAT-Python](https://pypi.org/project/neat-python/), 
-[Arcade](https://pypi.org/project/arcade/)
+[NumPy](https://pypi.org/project/numpy/)
 
 #### Install dependencies
 
