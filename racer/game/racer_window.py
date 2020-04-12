@@ -1,11 +1,14 @@
+from os import path
+
 import numpy as np
 import pyglet
 from pyglet.window import key
 
-from racer_engine import RacerEngine, PlayerOperation, CAR_BOUND_POINTS
-from tracks import OUTER_TRACK, INNER_TRACK, WINDOW_SIZE
+from .racer_engine import RacerEngine, PlayerOperation, CAR_BOUND_POINTS
+from .tracks import OUTER_TRACK, INNER_TRACK, WINDOW_SIZE
 
-pyglet.resource.path = ['resources']
+resource_dir = path.join(path.abspath(path.dirname(__file__)), 'resources')
+pyglet.resource.path = [resource_dir]
 pyglet.resource.reindex()
 car_frame_img = pyglet.resource.image('car-frame.png')
 car_frame_img.anchor_x = car_frame_img.width / 3
@@ -55,6 +58,10 @@ class RacerWindow(pyglet.window.Window):
         self.player_operations = PlayerOperation()
         self.game_state = GameState()
 
+    def start(self):
+        pyglet.clock.schedule_interval(self.update, 1 / 120.0)
+        pyglet.app.run()
+
     def on_draw(self):
         self.clear()
         self.draw_car_background()
@@ -80,9 +87,13 @@ class RacerWindow(pyglet.window.Window):
                                  ('c3B', (100, 100, 255) * 2)
                                  )
 
+    def on_close(self):
+        self.game_state.lost = True
+        super().on_close()
+
     def on_key_press(self, symbol, modifiers):
         super().on_key_press(symbol, modifiers)
-        if self.engine.game_over:
+        if self.game_state.lost:
             return
         if symbol == key.P:
             self.game_state.is_paused = not self.game_state.is_paused
@@ -219,11 +230,7 @@ def closest_on_line(pos, rot):
             cross_pts.append((candidates.x, candidates.y))
 
     np_cross_pts = np.array(cross_pts)
+    if len(np_cross_pts) == 0:
+        return []
     sq_distances = np.sum((np_cross_pts - pos) ** 2, axis=1)
     return cross_pts[np.argmin(sq_distances)]
-
-
-if __name__ == '__main__':
-    w = RacerWindow(RacerEngine())
-    pyglet.clock.schedule_interval(w.update, 1 / 120.0)
-    pyglet.app.run()
