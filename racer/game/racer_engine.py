@@ -87,7 +87,7 @@ class RacerEngine:
 
 class Player:
     def __init__(self):
-        self.position = INIT_CAR_POSITION
+        self.position = INIT_CAR_POSITION.copy()
         self.rotation = INIT_CAR_ROTATION
         self.speed = 0
         self.boundaries = []

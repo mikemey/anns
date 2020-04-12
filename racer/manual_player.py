@@ -22,8 +22,15 @@ class ManualController(RaceController):
         self.engine = RacerEngine()
         self.player_operations = PlayerOperation()
 
+    def reset(self):
+        super().reset()
+        self.engine = RacerEngine()
+        self.player_operations = PlayerOperation()
+
     def on_key_press(self, symbol):
         if self.show_lost_screen:
+            if symbol == key.N:
+                self.reset()
             return
         if symbol == key.P:
             self.show_paused_screen = not self.show_paused_screen

@@ -20,6 +20,10 @@ class RaceController:
         self.show_lost_screen = False
         self.show_paused_screen = False
 
+    def reset(self):
+        self.show_lost_screen = False
+        self.show_paused_screen = False
+
     def interact(self):
         pass
 
@@ -55,7 +59,7 @@ class RacerWindow(pyglet.window.Window):
         self.score_box = ScoreBox()
         self.car = CarGraphics()
         self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
-        self.lost_overlay = GameOverlay('Lost!', '')
+        self.lost_overlay = GameOverlay('Lost!', '"n" New game')
 
     def start(self):
         pyglet.clock.schedule_interval(self.update, 1 / 120.0)
