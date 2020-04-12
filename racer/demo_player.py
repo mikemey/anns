@@ -73,8 +73,8 @@ class DemoController(RaceController):
             if symbol == key.N:
                 self.reset()
 
-    def get_score(self):
-        return self.player1.get_score() + self.player2.get_score()
+    def get_score_text(self):
+        return '2 player demo'
 
     def update_players(self, dt) -> List[Tuple[float, float, float]]:
         if not self.show_lost_screen:

@@ -39,7 +39,7 @@ class RaceController:
     def update_players(self, dt) -> List[Tuple[float, float, float]]:
         pass
 
-    def get_score(self):
+    def get_score_text(self):
         pass
 
 
@@ -90,7 +90,7 @@ class RacerWindow(pyglet.window.Window):
         player_positions = self.controller.update_players(dt)
         for player_pos, car in zip(player_positions, self.cars):
             car.update(*player_pos)
-        self.score_box.update_text(self.controller.get_score())
+        self.score_box.update_text(self.controller.get_score_text())
 
 
 class GraphicsElement:
@@ -199,8 +199,8 @@ class ScoreBox(GraphicsElement):
         self.label = pyglet.text.Label(x=TRACK_SIZE[0] - 100, y=TRACK_SIZE[1] - 25,
                                        batch=self.batch, group=foreground)
 
-    def update_text(self, score):
-        self.label.text = 'Score: {}'.format(score)
+    def update_text(self, score_text):
+        self.label.text = score_text
         self.label.x = self.center_x - self.label.content_width / 2
 
 

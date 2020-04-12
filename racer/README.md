@@ -19,8 +19,14 @@ Python 3,
 
 #### Run game manually
 
+Single-player mode
 ```bash
 [project-root-dir] $ python3 racer
+```
+
+2-player mode
+```bash
+[project-root-dir] $ python3 racer 2
 ```
 
 #### Demo auto player
