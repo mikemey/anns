@@ -39,11 +39,16 @@ class RaceController:
         pass
 
 
+def random_color():
+    return tuple(np.random.randint(0, 255, size=3))
+
+
 class RacerWindow(pyglet.window.Window):
     BG_COLOR = 0.5, 0.8, 0.4, 1
     WINDOW_POS = 20, 0
     TRACK_COLOR = 160, 10, 60
-    CAR_COLOR = tuple(np.random.randint(0, 255, size=3))
+    CAR_COLOR = ('c3B', random_color() + random_color() +
+                 random_color() + random_color())
 
     def __init__(self, controller: RaceController):
         super().__init__(*WINDOW_SIZE, caption='Racer')
@@ -59,7 +64,8 @@ class RacerWindow(pyglet.window.Window):
         self.score_box = ScoreBox(self.batch)
         self.car_frame = pyglet.sprite.Sprite(img=car_frame_img, batch=self.batch)
         self.car_frame.scale = 0.5
-        self.car_color = create_vertex_list(CAR_BOUND_POINTS, self.CAR_COLOR)
+        pts, vertices, _ = convert_data(CAR_BOUND_POINTS)
+        self.car_color = pyglet.graphics.vertex_list(pts, vertices, vertices, self.CAR_COLOR)
         self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
         self.lost_overlay = GameOverlay('Lost!', '')
 
@@ -164,10 +170,10 @@ class ScoreBox:
         self.label.x = self.center_x - self.label.content_width / 2
 
 
-def convert_data(points, color, color_mode='c3B'):
+def convert_data(points, color=None, color_mode='c3B'):
     pts_count = int(len(points) / 2)
     vertices = ('v2i', points)
-    color_data = (color_mode, color * pts_count)
+    color_data = (color_mode, color * pts_count) if color else None
     return pts_count, vertices, color_data
 
 
