@@ -1,10 +1,10 @@
 from os import path
+from typing import Tuple
 
 import numpy as np
 import pyglet
-from pyglet.window import key
 
-from .racer_engine import RacerEngine, PlayerOperation, CAR_BOUND_POINTS
+from .racer_engine import CAR_BOUND_POINTS
 from .tracks import OUTER_TRACK, INNER_TRACK, WINDOW_SIZE
 
 resource_dir = path.join(path.abspath(path.dirname(__file__)), 'resources')
@@ -15,20 +15,28 @@ car_frame_img.anchor_x = car_frame_img.width / 3
 car_frame_img.anchor_y = car_frame_img.height / 2
 
 
-def convert_data(points, color, color_mode='c3B'):
-    pts_count = int(len(points) / 2)
-    vertices = ('v2i', points)
-    color_data = (color_mode, color * pts_count)
-    return pts_count, vertices, color_data
+class RaceController:
+    def __init__(self):
+        self.show_lost_screen = False
+        self.show_paused_screen = False
 
+    def interact(self):
+        pass
 
-def create_vertex_list(points, color):
-    return pyglet.graphics.vertex_list(*convert_data(points, color))
+    def on_key_press(self, symbol):
+        pass
 
+    def on_key_release(self, symbol):
+        pass
 
-def add_points_to(batch, points, color, mode=pyglet.gl.GL_LINE_STRIP, group=None):
-    pts_count, vertices, color_data = convert_data(points, color)
-    batch.add(pts_count, mode, group, vertices, color_data)
+    def focus_lost(self):
+        pass
+
+    def update_player(self, dt) -> Tuple[float, float, float]:
+        pass
+
+    def get_score(self):
+        pass
 
 
 class RacerWindow(pyglet.window.Window):
@@ -37,13 +45,13 @@ class RacerWindow(pyglet.window.Window):
     TRACK_COLOR = 160, 10, 60
     CAR_COLOR = tuple(np.random.randint(0, 255, size=3))
 
-    def __init__(self, engine: RacerEngine):
+    def __init__(self, controller: RaceController):
         super().__init__(*WINDOW_SIZE, caption='Racer')
+        self.controller = controller
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
         self.set_location(*self.WINDOW_POS)
         pyglet.gl.glClearColor(*self.BG_COLOR)
-        self.engine = engine
         self.batch = pyglet.graphics.Batch()
         add_points_to(self.batch, OUTER_TRACK, self.TRACK_COLOR)
         add_points_to(self.batch, INNER_TRACK, self.TRACK_COLOR)
@@ -55,9 +63,6 @@ class RacerWindow(pyglet.window.Window):
         self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
         self.lost_overlay = GameOverlay('Lost!', '')
 
-        self.player_operations = PlayerOperation()
-        self.game_state = GameState()
-
     def start(self):
         pyglet.clock.schedule_interval(self.update, 1 / 120.0)
         pyglet.app.run()
@@ -67,9 +72,9 @@ class RacerWindow(pyglet.window.Window):
         self.draw_car_background()
         pyglet.gl.glLineWidth(5)
         self.batch.draw()
-        if self.game_state.lost:
+        if self.controller.show_lost_screen:
             self.lost_overlay.draw()
-        elif self.game_state.is_paused:
+        elif self.controller.show_paused_screen:
             self.pause_overlay.draw()
 
     def draw_car_background(self):
@@ -87,52 +92,22 @@ class RacerWindow(pyglet.window.Window):
                                  ('c3B', (100, 100, 255) * 2)
                                  )
 
-    def on_close(self):
-        self.game_state.lost = True
-        super().on_close()
-
     def on_key_press(self, symbol, modifiers):
         super().on_key_press(symbol, modifiers)
-        if self.game_state.lost:
-            return
-        if symbol == key.P:
-            self.game_state.is_paused = not self.game_state.is_paused
-        if symbol == key.UP:
-            self.player_operations.accelerate()
-        if symbol == key.DOWN:
-            self.player_operations.reverse()
-        if symbol == key.LEFT:
-            self.player_operations.turn_left()
-        if symbol == key.RIGHT:
-            self.player_operations.turn_right()
+        self.controller.on_key_press(symbol)
 
     def on_key_release(self, symbol, modifiers):
-        if symbol in (key.UP, key.DOWN):
-            self.player_operations.stop_direction()
-        if symbol == key.LEFT:
-            self.player_operations.stop_left()
-        if symbol == key.RIGHT:
-            self.player_operations.stop_right()
+        self.controller.on_key_release(symbol)
 
     def on_deactivate(self):
-        self.game_state.is_paused = True
+        self.controller.focus_lost()
 
     def update(self, dt):
-        if self.game_state.is_paused:
-            return
-        self.engine.update(dt, self.player_operations)
-        if self.engine.game_over:
-            self.game_state.lost = True
-            return
-        pl = self.engine.player
-        self.car_frame.update(x=pl.position[0], y=pl.position[1], rotation=pl.rotation)
-        self.score_box.update_text(self.engine.score)
-
-
-class GameState:
-    def __init__(self):
-        self.is_paused = False
-        self.lost = False
+        player_pos = self.controller.update_player(dt)
+        if player_pos:
+            pos_x, pos_y, rot = player_pos
+            self.car_frame.update(x=pos_x, y=pos_y, rotation=rot)
+            self.score_box.update_text(self.controller.get_score())
 
 
 class GameOverlay:
@@ -187,6 +162,22 @@ class ScoreBox:
     def update_text(self, score):
         self.label.text = 'Score: {}'.format(score)
         self.label.x = self.center_x - self.label.content_width / 2
+
+
+def convert_data(points, color, color_mode='c3B'):
+    pts_count = int(len(points) / 2)
+    vertices = ('v2i', points)
+    color_data = (color_mode, color * pts_count)
+    return pts_count, vertices, color_data
+
+
+def create_vertex_list(points, color):
+    return pyglet.graphics.vertex_list(*convert_data(points, color))
+
+
+def add_points_to(batch, points, color, mode=pyglet.gl.GL_LINE_STRIP, group=None):
+    pts_count, vertices, color_data = convert_data(points, color)
+    batch.add(pts_count, mode, group, vertices, color_data)
 
 
 import math
