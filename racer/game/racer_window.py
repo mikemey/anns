@@ -39,33 +39,21 @@ class RaceController:
         pass
 
 
-def random_color():
-    return tuple(np.random.randint(0, 255, size=3))
-
-
 class RacerWindow(pyglet.window.Window):
     BG_COLOR = 0.5, 0.8, 0.4, 1
     WINDOW_POS = 20, 0
-    TRACK_COLOR = 160, 10, 60
-    CAR_COLOR = ('c3B', random_color() + random_color() +
-                 random_color() + random_color())
 
     def __init__(self, controller: RaceController):
         super().__init__(*WINDOW_SIZE, caption='Racer')
-        self.controller = controller
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
-        self.set_location(*self.WINDOW_POS)
         pyglet.gl.glClearColor(*self.BG_COLOR)
-        self.batch = pyglet.graphics.Batch()
-        add_points_to(self.batch, OUTER_TRACK, self.TRACK_COLOR)
-        add_points_to(self.batch, INNER_TRACK, self.TRACK_COLOR)
+        self.set_location(*self.WINDOW_POS)
+        self.controller = controller
 
-        self.score_box = ScoreBox(self.batch)
-        self.car_frame = pyglet.sprite.Sprite(img=car_frame_img, batch=self.batch)
-        self.car_frame.scale = 0.5
-        pts, vertices, _ = convert_data(CAR_BOUND_POINTS)
-        self.car_color = pyglet.graphics.vertex_list(pts, vertices, vertices, self.CAR_COLOR)
+        self.track = TrackGraphics()
+        self.score_box = ScoreBox()
+        self.car = CarGraphics()
         self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
         self.lost_overlay = GameOverlay('Lost!', '')
 
@@ -75,28 +63,13 @@ class RacerWindow(pyglet.window.Window):
 
     def on_draw(self):
         self.clear()
-        self.draw_car_background()
-        pyglet.gl.glLineWidth(5)
-        self.batch.draw()
+        self.track.draw()
+        self.car.draw()
         if self.controller.show_lost_screen:
             self.lost_overlay.draw()
         elif self.controller.show_paused_screen:
             self.pause_overlay.draw()
-
-    def draw_car_background(self):
-        pyglet.gl.glPushMatrix()
-        pyglet.gl.glTranslatef(self.car_frame.x, self.car_frame.y, 0)
-        pyglet.gl.glRotatef(-self.car_frame.rotation, 0, 0, 1.0)
-        self.car_color.draw(pyglet.gl.GL_POLYGON)
-        pyglet.gl.glPopMatrix()
-
-        pyglet.gl.glLineWidth(1)
-        rot = math.radians(self.car_frame.rotation)
-        for pos in find_nearest_points(self.car_frame.position, rot):
-            pyglet.graphics.draw(2, pyglet.gl.GL_LINE_STRIP,
-                                 ('v2f', self.car_frame.position + pos),
-                                 ('c3B', (100, 100, 255) * 2)
-                                 )
+        self.score_box.draw()
 
     def on_key_press(self, symbol, modifiers):
         super().on_key_press(symbol, modifiers)
@@ -111,18 +84,77 @@ class RacerWindow(pyglet.window.Window):
     def update(self, dt):
         player_pos = self.controller.update_player(dt)
         if player_pos:
-            pos_x, pos_y, rot = player_pos
-            self.car_frame.update(x=pos_x, y=pos_y, rotation=rot)
+            self.car.update(*player_pos)
             self.score_box.update_text(self.controller.get_score())
 
 
-class GameOverlay:
+class GraphicsElement:
+    def __init__(self):
+        self.batch = pyglet.graphics.Batch()
+
+    def draw(self):
+        self.batch.draw()
+
+
+def random_color():
+    return tuple(np.random.randint(0, 255, size=3))
+
+
+class CarGraphics(GraphicsElement):
+    CAR_COLOR = 'c3B', random_color() + random_color() + random_color() + random_color()
+    TRACE_COLOR = 100, 100, 255
+
+    def __init__(self, show_traces=True):
+        super().__init__()
+        self.show_traces = show_traces
+        self.car_frame = pyglet.sprite.Sprite(img=car_frame_img, batch=self.batch)
+        self.car_frame.scale = 0.5
+        pts, vertices, _ = convert_data(CAR_BOUND_POINTS)
+        self.car_color = pyglet.graphics.vertex_list(pts, vertices, vertices, self.CAR_COLOR)
+
+    def draw(self):
+        if self.show_traces:
+            self.draw_traces()
+        pyglet.gl.glPushMatrix()
+        pyglet.gl.glTranslatef(self.car_frame.x, self.car_frame.y, 0)
+        pyglet.gl.glRotatef(-self.car_frame.rotation, 0, 0, 1.0)
+        self.car_color.draw(pyglet.gl.GL_POLYGON)
+        pyglet.gl.glPopMatrix()
+        self.batch.draw()
+
+    def draw_traces(self):
+        pyglet.gl.glLineWidth(1)
+        rot = math.radians(self.car_frame.rotation)
+        for pos in find_nearest_points(self.car_frame.position, rot):
+            pyglet.graphics.draw(2, pyglet.gl.GL_LINE_STRIP,
+                                 ('v2f', self.car_frame.position + pos),
+                                 ('c3B', self.TRACE_COLOR * 2)
+                                 )
+
+    def update(self, pos_x, pos_y, rot):
+        self.car_frame.update(x=pos_x, y=pos_y, rotation=rot)
+
+
+class TrackGraphics(GraphicsElement):
+    TRACK_COLOR = 160, 10, 60
+
+    def __init__(self):
+        super().__init__()
+        add_points_to(self.batch, OUTER_TRACK, self.TRACK_COLOR)
+        add_points_to(self.batch, INNER_TRACK, self.TRACK_COLOR)
+
+    def draw(self):
+        pyglet.gl.glLineWidth(5)
+        self.batch.draw()
+
+
+class GameOverlay(GraphicsElement):
     BG_COLOR = 30, 30, 30, 150
     MAIN_COLOR = 255, 255, 0, 255
     SECOND_COLOR = 255, 255, 150, 255
 
     def __init__(self, main_txt, support_txt, exit_txt='"Esc" to quit'):
-        self.overlay = pyglet.graphics.Batch()
+        super().__init__()
         background = pyglet.graphics.OrderedGroup(0)
         foreground = pyglet.graphics.OrderedGroup(1)
 
@@ -130,40 +162,39 @@ class GameOverlay:
         cnt, vertices, transparent = convert_data(
             [0, 0, size[0], 0, size[0], size[1], 0, size[1]],
             self.BG_COLOR, color_mode='c4B')
-        self.overlay.add(4, pyglet.gl.GL_POLYGON, background, vertices, transparent)
+        self.batch.add(4, pyglet.gl.GL_POLYGON, background, vertices, transparent)
 
-        main_lbl = pyglet.text.Label(main_txt, batch=self.overlay, group=foreground,
+        main_lbl = pyglet.text.Label(main_txt, batch=self.batch, group=foreground,
                                      color=self.MAIN_COLOR, font_size=22, bold=True)
         main_lbl.x = size[0] / 2 - main_lbl.content_width / 2
         main_lbl.y = size[1] / 2 - main_lbl.content_height / 2
-        support_lbl = pyglet.text.Label(support_txt, batch=self.overlay, group=foreground,
+        support_lbl = pyglet.text.Label(support_txt, batch=self.batch, group=foreground,
                                         color=self.SECOND_COLOR, font_size=16)
         support_lbl.x = size[0] / 2 - support_lbl.content_width / 2
         support_lbl.y = size[1] / 2 - main_lbl.content_height - support_lbl.content_height
-        exit_lbl = pyglet.text.Label(exit_txt, batch=self.overlay, group=foreground,
+        exit_lbl = pyglet.text.Label(exit_txt, batch=self.batch, group=foreground,
                                      color=self.SECOND_COLOR, font_size=16)
         exit_lbl.x = size[0] / 2 - exit_lbl.content_width / 2
         exit_lbl.y = size[1] / 2 - main_lbl.content_height - exit_lbl.content_height * 2.3
 
-    def draw(self):
-        self.overlay.draw()
 
-
-class ScoreBox:
+class ScoreBox(GraphicsElement):
     BG_COLOR = 50, 50, 200
     SCORE_BOX = 125, 40
 
-    def __init__(self, batch):
+    def __init__(self):
+        super().__init__()
         offset = np.array(WINDOW_SIZE) - self.SCORE_BOX
         box = np.append(offset, offset + self.SCORE_BOX)
         self.center_x = offset[0] + self.SCORE_BOX[0] / 2
 
         background = pyglet.graphics.OrderedGroup(0)
         foreground = pyglet.graphics.OrderedGroup(1)
-        add_points_to(batch, [
+        add_points_to(self.batch, [
             box[0], box[1], box[2], box[1], box[2], box[3], box[0], box[3], box[0], box[1]
         ], self.BG_COLOR, pyglet.gl.GL_POLYGON, background)
-        self.label = pyglet.text.Label(x=WINDOW_SIZE[0] - 100, y=WINDOW_SIZE[1] - 25, batch=batch, group=foreground)
+        self.label = pyglet.text.Label(x=WINDOW_SIZE[0] - 100, y=WINDOW_SIZE[1] - 25,
+                                       batch=self.batch, group=foreground)
 
     def update_text(self, score):
         self.label.text = 'Score: {}'.format(score)
