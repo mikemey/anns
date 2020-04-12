@@ -2,7 +2,9 @@
 
 #### Manual player
 
-<img src="docs/manual-run.png" height="415"/>
+<p align="center">
+    <img src="docs/manual-run.png" height="415"/>
+</p>
 
 #### Requirements
 Python 3, 
@@ -33,5 +35,5 @@ Single-player mode
 
 Demo player, mainly used during development.
 ```bash
-python3 racer demo
+[project-root-dir] $ python3 racer demo
 ```
