@@ -8,7 +8,7 @@
 Python 3, 
 [NumPy](https://pypi.org/project/numpy/), 
 [NEAT-Python](https://pypi.org/project/neat-python/), 
-[pyglet](http://pyglet.org/)
+[pyglet](http://pyglet.org/),
 [Shapely](https://pypi.org/project/Shapely/)
 
 #### Install dependencies
@@ -21,4 +21,11 @@ Python 3,
 
 ```bash
 [project-root-dir] $ python3 racer
+```
+
+#### Demo auto player
+
+Demo player, mainly used during development.
+```bash
+python3 racer demo
 ```
