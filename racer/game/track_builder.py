@@ -31,6 +31,12 @@ class TrackBuilderWindow(pyglet.window.Window):
         self.player = pyglet.sprite.Sprite(img=player_img, batch=self.batch)
         self.player.scale = 0.5
         self.player.position = (100, 100)
+        pyglet.text.Label('switch track:', x=830, y=670, batch=self.batch)
+        pyglet.text.Label('\'Enter\'', x=940, y=670, batch=self.batch)
+        pyglet.text.Label('switch mode:', x=830, y=650, batch=self.batch)
+        pyglet.text.Label('\'a\'', x=940, y=650, batch=self.batch)
+        pyglet.text.Label('print track:', x=830, y=630, batch=self.batch)
+        pyglet.text.Label('\'p\'', x=940, y=630, batch=self.batch)
 
         self.select_mode = True
         self.select_point_ix = -1
