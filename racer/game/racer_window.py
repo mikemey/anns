@@ -5,7 +5,7 @@ import numpy as np
 import pyglet
 
 from .racer_engine import CAR_BOUND_POINTS
-from .tracks import OUTER_TRACK, INNER_TRACK, WINDOW_SIZE
+from .tracks import OUTER_TRACK, INNER_TRACK, TRACK_SIZE, get_trace_points
 
 resource_dir = path.join(path.abspath(path.dirname(__file__)), 'resources')
 pyglet.resource.path = [resource_dir]
@@ -44,7 +44,7 @@ class RacerWindow(pyglet.window.Window):
     WINDOW_POS = 20, 0
 
     def __init__(self, controller: RaceController):
-        super().__init__(*WINDOW_SIZE, caption='Racer')
+        super().__init__(*TRACK_SIZE, caption='Racer')
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
         pyglet.gl.glClearColor(*self.BG_COLOR)
@@ -124,8 +124,7 @@ class CarGraphics(GraphicsElement):
 
     def draw_traces(self):
         pyglet.gl.glLineWidth(1)
-        rot = math.radians(self.car_frame.rotation)
-        for pos in find_nearest_points(self.car_frame.position, rot):
+        for pos in get_trace_points(self.car_frame.position, self.car_frame.rotation):
             pyglet.graphics.draw(2, pyglet.gl.GL_LINE_STRIP,
                                  ('v2f', self.car_frame.position + pos),
                                  ('c3B', self.TRACE_COLOR * 2)
@@ -158,24 +157,23 @@ class GameOverlay(GraphicsElement):
         background = pyglet.graphics.OrderedGroup(0)
         foreground = pyglet.graphics.OrderedGroup(1)
 
-        size = WINDOW_SIZE
         cnt, vertices, transparent = convert_data(
-            [0, 0, size[0], 0, size[0], size[1], 0, size[1]],
+            [0, 0, TRACK_SIZE[0], 0, TRACK_SIZE[0], TRACK_SIZE[1], 0, TRACK_SIZE[1]],
             self.BG_COLOR, color_mode='c4B')
         self.batch.add(4, pyglet.gl.GL_POLYGON, background, vertices, transparent)
 
         main_lbl = pyglet.text.Label(main_txt, batch=self.batch, group=foreground,
                                      color=self.MAIN_COLOR, font_size=22, bold=True)
-        main_lbl.x = size[0] / 2 - main_lbl.content_width / 2
-        main_lbl.y = size[1] / 2 - main_lbl.content_height / 2
+        main_lbl.x = TRACK_SIZE[0] / 2 - main_lbl.content_width / 2
+        main_lbl.y = TRACK_SIZE[1] / 2 - main_lbl.content_height / 2
         support_lbl = pyglet.text.Label(support_txt, batch=self.batch, group=foreground,
                                         color=self.SECOND_COLOR, font_size=16)
-        support_lbl.x = size[0] / 2 - support_lbl.content_width / 2
-        support_lbl.y = size[1] / 2 - main_lbl.content_height - support_lbl.content_height
+        support_lbl.x = TRACK_SIZE[0] / 2 - support_lbl.content_width / 2
+        support_lbl.y = TRACK_SIZE[1] / 2 - main_lbl.content_height - support_lbl.content_height
         exit_lbl = pyglet.text.Label(exit_txt, batch=self.batch, group=foreground,
                                      color=self.SECOND_COLOR, font_size=16)
-        exit_lbl.x = size[0] / 2 - exit_lbl.content_width / 2
-        exit_lbl.y = size[1] / 2 - main_lbl.content_height - exit_lbl.content_height * 2.3
+        exit_lbl.x = TRACK_SIZE[0] / 2 - exit_lbl.content_width / 2
+        exit_lbl.y = TRACK_SIZE[1] / 2 - main_lbl.content_height - exit_lbl.content_height * 2.3
 
 
 class ScoreBox(GraphicsElement):
@@ -184,7 +182,7 @@ class ScoreBox(GraphicsElement):
 
     def __init__(self):
         super().__init__()
-        offset = np.array(WINDOW_SIZE) - self.SCORE_BOX
+        offset = np.array(TRACK_SIZE) - self.SCORE_BOX
         box = np.append(offset, offset + self.SCORE_BOX)
         self.center_x = offset[0] + self.SCORE_BOX[0] / 2
 
@@ -193,7 +191,7 @@ class ScoreBox(GraphicsElement):
         add_points_to(self.batch, [
             box[0], box[1], box[2], box[1], box[2], box[3], box[0], box[3], box[0], box[1]
         ], self.BG_COLOR, pyglet.gl.GL_POLYGON, background)
-        self.label = pyglet.text.Label(x=WINDOW_SIZE[0] - 100, y=WINDOW_SIZE[1] - 25,
+        self.label = pyglet.text.Label(x=TRACK_SIZE[0] - 100, y=TRACK_SIZE[1] - 25,
                                        batch=self.batch, group=foreground)
 
     def update_text(self, score):
@@ -208,57 +206,6 @@ def convert_data(points, color=None, color_mode='c3B'):
     return pts_count, vertices, color_data
 
 
-def create_vertex_list(points, color):
-    return pyglet.graphics.vertex_list(*convert_data(points, color))
-
-
 def add_points_to(batch, points, color, mode=pyglet.gl.GL_LINE_STRIP, group=None):
     pts_count, vertices, color_data = convert_data(points, color)
     batch.add(pts_count, mode, group, vertices, color_data)
-
-
-import math
-import shapely
-from shapely.geometry import LineString
-
-INNER_LINE = LineString(np.reshape(INNER_TRACK, (-1, 2)))
-OUTER_LINE = LineString(np.reshape(OUTER_TRACK, (-1, 2)))
-
-TRACE_LEN = WINDOW_SIZE[0]
-DEG_20 = math.pi / 9
-DEG_40 = math.pi / 9 * 2
-DEG_65 = math.pi / 36 * 13
-DEG_90 = math.pi / 2
-
-
-def find_nearest_points(pos, rot):
-    return [
-        closest_on_line(pos, rot),
-        closest_on_line(pos, rot + DEG_20),
-        closest_on_line(pos, rot - DEG_20),
-        closest_on_line(pos, rot + DEG_40),
-        closest_on_line(pos, rot - DEG_40),
-        closest_on_line(pos, rot + DEG_65),
-        closest_on_line(pos, rot - DEG_65),
-        closest_on_line(pos, rot + DEG_90),
-        closest_on_line(pos, rot - DEG_90)
-    ]
-
-
-def closest_on_line(pos, rot):
-    trace_target = (pos[0] + math.cos(rot) * TRACE_LEN, pos[1] - math.sin(rot) * TRACE_LEN)
-    tracer = LineString([pos, trace_target])
-    candidates = INNER_LINE.intersection(tracer).union(OUTER_LINE.intersection(tracer))
-    cross_pts = []
-    if not candidates.is_empty:
-        if isinstance(candidates, shapely.geometry.MultiPoint):
-            for pts in candidates.geoms:
-                cross_pts.append((pts.x, pts.y))
-        else:
-            cross_pts.append((candidates.x, candidates.y))
-
-    np_cross_pts = np.array(cross_pts)
-    if len(np_cross_pts) == 0:
-        return []
-    sq_distances = np.sum((np_cross_pts - pos) ** 2, axis=1)
-    return cross_pts[np.argmin(sq_distances)]
