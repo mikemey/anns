@@ -21,8 +21,8 @@ Python 3,
 
 | **READMEs** |
 | --- |
-| **[Box pusher](src#readme)** |
-| <p align="center"><img src="src/docs/manual-run.png" height="320" /></p> |
+| **[Box pusher](boxpusher#readme)** |
+| <p align="center"><img src="boxpusher/docs/manual-run.png" height="320" /></p> |
 | **[Racer](racer#readme)** |
 | <p align="center"><img src="racer/docs/manual-run.png" height="320" /></p> |
 | **[Chatter box](chatter#readme)** |

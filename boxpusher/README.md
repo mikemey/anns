@@ -44,20 +44,20 @@ Python 3,
 #### Run game manually
 
 ```bash
-[project-root-dir] $ python3 src/manual_player.py
+[project-root-dir] $ python3 boxpusher/manual_player.py
 ```
 
 #### Demo auto player
 
 A demonstration of `AutoPlayer`, mainly used during development.
 ```bash
-[project-root-dir] $ python3 src/auto_player.py
+[project-root-dir] $ python3 boxpusher/auto_player.py
 ```
 
 ### Train NEAT network
 
 ```bash
-[project-root-dir] $ python3 src/training.py
+[project-root-dir] $ python3 boxpusher/training.py
 [2020-04-07 12:57:53] --- START ---
 [2020-04-07 12:57:54] g:[   1], bm:   357, w/l:     0 /  25,000
  ───  p/s: 250/ 2, avg: -86.3 max a/f: -86.3[   1] / -40.5[   1], gen a/b: -86.3 / -40.5 ( 4-20) abs: 0 cla:100 rel: 0 sig: 0
