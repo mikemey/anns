@@ -5,7 +5,8 @@ import numpy as np
 import pyglet
 
 from .racer_engine import CAR_BOUND_POINTS
-from .tracks import OUTER_TRACK, INNER_TRACK, TRACK_SIZE, get_trace_points
+from .tracers import get_trace_points
+from .tracks import OUTER_TRACK, INNER_TRACK, TRACK_SIZE
 
 resource_dir = path.join(path.abspath(path.dirname(__file__)), 'resources')
 pyglet.resource.path = [resource_dir]
