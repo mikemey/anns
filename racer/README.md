@@ -19,14 +19,26 @@ Python 3,
 [project-root-dir] $ pip3 install -r requirements.txt
 ```
 
+##### Start parameters
+
+```bash
+Parameters:
+	[none] 	single-player mode
+	2      	2-player mode
+	demo   	demo mode
+	train  	training mode
+```
+
 #### Run game manually
 
-Single-player mode
+##### Single-player mode
+
 ```bash
 [project-root-dir] $ python3 racer
 ```
 
-2-player mode
+##### 2-player mode
+
 ```bash
 [project-root-dir] $ python3 racer 2
 ```
@@ -36,4 +48,11 @@ Single-player mode
 Demo player, mainly used during development.
 ```bash
 [project-root-dir] $ python3 racer demo
+```
+
+#### Train NEAT network
+
+Start training:
+```bash
+[project-root-dir] $ python3 racer train
 ```

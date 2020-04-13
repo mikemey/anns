@@ -3,7 +3,7 @@ import math
 import matplotlib.path as mpath
 import numpy as np
 
-from .tracks import *
+from .tracks import OUTER_TRACK, INNER_TRACK, INIT_CAR_POSITION, INIT_CAR_ROTATION
 
 CAR_BOUNDS = (-15, -11, 33, 11)
 CAR_BOUND_POINTS = (CAR_BOUNDS[0], CAR_BOUNDS[1], CAR_BOUNDS[2], CAR_BOUNDS[1],
@@ -67,6 +67,12 @@ class PlayerOperation:
         self._data[self.LEFT_IX] = False
 
     def stop_right(self):
+        self._data[self.RIGHT_IX] = False
+
+    def stop_all(self):
+        self._data[self.FWD_IX] = False
+        self._data[self.REV_IX] = False
+        self._data[self.LEFT_IX] = False
         self._data[self.RIGHT_IX] = False
 
 
