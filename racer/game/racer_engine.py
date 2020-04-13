@@ -80,15 +80,12 @@ class RacerEngine:
     def __init__(self):
         self.player = Player()
         self.track = Track()
-        self.score = 0
         self.game_over = False
 
     def update(self, dt, operations):
         self.player.update(dt, operations)
         if not self.track.contains_points(self.player.boundaries):
             self.game_over = True
-        elif not ignore_speed(self.player.speed):
-            self.score += 1 if self.player.speed > 0 else -2
 
 
 class Player:
@@ -97,6 +94,12 @@ class Player:
         self.rotation = INIT_CAR_ROTATION
         self.speed = 0
         self.boundaries = []
+
+    @property
+    def relevant_speed(self):
+        if ignore_speed(self.speed):
+            return 0
+        return self.speed
 
     def update(self, dt, operations: PlayerOperation):
         self.speed *= CAR_FRICTION

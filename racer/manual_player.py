@@ -56,11 +56,11 @@ class ManualController(RaceController):
 
     def get_score_text(self):
         if self.two_players:
-            if self.players[0].engine.score > self.players[1].engine.score:
+            if self.players[0].score > self.players[1].score:
                 return 'Player 1'
             else:
                 return 'Player 2'
-        return 'Score: {}'.format(self.players[0].engine.score)
+        return 'Score: {:.0f}'.format(self.players[0].score)
 
     def update_players(self, dt) -> List[Tuple[float, float, float]]:
         if not (self.show_paused_screen or self.show_lost_screen):
@@ -74,11 +74,13 @@ class ManualController(RaceController):
 
 class ManualPlayer:
     def __init__(self, up, down, left, right):
+        self.score = 0
         self.engine = RacerEngine()
         self.operation = PlayerOperation()
         self.up, self.down, self.left, self.right = up, down, left, right
 
     def reset(self):
+        self.score = 0
         self.engine = RacerEngine()
         self.operation = PlayerOperation()
 
@@ -103,6 +105,9 @@ class ManualPlayer:
     def update(self, dt) -> List[Tuple[float, float, float]]:
         if not self.engine.game_over:
             self.engine.update(dt, self.operation)
+            relevant_speed = self.engine.player.relevant_speed
+            amp = 0.002 if relevant_speed < 0 else 0.001
+            self.score += relevant_speed * amp
 
     def get_position(self):
         return self.engine.player.position[0], \

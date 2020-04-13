@@ -105,9 +105,6 @@ class DemoPlayer:
         self.next_step = None
         self.__set_next_step__()
 
-    def get_score(self):
-        return self.engine.score
-
     def update_position(self, dt, time):
         if self.engine.game_over or time < self.time_delay:
             return
