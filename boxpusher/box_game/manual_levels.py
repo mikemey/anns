@@ -1,4 +1,4 @@
-from game_engine import Level
+from .game_engine import Level
 
 __walls__ = {
     'empty': [],

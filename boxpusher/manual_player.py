@@ -1,7 +1,7 @@
 from fitness_calc import create_fitness_calculator
-from game_engine import BoxPusherEngine
-from game_window import GameWindowObserver, BoxPusherWindow
-from manual_levels import LEVELS
+from box_game.game_engine import BoxPusherEngine
+from box_game.game_window import GameWindowObserver, BoxPusherWindow
+from box_game.manual_levels import LEVELS
 
 
 class GameMaster(GameWindowObserver):

@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 
-from game_engine import Level
+from .game_engine import Level
 
 
 def generate_level():

@@ -1,7 +1,7 @@
 import arcade
 from arcade import Sprite
 
-from game_engine import Direction
+from .game_engine import Direction
 
 SCREEN_TITLE = "Box pusher"
 SPRITE_SCALING = 0.5

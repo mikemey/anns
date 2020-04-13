@@ -1,5 +1,5 @@
-from game_engine import BoxPusherEngine, Level, GameListener
-from training_levels import distance_between, distance_sum_between
+from box_game.game_engine import BoxPusherEngine, Level, GameListener
+from box_game.training_levels import distance_between, distance_sum_between
 
 
 def get_axis_neighbours(goal_coord, box_coord):

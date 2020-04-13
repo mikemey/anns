@@ -1,5 +1,5 @@
-from game_engine import BoxPusherEngine, Level, Direction
-from game_window import GameWindowObserver, BoxPusherWindow
+from box_game.game_engine import BoxPusherEngine, Level, Direction
+from box_game.game_window import GameWindowObserver, BoxPusherWindow
 
 
 class AutoPlayer:
