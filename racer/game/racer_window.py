@@ -48,7 +48,7 @@ class RacerWindow(pyglet.window.Window):
     BG_COLOR = 0.5, 0.8, 0.4, 1
     WINDOW_POS = 20, 0
 
-    def __init__(self, controller: RaceController):
+    def __init__(self, controller: RaceController, show_traces=True):
         super().__init__(*TRACK_SIZE, caption='Racer')
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
@@ -58,7 +58,7 @@ class RacerWindow(pyglet.window.Window):
 
         self.track = TrackGraphics()
         self.score_box = ScoreBox()
-        self.cars = [CarGraphics() for _ in range(self.controller.get_player_count())]
+        self.cars = [CarGraphics(show_traces) for _ in range(self.controller.get_player_count())]
         self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
         self.lost_overlay = GameOverlay('Lost!', '"n" New game')
 

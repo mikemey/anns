@@ -1,3 +1,4 @@
+import math
 import os
 from configparser import ConfigParser
 from multiprocessing import Pool
@@ -36,6 +37,7 @@ class TrainingConfig:
 
         self.processes = parameters.getint(self.SECTION, 'processes')
         self.showcase_batch_size = parameters.getint(self.SECTION, 'showcase_every_gen')
+        self.showcase_racer_count = parameters.getint(self.SECTION, 'showcase_racer_count')
 
 
 class NeuralMaster:
@@ -44,10 +46,19 @@ class NeuralMaster:
         self.population = neat.Population(neat_config)
         self.reporter = TrainingReporter(self.training_config.showcase_batch_size)
         self.population.add_reporter(self.reporter)
+        self.best_racers = []
 
         self.pool = None
         signal(SIGINT, self.stop)
         self.pool = Pool(processes=self.training_config.processes)
+
+    def run(self):
+        try:
+            winner = self.population.run(self.eval_population, 100000)
+            print('\nWinner fitness:', winner.fitness)
+        except ValueError or CompleteExtinctionException as ex:
+            print(ex)
+            self.stop()
 
     def stop(self, signal_received=None, frame=None):
         if self.pool:
@@ -56,58 +67,51 @@ class NeuralMaster:
             print('process pool closed.')
             exit(0)
 
-    def run(self):
-        try:
-            winner = self.population.run(self.eval_population, 100000)
-            print('\nWinner fitness:', winner.fitness)
-        except ValueError or CompleteExtinctionException:
-            self.stop()
+    def eval_population(self, key_genomes, config: neat.config.Config):
+        separated_tup = list(zip(*key_genomes))
+        genomes = list(separated_tup[1])
+        genome_configs = [(genome, config) for genome in genomes]
+        pop_fitness = self.pool.starmap(NeuralRacer.play_game, genome_configs)
 
-    def eval_population(self, population_genomes, config: neat.config.Config):
-        # genome_configs = [(genome, config) for _, genome in population_genomes]
-        #
-        # pop_fitness = self.pool.starmap(NeuralRacer.play_game, genome_configs)
-        # for fitness, (genome, _) in zip(pop_fitness, genome_configs):
-        #     genome.fitness = fitness
-        #
-        # pop_best = sorted([g for _, g in population_genomes], key=lambda g: g.fitness)[:4]
-        first_ten = [g for _, g in population_genomes][:4]
-        ShowcaseController(first_ten, config).showcase()
-        # self.reporter.run_post_batch(lambda: controller.showcase_genome(pop_best_genome, config))
+        for fitness, genome in zip(pop_fitness, genomes):
+            genome.fitness = fitness
 
+        def showcase_best():
+            racer = sorted(genomes, key=lambda gen: gen.fitness, reverse=True)[:self.training_config.showcase_racer_count]
+            print('Showcase racer fitness:', [math.floor(r.fitness) for r in racer])
+            ShowcaseController(racer, config).showcase()
 
-# class BestRacers:
-#     SIZE = 10
-#     def __init__(self):
-#         self.racer = [None] * self.SIZE
+        self.reporter.run_post_batch(showcase_best)
+
 
 class ShowcaseController(RaceController):
-    DELAY_AUTO_CLOSE_SECS = 3
+    DELAY_AUTO_CLOSE_SECS = 5
 
     def __init__(self, genomes, config):
         super().__init__()
         self.players = [NeuralRacer(genome, config) for genome in genomes]
-        self.window = RacerWindow(self)
+        self.window = RacerWindow(self, False)
         self.seconds_to_close = self.DELAY_AUTO_CLOSE_SECS
 
     def showcase(self):
         self.window.start()
 
     def get_score_text(self):
-        highest_score = max([player.engine.score for player in self.players])
-        return 'max: {}'.format(highest_score)
+        highest_score = max([player.score for player in self.players])
+        return 'max: {:.0f}'.format(highest_score)
 
     def update_players(self, dt) -> List[Tuple[float, float, float]]:
         if not self.show_lost_screen:
-            self.show_lost_screen = True
+            all_lost = True
             for player in self.players:
                 if not player.game_over():
-                    self.show_lost_screen = False
+                    all_lost = False
                     player.next_step(dt)
+            self.show_lost_screen = all_lost
 
         if self.show_lost_screen:
             if self.seconds_to_close == self.DELAY_AUTO_CLOSE_SECS:
-                print('all games ended, waiting {} seconds to exit...'.format(self.DELAY_AUTO_CLOSE_SECS))
+                print('showcases finished, waiting {} seconds to exit...'.format(self.DELAY_AUTO_CLOSE_SECS))
             self.seconds_to_close -= dt
             if self.seconds_to_close < 0:
                 self.window.close()
@@ -120,9 +124,9 @@ class ShowcaseController(RaceController):
 
 class NeuralRacer:
     TRAINING_DT = 1 / 60
-    MIN_DISTANCE = 10
-    DISTANCE_RANGE = 650
-    NOOP_TIMEOUT_SECS = 3
+    NOOP_TIMEOUT_SECS = 2
+    MIN_SCORE_PER_SECOND = 1
+    MIN_SPS_OFFSET = 2
 
     @staticmethod
     def play_game(genome, config):
@@ -133,6 +137,8 @@ class NeuralRacer:
         self.net = neat.nn.FeedForwardNetwork.create(genome, config)
         self.operations = PlayerOperation()
         self.noop_timeout = self.NOOP_TIMEOUT_SECS
+        self.time = 0
+        self.score = 0
 
     def get_position(self):
         return self.engine.player.position[0], \
@@ -140,23 +146,31 @@ class NeuralRacer:
                self.engine.player.rotation
 
     def game_over(self):
-        return self.engine.score < 0 or self.engine.game_over or self.noop_timeout < 0
+        return self.score < 0 \
+               or self.engine.game_over \
+               or self.noop_timeout < 0 \
+               or self.__under_score_per_seconds_limit()
 
     def get_fitness(self):
-        max_fitness = 0
         while not self.game_over():
             self.next_step(self.TRAINING_DT)
-            if self.engine.score > max_fitness:
-                max_fitness = self.engine.score
-        return max_fitness
+            self.time += self.TRAINING_DT
+
+        fitness = self.score
+        if self.noop_timeout < 0:
+            fitness -= 20
+        if self.__under_score_per_seconds_limit():
+            fitness -= 10
+        return fitness
 
     def next_step(self, dt):
         distances = get_trace_distances(self.engine.player.position, self.engine.player.rotation)
         output = self.net.activate(distances)
-        self.update_operations(dt, *output)
+        self.__update_operations(dt, *output)
         self.engine.update(dt, self.operations)
+        self.__update_score()
 
-    def update_operations(self, dt, fwd, back, left, right):
+    def __update_operations(self, dt, fwd, back, left, right):
         self.operations.stop_all()
         self.noop_timeout -= dt
         if fwd > 0.5 or back > 0.5:
@@ -171,7 +185,21 @@ class NeuralRacer:
             else:
                 self.operations.turn_right()
 
+    def __update_score(self):
+        relevant_speed = self.engine.player.relevant_speed
+        amp = 0.002 if relevant_speed < 0 else 0.001
+        self.score += relevant_speed * amp
+
+    def __under_score_per_seconds_limit(self):
+        if self.time > self.MIN_SPS_OFFSET:
+            return self.score / self.time < self.MIN_SCORE_PER_SECOND
+        return False
+
+
+MIN_DISTANCE = 10
+DISTANCE_RANGE = 650
+
 
 def normalized_distances(self):
     distances = get_trace_distances(self.engine.player.position, self.engine.player.rotation)
-    return [(dist - self.MIN_DISTANCE) / self.DISTANCE_RANGE for dist in distances]
+    return [(dist - MIN_DISTANCE) / DISTANCE_RANGE for dist in distances]

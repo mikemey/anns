@@ -3,10 +3,10 @@ from datetime import datetime
 
 import neat
 
-FITNESS_FORMAT = '{:5f}'
+FITNESS_FORMAT = '{:5.0f}'
 TRAINING_STATS_TEMPLATE = 'g:[{{:5}}], p/s: {{}}/{{:2}}, avg: {0} max a/f: {0}[{{:4}}] / {0}[{{:4}}], ' \
                           'gen a/b: {0} / {0} ({{:2}}-{{:2}})'.format(FITNESS_FORMAT)
-BATCH_STATS_TEMPLATE = '_' * 50 + '▏total distance: {:8,}'
+BATCH_STATS_TEMPLATE = '_' * 50 + '▏total distance: {:8,.0f}'
 
 
 class TrainingReporter(neat.reporting.BaseReporter):
@@ -38,7 +38,7 @@ class TrainingReporter(neat.reporting.BaseReporter):
         self.keep_max_gen(self.max_avg, rolling_fit_mean, self.generations)
         self.keep_max_gen(self.max_fit, best_genome.fitness, self.generations)
 
-        print(TRAINING_STATS_TEMPLATE.format(
+        self.__report__(TRAINING_STATS_TEMPLATE.format(
             self.generations, pop_count, len(species_set.species), rolling_fit_mean,
             self.max_avg[0], self.max_avg[1],
             self.max_fit[0], self.max_fit[1],
