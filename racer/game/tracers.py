@@ -30,11 +30,15 @@ def get_trace_points(pos, rotation_grad):
 
 def closest_distance_on_line(pos, rot):
     cross_pts = cross_points_on_line(pos, rot)
+    if len(cross_pts) == 0:
+        return TRACE_LEN
     return min(np.sum((np.abs(np.array(cross_pts) - pos)), axis=1))
 
 
 def closest_point_on_line(pos, rot):
     cross_pts = cross_points_on_line(pos, rot)
+    if len(cross_pts) == 0:
+        return pos
     sq_distances = np.sum((np.array(cross_pts) - pos) ** 2, axis=1)
     return cross_pts[np.argmin(sq_distances)]
 
