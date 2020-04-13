@@ -1,9 +1,11 @@
+import os.path as path
+
 import arcade
 from arcade import Sprite
 
 from .game_engine import Direction
 
-SCREEN_TITLE = "Box pusher"
+SCREEN_TITLE = 'Box pusher'
 SPRITE_SCALING = 0.5
 FLOOR_TILE_WIDTH = 50
 FTW_HALF = FLOOR_TILE_WIDTH / 2
@@ -32,6 +34,13 @@ class GameWindowObserver:
         pass
 
 
+resource_dir = path.join(path.dirname(__file__), 'resources')
+
+
+def create_field_sprite(sprite_id, scaling=SPRITE_SCALING):
+    return FieldSprite(path.join(resource_dir, sprite_id), scaling)
+
+
 class FieldSprite(Sprite):
     def set_to_field(self, field):
         new_pos = field_to_position(field)
@@ -48,7 +57,7 @@ def field_to_position(field_position):
 def append_sprites(sprites_list, positions, sprite_image):
     for field in positions:
         pos = field_to_position(field)
-        sprite = FieldSprite(sprite_image, SPRITE_SCALING)
+        sprite = create_field_sprite(sprite_image)
         sprite.center_x = pos[0]
         sprite.center_y = pos[1]
         sprites_list.append(sprite)
@@ -87,7 +96,7 @@ class BoxPusherWindow(arcade.Window):
         self.engine = engine
         self.floor = self.__create_floor__()
         self.static_sprites = self.__create_static_sprites__()
-        self.player_sprite = self.__create_player__()
+        self.player_sprite = create_field_sprite('player.png')
         self.box_sprites = self.__create_box_sprites__()
 
         self.lost_text = self.__create_text__('LOST')
@@ -115,38 +124,34 @@ class BoxPusherWindow(arcade.Window):
     def __game_not_ready__(self):
         return self.engine is None
 
-    @staticmethod
-    def __create_player__():
-        return FieldSprite("resources/player.png", SPRITE_SCALING)
-
     def __create_text__(self, result_msg):
         sprites = arcade.SpriteList(is_static=True)
         if not self.disable_text:
-            result_text = arcade.draw_text("{} !".format(result_msg), 0, 0, arcade.color.RED_ORANGE, 20, bold=True)
+            result_text = arcade.draw_text('{} !'.format(result_msg), 0, 0, arcade.color.RED_ORANGE, 20, bold=True)
             result_text.set_position(self.field_width / 2, self.field_height / 2)
             sprites.append(result_text)
 
-            next_text = arcade.draw_text("Press 'n' to continue...", 0, 0, arcade.color.DARK_BLUE_GRAY)
+            next_text = arcade.draw_text('Press \'n\' to continue...', 0, 0, arcade.color.DARK_BLUE_GRAY)
             next_text.set_position(self.field_width / 2, self.field_height / 2 - HELP_TEXT_OFFSET)
             sprites.append(next_text)
 
-            quit_text = arcade.draw_text("Press 'q' to quit...", 0, 0, arcade.color.DARK_BLUE_GRAY)
+            quit_text = arcade.draw_text('Press \'q\' to quit...', 0, 0, arcade.color.DARK_BLUE_GRAY)
             quit_text.set_position(self.field_width / 2, self.field_height / 2 - (HELP_TEXT_OFFSET * 2))
             sprites.append(quit_text)
         return sprites
 
     def __create_static_sprites__(self):
         sprites = arcade.SpriteList(is_static=True)
-        goal_sprite = FieldSprite("resources/goal.png", SPRITE_SCALING)
+        goal_sprite = create_field_sprite('goal.png')
         goal_sprite.set_to_field(self.engine.goal)
         sprites.append(goal_sprite)
 
-        append_sprites(sprites, self.engine.walls, "resources/wall.png")
+        append_sprites(sprites, self.engine.walls, 'wall.png')
         return sprites
 
     def __create_box_sprites__(self):
         boxes = arcade.SpriteList()
-        append_sprites(boxes, self.engine.boxes, "resources/box.png")
+        append_sprites(boxes, self.engine.boxes, 'box.png')
         return boxes
 
     def __create_floor__(self):
