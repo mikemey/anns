@@ -89,24 +89,24 @@ A demonstration of `AutoPlayer`, mainly used during development.
 ### Stored training population
 
 When the current population's best genome has the best (highest) fitness value of all generations,
-the whole population and associated training data will be stored to a directory `trainings`. 
+the whole population will be stored to a directory `trainings`. 
 Since many 'best' generations occur during training start, storing will only start after generation 100 
 (configuration value `RECORD_BEST_AFTER_GEN` in `training.py`). 
 
-Training file name format: `[<date>-<time>]_gen_<# generation>_fit_<best fitness>.pop`
+Training file name format: `[<date>-<time>]_gen_<generation-counter>_fit_<best-fitness>.pop`
 
 ### Load training population
 
 To restart a previously stored training, add the training file name as start parameter:
 
 ```bash
-[project-root-dir] $ python3 boxpusher/training.py boxpusher/trainings/20200413-103332_gen_31_fit_-14.pop
+[project-root-dir] $ python3 boxpusher/training.py boxpusher/trainings/20200413-103332_gen_131_fit_-14.pop
 [2020-04-13 10:34:01] --- START ---
-[2020-04-13 10:34:01] g:[   31], bm:    460, w/l:      1 /    869
- ───  p/s: 29/ 3, avg: -23.3 max a/f: -23.3[  31] / -15.1[  31], gen a/b: -23.3 / -15.1 ( 6-14) cla:12 rel:21 sig:67
-[2020-04-13 10:34:02] g:[   32], bm:    389, w/l:      3 /    927
- ───  p/s: 31/ 3, avg: -23.5 max a/f: -23.3[  31] / -15.1[  31], gen a/b: -23.7 / -17.4 ( 5-19) cla:15 rel:22 sig:63
-[2020-04-13 10:34:02] g:[   33], bm:    362, w/l:      6 /    894
- ───  p/s: 30/ 3, avg: -22.7 max a/f: -22.7[  33] / -13.7[  33], gen a/b: -21.3 / -13.7 ( 6-14) cla:13 rel:26 sig:61
+[2020-04-13 10:34:01] g:[  131], bm:    460, w/l:      1 /    869
+ ───  p/s: 29/ 3, avg: -23.3 max a/f: -23.3[ 131] / -15.1[  31], gen a/b: -23.3 / -15.1 ( 6-14) cla:12 rel:21 sig:67
+[2020-04-13 10:34:02] g:[  132], bm:    389, w/l:      3 /    927
+ ───  p/s: 31/ 3, avg: -23.5 max a/f: -23.3[ 131] / -15.1[  31], gen a/b: -23.7 / -17.4 ( 5-19) cla:15 rel:22 sig:63
+[2020-04-13 10:34:02] g:[  133], bm:    362, w/l:      6 /    894
+ ───  p/s: 30/ 3, avg: -22.7 max a/f: -22.7[ 133] / -13.7[  33], gen a/b: -21.3 / -13.7 ( 6-14) cla:13 rel:26 sig:61
 ...
 ```
