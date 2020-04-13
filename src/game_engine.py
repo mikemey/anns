@@ -2,8 +2,6 @@ from enum import Enum, auto
 
 from numpy import array
 
-from training_levels import Level
-
 
 class Direction(Enum):
     UP = auto()
@@ -21,6 +19,33 @@ MOVE_VECTOR = {
     Direction.HALT: array([0, 0])
 }
 BOX_REWARD = 10
+
+
+class Level:
+    def __init__(self, field_size, player, walls, boxes, goal, max_points):
+        self.field_size = field_size
+        self.player = player
+        self.walls = walls
+        self.boxes = boxes
+        self.goal = goal
+        self.max_points = max_points
+
+    def print(self):
+        intend = '>>'
+        separator = intend + '─' * (2 * self.field_size[0] + 2)
+        field = [['░░'] * self.field_size[0] for _ in range(self.field_size[1])]
+
+        field[self.player[1]][self.player[0]] = '├┘'
+        field[self.goal[1]][self.goal[0]] = '╰╯'
+        for box in self.boxes:
+            field[box[1]][box[0]] = '[]'
+        for wall in self.walls:
+            field[wall[1]][wall[0]] = '▐▍'
+
+        print(separator)
+        for line in reversed(field):
+            print(intend, ''.join(line))
+        print(separator)
 
 
 class GameListener:

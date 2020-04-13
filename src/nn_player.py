@@ -3,8 +3,8 @@ import numpy as np
 
 from auto_player import AutomaticMaster, AutoPlayer
 from fitness_calc import create_fitness_calculator
-from game_engine import BoxPusherEngine, Direction, MOVE_VECTOR
-from training_levels import Level
+from game_engine import BoxPusherEngine, Level, Direction, MOVE_VECTOR
+from training_levels import generate_level
 from training_reporter import FITNESS_FORMAT
 
 SHOWCASE_TEMPLATE = 'Showcase genome: {{}}, average fitness: {0}, showcase-level fitness: {0}'.format(FITNESS_FORMAT)
@@ -19,7 +19,7 @@ first_training_level = Level(
 
 
 def generate_training_levels():
-    return [Level.generate_level() for _ in range(30)]
+    return [generate_level() for _ in range(30)]
 
 
 class NeuralNetMaster:

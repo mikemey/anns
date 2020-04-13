@@ -1,6 +1,5 @@
-from game_engine import BoxPusherEngine, Direction
+from game_engine import BoxPusherEngine, Level, Direction
 from game_window import GameWindowObserver, BoxPusherWindow
-from training_levels import Level
 
 
 class AutoPlayer:
