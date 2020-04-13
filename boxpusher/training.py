@@ -15,6 +15,8 @@ from training_reporter import TrainingReporter
 SHOWCASE_EVERY_GEN = 20
 EVAL_PROCESSES = 4
 RECORD_BEST_AFTER_GEN = 100
+LOCAL_DIR = os.path.dirname(__file__)
+TRAININGS_DIR = os.path.join(LOCAL_DIR, 'trainings')
 
 
 class Trainer:
@@ -76,7 +78,7 @@ def shutdown(signal_received=None, frame=None, msg='exit'):
 
 def store_training(population: neat.Population, config: neat.Config, best_fitness):
     training_state = config, population.population, population.species, population.generation
-    file_name = create_population_file_name(population.generation + 1, best_fitness)
+    file_name = create_training_file_name(population.generation + 1, best_fitness)
     print('storing training file: <{}>'.format(file_name))
     with open(file_name, 'wb') as f:
         pickle.dump(training_state, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -84,8 +86,7 @@ def store_training(population: neat.Population, config: neat.Config, best_fitnes
 
 def load_config(file_name='training.cfg'):
     print('loading config file: <{}>'.format(file_name))
-    local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, file_name)
+    config_path = os.path.join(LOCAL_DIR, file_name)
     with open(config_path, 'r') as f:
         print(f.read())
     return neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -101,9 +102,12 @@ def load_training(file_name):
         return pop
 
 
-def create_population_file_name(generation, fitness):
+def create_training_file_name(generation, fitness):
+    if not os.path.exists(TRAININGS_DIR):
+        os.mkdir(TRAININGS_DIR)
     ts = datetime.now().strftime('%Y%m%d-%H%M%S')
-    return 'trainings/{}_gen_{}_fit_{:.0f}.pop'.format(ts, generation, fitness)
+    file_name = '{}_gen_{}_fit_{:.0f}.pop'.format(ts, generation, fitness)
+    return os.path.join(TRAININGS_DIR, file_name)
 
 
 if __name__ == '__main__':
