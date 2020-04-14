@@ -89,7 +89,7 @@ class TrackGraphics(GraphicsElement):
 class WarmupSequence:
     def __init__(self):
         self.__overlays = [(GameOverlay('3', ''), 1.0), (GameOverlay('2', ''), 1.0),
-                           (GameOverlay('1', ''), 1.0), (GameOverlay('GO !!!', '', '', text_only=True), 0.7)]
+                           (GameOverlay('1', ''), 1.0), (GameOverlay('', 'GO !!!', '', text_only=True), 0.7)]
         self.__current_ix = -1
 
     def reset(self):
@@ -114,30 +114,29 @@ class WarmupSequence:
 
 
 class GameOverlay(GraphicsElement):
-    BG_COLOR = 30, 30, 30, 150
-    MAIN_COLOR = 255, 255, 0, 255
-    SECOND_COLOR = 255, 255, 150, 255
+    REGULAR_COLORS = [(255, 255, 0, 255), (255, 255, 150, 255), (30, 30, 30, 150)]
+    TEXT_ONLY_COLORS = [(60, 60, 60, 255), (60, 60, 60, 255), (0, 0, 0, 0)]
 
     def __init__(self, main_txt, support_txt, exit_txt='"Esc" to quit', text_only=False):
         super().__init__()
-        if not text_only:
-            background = pyglet.graphics.OrderedGroup(0)
-            cnt, vertices, transparent = convert_data(
-                [0, 0, TRACK_SIZE[0], 0, TRACK_SIZE[0], TRACK_SIZE[1], 0, TRACK_SIZE[1]],
-                self.BG_COLOR, color_mode='c4B')
-            self.batch.add(4, pyglet.gl.GL_POLYGON, background, vertices, transparent)
+        colors = self.TEXT_ONLY_COLORS if text_only else self.REGULAR_COLORS
+        background = pyglet.graphics.OrderedGroup(0)
+        cnt, vertices, transparent = convert_data(
+            [0, 0, TRACK_SIZE[0], 0, TRACK_SIZE[0], TRACK_SIZE[1], 0, TRACK_SIZE[1]],
+            colors[2], color_mode='c4B')
+        self.batch.add(4, pyglet.gl.GL_POLYGON, background, vertices, transparent)
 
         foreground = pyglet.graphics.OrderedGroup(1)
         main_lbl = pyglet.text.Label(main_txt, batch=self.batch, group=foreground,
-                                     color=self.MAIN_COLOR, font_size=22, bold=True)
+                                     color=colors[0], font_size=22, bold=True)
         main_lbl.x = TRACK_SIZE[0] / 2 - main_lbl.content_width / 2
         main_lbl.y = TRACK_SIZE[1] / 2 - main_lbl.content_height / 2
         support_lbl = pyglet.text.Label(support_txt, batch=self.batch, group=foreground,
-                                        color=self.SECOND_COLOR, font_size=16)
+                                        color=colors[1], font_size=16)
         support_lbl.x = TRACK_SIZE[0] / 2 - support_lbl.content_width / 2
         support_lbl.y = TRACK_SIZE[1] / 2 - main_lbl.content_height - support_lbl.content_height
         exit_lbl = pyglet.text.Label(exit_txt, batch=self.batch, group=foreground,
-                                     color=self.SECOND_COLOR, font_size=16)
+                                     color=colors[1], font_size=16)
         exit_lbl.x = TRACK_SIZE[0] / 2 - exit_lbl.content_width / 2
         exit_lbl.y = TRACK_SIZE[1] / 2 - main_lbl.content_height - exit_lbl.content_height * 2.3
 
