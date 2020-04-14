@@ -93,6 +93,7 @@ class RacerWindow(pyglet.window.Window):
         super().__init__(*TRACK_SIZE, caption='Racer')
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
+        pyglet.gl.glEnable(pyglet.gl.GL_LINE_SMOOTH)
         pyglet.gl.glClearColor(*self.BG_COLOR)
         self.set_location(*self.WINDOW_POS)
         self.controller = controller
