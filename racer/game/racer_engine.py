@@ -116,14 +116,13 @@ class PlayerState:
             self.rotation += allowed_rot * dt * turn_fact
 
         rot = math.radians(self.rotation)
-        self.x += math.cos(rot) * self.speed * dt
-        self.y -= math.sin(rot) * self.speed * dt
-        self.boundaries = self.__update_boundaries__(rot)
+        cosine, sine = math.cos(rot), math.sin(rot)
+        self.x += cosine * self.speed * dt
+        self.y -= sine * self.speed * dt
+        self.boundaries = self.__update_boundaries__(cosine, sine)
 
-    def __update_boundaries__(self, radians):
-        # TODO avoid double cos/sin calculation:
-        c, s = np.cos(radians), np.sin(radians)
-        j = np.array([[c, s], [-s, c]])
+    def __update_boundaries__(self, cosine, sine):
+        j = np.array([[cosine, sine], [-sine, cosine]])
 
         def move_rotate_pt(pt):
             m = np.dot(j, pt)
