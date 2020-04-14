@@ -12,15 +12,16 @@ MIN_SPS_OFFSET = 2
 class NeuralRacer:
     @staticmethod
     def play_game(genome, config):
-        return NeuralRacer(genome, config).get_fitness()
+        return NeuralRacer(genome, config, config.fitness_threshold).get_fitness()
 
-    def __init__(self, genome, config):
+    def __init__(self, genome, config, limit=None):
         self.engine = RacerEngine()
         self.net = neat.nn.FeedForwardNetwork.create(genome, config)
         self.operations = PlayerOperation()
         self.noop_timeout = NOOP_TIMEOUT_SECS
         self.time = 0
         self.score = 0
+        self.limit = limit
 
     def get_state(self):
         return self.engine.player_state
@@ -69,6 +70,8 @@ class NeuralRacer:
         amp = 0.002 if relevant_speed < 0 else 0.001
         self.score += relevant_speed * amp
         if self.score < 0:
+            self.engine.game_over = True
+        if self.limit and self.score >= self.limit:
             self.engine.game_over = True
 
     def __under_sps_limit(self):

@@ -58,6 +58,7 @@ class NeuralMaster:
             print('\nWinner fitness:', winner.fitness)
         except ValueError or CompleteExtinctionException as ex:
             print(ex)
+        finally:
             self.stop()
 
     def stop(self, signal_received=None, frame=None):
