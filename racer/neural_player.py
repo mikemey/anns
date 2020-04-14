@@ -90,7 +90,8 @@ class ShowcaseController(RaceController):
     def __init__(self, genomes, config):
         super().__init__()
         self.neural_racer = [NeuralRacer(genome, config) for genome in genomes]
-        self.window = RacerWindow(self, False)
+        # TODO set lost screen text for neural-net players:
+        self.window = RacerWindow(self, show_traces=False)
         self.seconds_to_close = self.DELAY_AUTO_CLOSE_SECS
 
     def showcase(self):
@@ -100,7 +101,7 @@ class ShowcaseController(RaceController):
         highest_score = max([racer.score for racer in self.neural_racer])
         return 'max: {:.0f}'.format(highest_score)
 
-    def update_player_states(self, dt) -> List[PlayerState]:
+    def update_player_states(self, dt):
         if not self.show_lost_screen:
             all_lost = True
             for racer in self.neural_racer:
@@ -116,6 +117,7 @@ class ShowcaseController(RaceController):
             if self.seconds_to_close < 0:
                 self.window.close()
 
+    def get_player_states(self) -> List[PlayerState]:
         return [racer.get_state() for racer in self.neural_racer]
 
     def get_player_count(self):

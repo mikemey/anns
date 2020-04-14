@@ -63,13 +63,15 @@ class ManualController(RaceController):
                 return 'Player 2'
         return 'Score: {:.0f}'.format(self.players[0].score)
 
-    def update_player_states(self, dt) -> List[PlayerState]:
+    def update_player_states(self, dt):
         if not (self.show_paused_screen or self.show_lost_screen):
             for player in self.players:
                 player.update(dt)
 
             if all([player.engine.game_over for player in self.players]):
                 self.show_lost_screen = True
+
+    def get_player_states(self) -> List[PlayerState]:
         return [player.get_state() for player in self.players]
 
 

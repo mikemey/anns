@@ -17,13 +17,19 @@ car_frame_img.anchor_y = car_frame_img.height / 2
 
 
 class RaceController:
-    def __init__(self):
+    def __init__(self, show_warmup_screen=True):
         self.show_lost_screen = False
         self.show_paused_screen = False
+        self.__warmup_controller = WarmupController(show_warmup_screen)
+
+    @property
+    def warmup_controller(self):
+        return self.__warmup_controller
 
     def reset(self):
         self.show_lost_screen = False
         self.show_paused_screen = False
+        self.__warmup_controller.reset()
 
     def get_player_count(self):
         pass
@@ -37,11 +43,65 @@ class RaceController:
     def focus_lost(self):
         pass
 
-    def update_player_states(self, dt) -> List[PlayerState]:
+    def update_player_states(self, dt):
+        pass
+
+    def get_player_states(self) -> List[PlayerState]:
         pass
 
     def get_score_text(self):
         pass
+
+
+class WarmupController:
+    RESET_DELAY = 0.5
+
+    def __init__(self, show_warmup_screen):
+        self.__default_warmup = show_warmup_screen
+        self.show_warmup_screen = show_warmup_screen
+        self.control_released = False
+        self.warmup_screen = WarmupSequence()
+
+    def reset(self):
+        self.warmup_screen.reset()
+        self.show_warmup_screen = self.__default_warmup
+        self.control_released = False
+        self.next_screen()
+
+    def next_screen(self, _=None):
+        if self.show_warmup_screen:
+            self.show_warmup_screen = next(self.warmup_screen, False)
+            if self.show_warmup_screen:
+                self.control_released = self.warmup_screen.shows_last_screen()
+                delay = self.warmup_screen.current_delay()
+                pyglet.clock.schedule_once(self.next_screen, delay)
+
+
+class WarmupSequence:
+    def __init__(self):
+        self.__overlays = [(GameOverlay('3', ''), 1.0), (GameOverlay('2', ''), 1.0),
+                           (GameOverlay('1', ''), 1.0), (GameOverlay('GO !!!', '', '', text_only=True), 0.7)]
+        self.__current_ix = -1
+
+    def reset(self):
+        self.__current_ix = -1
+
+    def __next__(self):
+        self.__current_ix += 1
+        return self.__is_current_ix_valid()
+
+    def current_delay(self):
+        return self.__overlays[self.__current_ix][1]
+
+    def draw(self):
+        if self.__is_current_ix_valid():
+            self.__overlays[self.__current_ix][0].draw()
+
+    def shows_last_screen(self):
+        return self.__current_ix == len(self.__overlays) - 1
+
+    def __is_current_ix_valid(self):
+        return 0 <= self.__current_ix < len(self.__overlays)
 
 
 class RacerWindow(pyglet.window.Window):
@@ -55,6 +115,8 @@ class RacerWindow(pyglet.window.Window):
         pyglet.gl.glClearColor(*self.BG_COLOR)
         self.set_location(*self.WINDOW_POS)
         self.controller = controller
+        self.warmup_controller = controller.warmup_controller
+        self.warmup_screen = self.warmup_controller.warmup_screen
 
         self.track = TrackGraphics()
         self.score_box = ScoreBox()
@@ -64,6 +126,7 @@ class RacerWindow(pyglet.window.Window):
 
     def start(self):
         pyglet.clock.schedule_interval(self.update, 1 / 120.0)
+        self.warmup_controller.next_screen()
         pyglet.app.run()
 
     def on_draw(self):
@@ -71,7 +134,9 @@ class RacerWindow(pyglet.window.Window):
         self.track.draw()
         for car in self.cars:
             car.draw()
-        if self.controller.show_lost_screen:
+        if self.warmup_controller.show_warmup_screen:
+            self.warmup_screen.draw()
+        elif self.controller.show_lost_screen:
             self.lost_overlay.draw()
         elif self.controller.show_paused_screen:
             self.pause_overlay.draw()
@@ -88,7 +153,9 @@ class RacerWindow(pyglet.window.Window):
         self.controller.focus_lost()
 
     def update(self, dt):
-        player_states = self.controller.update_player_states(dt)
+        if self.warmup_controller.control_released:
+            self.controller.update_player_states(dt)
+        player_states = self.controller.get_player_states()
         for player_state, car in zip(player_states, self.cars):
             car.update(player_state)
         self.score_box.update_text(self.controller.get_score_text())
@@ -158,16 +225,16 @@ class GameOverlay(GraphicsElement):
     MAIN_COLOR = 255, 255, 0, 255
     SECOND_COLOR = 255, 255, 150, 255
 
-    def __init__(self, main_txt, support_txt, exit_txt='"Esc" to quit'):
+    def __init__(self, main_txt, support_txt, exit_txt='"Esc" to quit', text_only=False):
         super().__init__()
-        background = pyglet.graphics.OrderedGroup(0)
+        if not text_only:
+            background = pyglet.graphics.OrderedGroup(0)
+            cnt, vertices, transparent = convert_data(
+                [0, 0, TRACK_SIZE[0], 0, TRACK_SIZE[0], TRACK_SIZE[1], 0, TRACK_SIZE[1]],
+                self.BG_COLOR, color_mode='c4B')
+            self.batch.add(4, pyglet.gl.GL_POLYGON, background, vertices, transparent)
+
         foreground = pyglet.graphics.OrderedGroup(1)
-
-        cnt, vertices, transparent = convert_data(
-            [0, 0, TRACK_SIZE[0], 0, TRACK_SIZE[0], TRACK_SIZE[1], 0, TRACK_SIZE[1]],
-            self.BG_COLOR, color_mode='c4B')
-        self.batch.add(4, pyglet.gl.GL_POLYGON, background, vertices, transparent)
-
         main_lbl = pyglet.text.Label(main_txt, batch=self.batch, group=foreground,
                                      color=self.MAIN_COLOR, font_size=22, bold=True)
         main_lbl.x = TRACK_SIZE[0] / 2 - main_lbl.content_width / 2

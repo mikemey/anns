@@ -76,7 +76,7 @@ class DemoController(RaceController):
     def get_score_text(self):
         return '2 player demo'
 
-    def update_player_states(self, dt) -> List[PlayerState]:
+    def update_player_states(self, dt):
         if not self.show_lost_screen:
             self.time += dt
             self.player1.update_position(dt, self.time)
@@ -84,6 +84,8 @@ class DemoController(RaceController):
 
         if self.player1.engine.game_over and self.player2.engine.game_over:
             self.show_lost_screen = True
+
+    def get_player_states(self) -> List[PlayerState]:
         return [self.player1.get_state(), self.player2.get_state()]
 
 
