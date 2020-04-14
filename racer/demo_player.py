@@ -12,7 +12,7 @@ class DemoMaster:
         self.controller = DemoController()
 
     def run(self):
-        w = RacerWindow(self.controller)
+        w = RacerWindow(self.controller, show_traces=False)
         w.start()
 
 
@@ -54,7 +54,7 @@ MOVES = [
 
 class DemoController(RaceController):
     def __init__(self):
-        super().__init__()
+        super().__init__(show_warmup_screen=False)
         self.time = 0
         self.player1 = DemoPlayer()
         self.player2 = DemoPlayer(1.5)
@@ -69,7 +69,7 @@ class DemoController(RaceController):
         self.player2.reset()
 
     def on_key_press(self, symbol):
-        if self.show_lost_screen:
+        if self.show_end_screen:
             if symbol == key.N:
                 self.reset()
 
@@ -77,16 +77,19 @@ class DemoController(RaceController):
         return '2 player demo'
 
     def update_player_states(self, dt):
-        if not self.show_lost_screen:
+        if not self.show_end_screen:
             self.time += dt
             self.player1.update_position(dt, self.time)
             self.player2.update_position(dt, self.time)
 
         if self.player1.engine.game_over and self.player2.engine.game_over:
-            self.show_lost_screen = True
+            self.show_end_screen = True
 
     def get_player_states(self) -> List[PlayerState]:
         return [self.player1.get_state(), self.player2.get_state()]
+
+    def get_end_text(self):
+        return 'Game over!', '"n" New game'
 
 
 class DemoPlayer:

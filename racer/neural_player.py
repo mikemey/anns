@@ -85,7 +85,7 @@ class NeuralMaster:
 
 
 class ShowcaseController(RaceController):
-    DELAY_AUTO_CLOSE_SECS = 4
+    DELAY_AUTO_CLOSE_SECS = 3
 
     def __init__(self, genomes, config):
         super().__init__()
@@ -102,17 +102,17 @@ class ShowcaseController(RaceController):
         return 'max: {:.0f}'.format(highest_score)
 
     def update_player_states(self, dt):
-        if not self.show_lost_screen:
+        if not self.show_end_screen:
             all_lost = True
             for racer in self.neural_racer:
                 if not racer.game_over():
                     all_lost = False
                     racer.next_step(dt)
-            self.show_lost_screen = all_lost
+            self.show_end_screen = all_lost
 
-        if self.show_lost_screen:
+        if self.show_end_screen:
             if self.seconds_to_close == self.DELAY_AUTO_CLOSE_SECS:
-                print('showcases finished, waiting {} seconds to exit...'.format(self.DELAY_AUTO_CLOSE_SECS))
+                print('Showcases finished, waiting {} seconds to exit...'.format(self.DELAY_AUTO_CLOSE_SECS))
             self.seconds_to_close -= dt
             if self.seconds_to_close < 0:
                 self.window.close()
@@ -122,3 +122,6 @@ class ShowcaseController(RaceController):
 
     def get_player_count(self):
         return len(self.neural_racer)
+
+    def get_end_text(self):
+        return '', 'waiting {} seconds to exit...'.format(self.DELAY_AUTO_CLOSE_SECS), ''

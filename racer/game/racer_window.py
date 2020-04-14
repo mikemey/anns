@@ -17,21 +17,24 @@ car_frame_img.anchor_y = car_frame_img.height / 2
 
 class RaceController:
     def __init__(self, show_warmup_screen=True):
-        self.show_lost_screen = False
+        self.show_end_screen = False
         self.show_paused_screen = False
         self.__warmup_controller = WarmupController(show_warmup_screen)
+        self.__reset_hook = None
 
     @property
     def warmup_controller(self):
         return self.__warmup_controller
 
     def reset(self):
-        self.show_lost_screen = False
+        self.show_end_screen = False
         self.show_paused_screen = False
         self.__warmup_controller.reset()
+        if self.__reset_hook:
+            self.__reset_hook()
 
     def get_player_count(self):
-        pass
+        raise NotImplementedError()
 
     def on_key_press(self, symbol):
         pass
@@ -43,13 +46,19 @@ class RaceController:
         pass
 
     def update_player_states(self, dt):
-        pass
+        raise NotImplementedError()
 
     def get_player_states(self) -> List[PlayerState]:
-        pass
+        raise NotImplementedError()
 
     def get_score_text(self):
-        pass
+        raise NotImplementedError()
+
+    def get_end_text(self):
+        raise NotImplementedError()
+
+    def set_reset_hook(self, reset_hook):
+        self.__reset_hook = reset_hook
 
 
 class WarmupController:
@@ -57,14 +66,14 @@ class WarmupController:
 
     def __init__(self, show_warmup_screen):
         self.__default_warmup = show_warmup_screen
-        self.show_warmup_screen = show_warmup_screen
-        self.control_released = False
+        self.show_warmup_screen = self.__default_warmup
+        self.control_released = not self.__default_warmup
         self.warmup_screen = WarmupSequence()
 
     def reset(self):
         self.warmup_screen.reset()
         self.show_warmup_screen = self.__default_warmup
-        self.control_released = False
+        self.control_released = not self.__default_warmup
         self.next_screen()
 
     def next_screen(self, _=None):
@@ -87,6 +96,7 @@ class RacerWindow(pyglet.window.Window):
         pyglet.gl.glClearColor(*self.BG_COLOR)
         self.set_location(*self.WINDOW_POS)
         self.controller = controller
+        self.controller.set_reset_hook(self.on_reset)
         self.warmup_controller = controller.warmup_controller
         self.warmup_screen = self.warmup_controller.warmup_screen
 
@@ -94,7 +104,10 @@ class RacerWindow(pyglet.window.Window):
         self.score_box = ScoreBox()
         self.cars = [CarGraphics(show_traces) for _ in range(self.controller.get_player_count())]
         self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
-        self.lost_overlay = GameOverlay('Lost!', '"n" New game')
+        self.end_overlay = None
+
+    def on_reset(self):
+        self.end_overlay = None
 
     def start(self):
         pyglet.clock.schedule_interval(self.update, 1 / 120.0)
@@ -108,8 +121,10 @@ class RacerWindow(pyglet.window.Window):
             car.draw()
         if self.warmup_controller.show_warmup_screen:
             self.warmup_screen.draw()
-        elif self.controller.show_lost_screen:
-            self.lost_overlay.draw()
+        elif self.controller.show_end_screen:
+            if not self.end_overlay:
+                self.end_overlay = GameOverlay(*self.controller.get_end_text())
+            self.end_overlay.draw()
         elif self.controller.show_paused_screen:
             self.pause_overlay.draw()
         self.score_box.draw()

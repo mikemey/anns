@@ -43,7 +43,7 @@ class ManualController(RaceController):
         return len(self.players)
 
     def on_key_press(self, symbol):
-        if self.show_lost_screen:
+        if self.show_end_screen:
             if symbol == key.N:
                 self.reset()
             return
@@ -68,15 +68,20 @@ class ManualController(RaceController):
         return 'Score: {:.0f}'.format(self.players[0].score)
 
     def update_player_states(self, dt):
-        if not (self.show_paused_screen or self.show_lost_screen):
+        if not (self.show_paused_screen or self.show_end_screen):
             for player in self.players:
                 player.update(dt)
 
             if all([player.engine.game_over for player in self.players]):
-                self.show_lost_screen = True
+                self.show_end_screen = True
 
     def get_player_states(self) -> List[PlayerState]:
         return [player.state for player in self.players]
+
+    def get_end_text(self):
+        if self.two_players:
+            return 'Winner:  {}'.format(self.get_score_text()), '"n" New game'
+        return 'Lost!', '"n" New game'
 
 
 class ManualPlayer:
