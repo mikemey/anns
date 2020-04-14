@@ -1,9 +1,9 @@
-from typing import Tuple, List
+from typing import List
 
 from pyglet.window import key
 
 from game.racer_engine import RacerEngine, PlayerOperation
-from game.racer_window import RaceController
+from game.racer_window import RaceController, PlayerState
 from game.racer_window import RacerWindow
 
 
@@ -24,18 +24,19 @@ class ManualController(RaceController):
     def __init__(self, two_players: bool):
         super().__init__()
         self.two_players = two_players
-        self.players = [ManualPlayer(*PLAYER1_KEYS)]
-        if self.two_players:
-            self.players.append(ManualPlayer(*PLAYER2_KEYS))
-
-    def get_player_count(self):
-        return len(self.players)
+        self.players = self.__setup_players()
 
     def reset(self):
         super().reset()
-        self.players = [ManualPlayer(*PLAYER1_KEYS)]
+        self.players = self.__setup_players()
+
+    def __setup_players(self):
         if self.two_players:
-            self.players.append(ManualPlayer(*PLAYER2_KEYS))
+            return [ManualPlayer(*PLAYER2_KEYS), ManualPlayer(*PLAYER1_KEYS)]
+        return [ManualPlayer(*PLAYER1_KEYS)]
+
+    def get_player_count(self):
+        return len(self.players)
 
     def on_key_press(self, symbol):
         if self.show_lost_screen:
@@ -62,14 +63,14 @@ class ManualController(RaceController):
                 return 'Player 2'
         return 'Score: {:.0f}'.format(self.players[0].score)
 
-    def update_players(self, dt) -> List[Tuple[float, float, float]]:
+    def update_player_states(self, dt) -> List[PlayerState]:
         if not (self.show_paused_screen or self.show_lost_screen):
             for player in self.players:
                 player.update(dt)
 
             if all([player.engine.game_over for player in self.players]):
                 self.show_lost_screen = True
-        return [player.get_position() for player in self.players]
+        return [player.get_state() for player in self.players]
 
 
 class ManualPlayer:
@@ -102,14 +103,12 @@ class ManualPlayer:
         if symbol == self.right:
             self.operation.stop_right()
 
-    def update(self, dt) -> List[Tuple[float, float, float]]:
+    def update(self, dt):
         if not self.engine.game_over:
             self.engine.update(dt, self.operation)
-            relevant_speed = self.engine.player.relevant_speed
+            relevant_speed = self.engine.player_state.relevant_speed
             amp = 0.002 if relevant_speed < 0 else 0.001
             self.score += relevant_speed * amp
 
-    def get_position(self):
-        return self.engine.player.position[0], \
-               self.engine.player.position[1], \
-               self.engine.player.rotation
+    def get_state(self):
+        return self.engine.player_state

@@ -3,11 +3,12 @@ import os
 from configparser import ConfigParser
 from multiprocessing import Pool
 from signal import signal, SIGINT
-from typing import Tuple, List
+from typing import List
 
 import neat
 from neat import CompleteExtinctionException
 
+from game.racer_engine import PlayerState
 from game.racer_window import RaceController, RacerWindow
 from neural_racer import NeuralRacer
 from training_reporter import TrainingReporter
@@ -84,11 +85,11 @@ class NeuralMaster:
 
 
 class ShowcaseController(RaceController):
-    DELAY_AUTO_CLOSE_SECS = 5
+    DELAY_AUTO_CLOSE_SECS = 4
 
     def __init__(self, genomes, config):
         super().__init__()
-        self.players = [NeuralRacer(genome, config) for genome in genomes]
+        self.neural_racer = [NeuralRacer(genome, config) for genome in genomes]
         self.window = RacerWindow(self, False)
         self.seconds_to_close = self.DELAY_AUTO_CLOSE_SECS
 
@@ -96,16 +97,16 @@ class ShowcaseController(RaceController):
         self.window.start()
 
     def get_score_text(self):
-        highest_score = max([player.score for player in self.players])
+        highest_score = max([racer.score for racer in self.neural_racer])
         return 'max: {:.0f}'.format(highest_score)
 
-    def update_players(self, dt) -> List[Tuple[float, float, float]]:
+    def update_player_states(self, dt) -> List[PlayerState]:
         if not self.show_lost_screen:
             all_lost = True
-            for player in self.players:
-                if not player.game_over():
+            for racer in self.neural_racer:
+                if not racer.game_over():
                     all_lost = False
-                    player.next_step(dt)
+                    racer.next_step(dt)
             self.show_lost_screen = all_lost
 
         if self.show_lost_screen:
@@ -115,7 +116,7 @@ class ShowcaseController(RaceController):
             if self.seconds_to_close < 0:
                 self.window.close()
 
-        return [player.get_position() for player in self.players]
+        return [racer.get_state() for racer in self.neural_racer]
 
     def get_player_count(self):
-        return len(self.players)
+        return len(self.neural_racer)

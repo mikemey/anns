@@ -1,10 +1,10 @@
 from os import path
-from typing import Tuple, List
+from typing import List
 
 import numpy as np
 import pyglet
 
-from .racer_engine import CAR_BOUND_POINTS
+from .racer_engine import PlayerState, CAR_BOUND_POINTS
 from .tracers import get_trace_points
 from .tracks import OUTER_TRACK, INNER_TRACK, TRACK_SIZE
 
@@ -37,7 +37,7 @@ class RaceController:
     def focus_lost(self):
         pass
 
-    def update_players(self, dt) -> List[Tuple[float, float, float]]:
+    def update_player_states(self, dt) -> List[PlayerState]:
         pass
 
     def get_score_text(self):
@@ -88,9 +88,9 @@ class RacerWindow(pyglet.window.Window):
         self.controller.focus_lost()
 
     def update(self, dt):
-        player_positions = self.controller.update_players(dt)
-        for player_pos, car in zip(player_positions, self.cars):
-            car.update(*player_pos)
+        player_states = self.controller.update_player_states(dt)
+        for player_state, car in zip(player_states, self.cars):
+            car.update(player_state)
         self.score_box.update_text(self.controller.get_score_text())
 
 
@@ -136,8 +136,8 @@ class CarGraphics(GraphicsElement):
                                  ('c3B', self.TRACE_COLOR * 2)
                                  )
 
-    def update(self, pos_x, pos_y, rot):
-        self.car_frame.update(x=pos_x, y=pos_y, rotation=rot)
+    def update(self, player: PlayerState):
+        self.car_frame.update(x=player.position[0], y=player.position[1], rotation=player.rotation)
 
 
 class TrackGraphics(GraphicsElement):

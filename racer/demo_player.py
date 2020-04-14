@@ -1,8 +1,8 @@
-from typing import Tuple, List
+from typing import List
 
 from pyglet.window import key
 
-from game.racer_engine import RacerEngine, PlayerOperation
+from game.racer_engine import RacerEngine, PlayerOperation, PlayerState
 from game.racer_window import RaceController
 from game.racer_window import RacerWindow
 
@@ -76,7 +76,7 @@ class DemoController(RaceController):
     def get_score_text(self):
         return '2 player demo'
 
-    def update_players(self, dt) -> List[Tuple[float, float, float]]:
+    def update_player_states(self, dt) -> List[PlayerState]:
         if not self.show_lost_screen:
             self.time += dt
             self.player1.update_position(dt, self.time)
@@ -84,7 +84,7 @@ class DemoController(RaceController):
 
         if self.player1.engine.game_over and self.player2.engine.game_over:
             self.show_lost_screen = True
-        return [self.player1.get_position(), self.player2.get_position()]
+        return [self.player1.get_state(), self.player2.get_state()]
 
 
 class DemoPlayer:
@@ -123,7 +123,5 @@ class DemoPlayer:
             operation.turn_right()
         self.engine.update(dt, operation)
 
-    def get_position(self):
-        return self.engine.player.position[0], \
-               self.engine.player.position[1], \
-               self.engine.player.rotation
+    def get_state(self):
+        return self.engine.player_state

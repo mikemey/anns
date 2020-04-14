@@ -78,17 +78,17 @@ class PlayerOperation:
 
 class RacerEngine:
     def __init__(self):
-        self.player = Player()
+        self.player_state = PlayerState()
         self.track = Track()
         self.game_over = False
 
     def update(self, dt, operations):
-        self.player.update(dt, operations)
-        if not self.track.contains_points(self.player.boundaries):
+        self.player_state.update(dt, operations)
+        if not self.track.contains_points(self.player_state.boundaries):
             self.game_over = True
 
 
-class Player:
+class PlayerState:
     def __init__(self):
         self.position = INIT_CAR_POSITION.copy()
         self.rotation = INIT_CAR_ROTATION
@@ -121,6 +121,7 @@ class Player:
         self.boundaries = self.__update_boundaries__(rot)
 
     def __update_boundaries__(self, radians):
+        # TODO avoid double cos/sin calculation:
         c, s = np.cos(radians), np.sin(radians)
         j = np.array([[c, s], [-s, c]])
 
