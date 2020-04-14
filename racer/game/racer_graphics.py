@@ -2,8 +2,9 @@ from os import path
 
 import numpy as np
 import pyglet
+from pyglet.graphics.vertexdomain import VertexList
 
-from .racer_engine import PlayerState, CAR_BOUND_POINTS
+from .racer_engine import PlayerState, CAR_BOUND_POINTS, CAR_BOUNDS
 from .tracers import get_trace_points
 from .tracks import OUTER_TRACK, INNER_TRACK, TRACK_SIZE
 
@@ -26,9 +27,9 @@ def convert_data(points, color=None, color_mode='c3B'):
     return pts_count, vertices, color_data
 
 
-def add_points_to(batch, points, color, mode=pyglet.gl.GL_LINE_STRIP, group=None):
-    pts_count, vertices, color_data = convert_data(points, color)
-    batch.add(pts_count, mode, group, vertices, color_data)
+def create_vertex_list(points, color, color_mode='c3B'):
+    pts, vertices, color_data = convert_data(points, color, color_mode)
+    return pyglet.graphics.vertex_list(pts, vertices, color_data)
 
 
 class GraphicsElement:
@@ -38,30 +39,43 @@ class GraphicsElement:
     def draw(self):
         self.batch.draw()
 
+    def add_points(self, points, color, mode=pyglet.gl.GL_LINE_STRIP, group=None) -> VertexList:
+        pts_count, vertices, color_data = convert_data(points, color)
+        return self.batch.add(pts_count, mode, group, vertices, color_data)
+
 
 class CarGraphics(GraphicsElement):
     TRACE_COLOR = 100, 100, 255
+    DEAD_COLOR = 255, 70, 70
+    DEAD_BG_COLOR = 70, 70, 70, 150
 
     def __init__(self, show_traces=True):
         super().__init__()
         self.show_traces = show_traces
         self.car_frame = pyglet.sprite.Sprite(img=car_frame_img, batch=self.batch)
         self.car_frame.scale = 0.5
-        pts, vertices, _ = convert_data(CAR_BOUND_POINTS)
+
         color_data = 'c3B', random_color() + random_color() + random_color() + random_color()
-        self.car_color = pyglet.graphics.vertex_list(pts, vertices, vertices, color_data)
+        pts, vertices, _ = convert_data(CAR_BOUND_POINTS)
+        self.car_color = pyglet.graphics.vertex_list(pts, vertices, color_data)
+
+        line_1 = [CAR_BOUNDS[0] + 1, CAR_BOUNDS[1] + 2, CAR_BOUNDS[2] - 1, CAR_BOUNDS[3] - 1]
+        line_2 = [CAR_BOUNDS[0] + 1, CAR_BOUNDS[3] - 1, CAR_BOUNDS[2] - 1, CAR_BOUNDS[1] + 2]
+        self.dead_x = [create_vertex_list(CAR_BOUND_POINTS, self.DEAD_BG_COLOR, 'c4B'),
+                       create_vertex_list(line_1, self.DEAD_COLOR),
+                       create_vertex_list(line_2, self.DEAD_COLOR)]
+        self.show_dead_x = False
 
     def draw(self):
         if self.show_traces:
-            self.draw_traces()
-        pyglet.gl.glPushMatrix()
-        pyglet.gl.glTranslatef(self.car_frame.x, self.car_frame.y, 0)
-        pyglet.gl.glRotatef(-self.car_frame.rotation, 0, 0, 1.0)
-        self.car_color.draw(pyglet.gl.GL_POLYGON)
-        pyglet.gl.glPopMatrix()
-        self.batch.draw()
+            self.__draw_traces()
 
-    def draw_traces(self):
+        self.__draw_at_car_position(lambda: self.car_color.draw(pyglet.gl.GL_POLYGON))
+        self.batch.draw()
+        if self.show_dead_x:
+            self.__draw_at_car_position(self.__draw_dead_x)
+
+    def __draw_traces(self):
         pyglet.gl.glLineWidth(1)
         for pos in get_trace_points(self.car_frame.position, self.car_frame.rotation):
             pyglet.graphics.draw(2, pyglet.gl.GL_LINE_STRIP,
@@ -69,8 +83,23 @@ class CarGraphics(GraphicsElement):
                                  ('c3B', self.TRACE_COLOR * 2)
                                  )
 
+    def __draw_dead_x(self):
+        pyglet.gl.glLineWidth(5)
+        [box, line_1, line_2] = self.dead_x
+        line_1.draw(pyglet.gl.GL_LINE_STRIP)
+        line_2.draw(pyglet.gl.GL_LINE_STRIP)
+        box.draw(pyglet.gl.GL_POLYGON)
+
+    def __draw_at_car_position(self, draw_callback):
+        pyglet.gl.glPushMatrix()
+        pyglet.gl.glTranslatef(self.car_frame.x, self.car_frame.y, 0)
+        pyglet.gl.glRotatef(-self.car_frame.rotation, 0, 0, 1.0)
+        draw_callback()
+        pyglet.gl.glPopMatrix()
+
     def update(self, player: PlayerState):
         self.car_frame.update(x=player.x, y=player.y, rotation=player.rotation)
+        self.show_dead_x = not player.is_alive
 
 
 class TrackGraphics(GraphicsElement):
@@ -78,8 +107,8 @@ class TrackGraphics(GraphicsElement):
 
     def __init__(self):
         super().__init__()
-        add_points_to(self.batch, OUTER_TRACK, self.TRACK_COLOR)
-        add_points_to(self.batch, INNER_TRACK, self.TRACK_COLOR)
+        self.add_points(OUTER_TRACK, self.TRACK_COLOR)
+        self.add_points(INNER_TRACK, self.TRACK_COLOR)
 
     def draw(self):
         pyglet.gl.glLineWidth(5)
@@ -153,9 +182,8 @@ class ScoreBox(GraphicsElement):
 
         background = pyglet.graphics.OrderedGroup(0)
         foreground = pyglet.graphics.OrderedGroup(1)
-        add_points_to(self.batch, [
-            box[0], box[1], box[2], box[1], box[2], box[3], box[0], box[3], box[0], box[1]
-        ], self.BG_COLOR, pyglet.gl.GL_POLYGON, background)
+        bg_box = [box[0], box[1], box[2], box[1], box[2], box[3], box[0], box[3], box[0], box[1]]
+        self.add_points(bg_box, self.BG_COLOR, pyglet.gl.GL_POLYGON, background)
         self.label = pyglet.text.Label(x=TRACK_SIZE[0] - 100, y=TRACK_SIZE[1] - 25,
                                        batch=self.batch, group=foreground)
 

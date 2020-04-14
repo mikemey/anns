@@ -82,6 +82,7 @@ class RacerEngine:
         self.player_state.update(dt, operations)
         if not self.track.contains_points(self.player_state.boundaries):
             self.game_over = True
+            self.player_state.is_alive = False
 
 
 class PlayerState:
@@ -89,6 +90,7 @@ class PlayerState:
         [self.x, self.y], self.rotation = INIT_CAR_POSITION, INIT_CAR_ROTATION
         self.speed = 0
         self.boundaries = []
+        self.is_alive = True
 
     @property
     def relevant_speed(self):
