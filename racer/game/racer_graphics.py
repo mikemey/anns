@@ -70,7 +70,7 @@ class CarGraphics(GraphicsElement):
                                  )
 
     def update(self, player: PlayerState):
-        self.car_frame.update(x=player.position[0], y=player.position[1], rotation=player.rotation)
+        self.car_frame.update(x=player.x, y=player.y, rotation=player.rotation)
 
 
 class TrackGraphics(GraphicsElement):

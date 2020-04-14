@@ -86,8 +86,7 @@ class RacerEngine:
 
 class PlayerState:
     def __init__(self):
-        self.position = INIT_CAR_POSITION.copy()
-        self.rotation = INIT_CAR_ROTATION
+        [self.x, self.y], self.rotation = INIT_CAR_POSITION, INIT_CAR_ROTATION
         self.speed = 0
         self.boundaries = []
 
@@ -115,8 +114,8 @@ class PlayerState:
             self.rotation += allowed_rot * dt * turn_fact
 
         rot = math.radians(self.rotation)
-        self.position[0] += math.cos(rot) * self.speed * dt
-        self.position[1] -= math.sin(rot) * self.speed * dt
+        self.x += math.cos(rot) * self.speed * dt
+        self.y -= math.sin(rot) * self.speed * dt
         self.boundaries = self.__update_boundaries__(rot)
 
     def __update_boundaries__(self, radians):
@@ -126,7 +125,7 @@ class PlayerState:
 
         def move_rotate_pt(pt):
             m = np.dot(j, pt)
-            return np.array(self.position) + m.T
+            return np.array((self.x, self.y)) + m.T
 
         return [move_rotate_pt(pt) for pt in CAR_COLL_BOX]
 

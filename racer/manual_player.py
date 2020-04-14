@@ -32,7 +32,11 @@ class ManualController(RaceController):
 
     def __setup_players(self):
         if self.two_players:
-            return [ManualPlayer(*PLAYER2_KEYS), ManualPlayer(*PLAYER1_KEYS)]
+            player1 = ManualPlayer(*PLAYER1_KEYS)
+            player1.state.y += 10
+            player2 = ManualPlayer(*PLAYER2_KEYS)
+            player2.state.y -= 20
+            return [player2, player1]
         return [ManualPlayer(*PLAYER1_KEYS)]
 
     def get_player_count(self):
@@ -72,7 +76,7 @@ class ManualController(RaceController):
                 self.show_lost_screen = True
 
     def get_player_states(self) -> List[PlayerState]:
-        return [player.get_state() for player in self.players]
+        return [player.state for player in self.players]
 
 
 class ManualPlayer:
@@ -82,10 +86,9 @@ class ManualPlayer:
         self.operation = PlayerOperation()
         self.up, self.down, self.left, self.right = up, down, left, right
 
-    def reset(self):
-        self.score = 0
-        self.engine = RacerEngine()
-        self.operation = PlayerOperation()
+    @property
+    def state(self):
+        return self.engine.player_state
 
     def on_key_press(self, symbol):
         if symbol == self.up:
@@ -111,6 +114,3 @@ class ManualPlayer:
             relevant_speed = self.engine.player_state.relevant_speed
             amp = 0.002 if relevant_speed < 0 else 0.001
             self.score += relevant_speed * amp
-
-    def get_state(self):
-        return self.engine.player_state

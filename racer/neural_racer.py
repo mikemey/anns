@@ -45,7 +45,8 @@ class NeuralRacer:
 
     def next_step(self, dt):
         # TODO use TRAINING_DT here:
-        distances = get_trace_distances(self.engine.player_state.position, self.engine.player_state.rotation)
+        state = self.engine.player_state
+        distances = get_trace_distances((state.x, state.y), state.rotation)
         output = self.net.activate(distances)
         self.__update_operations(dt, *output)
         self.engine.update(dt, self.operations)
@@ -83,5 +84,6 @@ DISTANCE_RANGE = 650
 
 
 def normalized_distances(self):
-    distances = get_trace_distances(self.engine.player_state.position, self.engine.player_state.rotation)
+    state = self.engine.player_state
+    distances = get_trace_distances((state.x, state.y), state.rotation)
     return [(dist - MIN_DISTANCE) / DISTANCE_RANGE for dist in distances]
