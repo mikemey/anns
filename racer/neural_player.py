@@ -90,7 +90,6 @@ class ShowcaseController(RaceController):
     def __init__(self, genomes, config):
         super().__init__()
         self.neural_racer = [NeuralRacer(genome, config) for genome in genomes]
-        # TODO set lost screen text for neural-net players:
         self.window = RacerWindow(self, show_traces=False)
         self.seconds_to_close = self.DELAY_AUTO_CLOSE_SECS
 
@@ -105,9 +104,9 @@ class ShowcaseController(RaceController):
         if not self.show_end_screen:
             all_lost = True
             for racer in self.neural_racer:
-                if not racer.game_over():
+                if not racer.engine.game_over:
                     all_lost = False
-                    racer.next_step(dt)
+                    racer.next_step()
             self.show_end_screen = all_lost
 
         if self.show_end_screen:

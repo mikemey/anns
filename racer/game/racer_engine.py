@@ -76,13 +76,21 @@ class RacerEngine:
     def __init__(self):
         self.player_state = PlayerState()
         self.track = Track()
-        self.game_over = False
+        self.__game_over = False
+
+    @property
+    def game_over(self):
+        return self.__game_over
+
+    @game_over.setter
+    def game_over(self, game_over):
+        self.player_state.is_alive = not game_over
+        self.__game_over = game_over
 
     def update(self, dt, operations):
         self.player_state.update(dt, operations)
         if not self.track.contains_points(self.player_state.boundaries):
             self.game_over = True
-            self.player_state.is_alive = False
 
 
 class PlayerState:

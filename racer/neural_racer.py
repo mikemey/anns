@@ -25,36 +25,31 @@ class NeuralRacer:
     def get_state(self):
         return self.engine.player_state
 
-    def game_over(self):
-        return self.score < 0 \
-               or self.engine.game_over \
-               or self.noop_timeout < 0 \
-               or self.__under_score_per_seconds_limit()
-
     def get_fitness(self):
-        while not self.game_over():
-            self.next_step(TRAINING_DT)
+        while not self.engine.game_over:
+            self.next_step()
             self.time += TRAINING_DT
 
         fitness = self.score
         if self.noop_timeout < 0:
             fitness -= 20
-        if self.__under_score_per_seconds_limit():
+        if self.__under_sps_limit():
             fitness -= 10
         return fitness
 
-    def next_step(self, dt):
-        # TODO use TRAINING_DT here:
+    def next_step(self):
         state = self.engine.player_state
         distances = get_trace_distances((state.x, state.y), state.rotation)
         output = self.net.activate(distances)
-        self.__update_operations(dt, *output)
-        self.engine.update(dt, self.operations)
+        self.__update_operations(*output)
+        self.engine.update(TRAINING_DT, self.operations)
         self.__update_score()
+        if self.__under_sps_limit():
+            self.engine.game_over = True
 
-    def __update_operations(self, dt, fwd, back, left, right):
+    def __update_operations(self, fwd, back, left, right):
         self.operations.stop_all()
-        self.noop_timeout -= dt
+        self.noop_timeout -= TRAINING_DT
         if fwd > 0.5 or back > 0.5:
             self.noop_timeout = NOOP_TIMEOUT_SECS
             if fwd > back:
@@ -66,13 +61,17 @@ class NeuralRacer:
                 self.operations.turn_left()
             else:
                 self.operations.turn_right()
+        if self.noop_timeout < 0:
+            self.engine.game_over = True
 
     def __update_score(self):
         relevant_speed = self.engine.player_state.relevant_speed
         amp = 0.002 if relevant_speed < 0 else 0.001
         self.score += relevant_speed * amp
+        if self.score < 0:
+            self.engine.game_over = True
 
-    def __under_score_per_seconds_limit(self):
+    def __under_sps_limit(self):
         if self.time > MIN_SPS_OFFSET:
             return self.score / self.time < MIN_SCORE_PER_SECOND
         return False
