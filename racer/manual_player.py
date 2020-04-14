@@ -12,7 +12,7 @@ class ManualMaster:
         self.controller = ManualController(two_players)
 
     def run(self):
-        w = RacerWindow(self.controller)
+        w = RacerWindow(self.controller, show_traces=not self.controller.two_players)
         w.start()
 
 
@@ -57,10 +57,10 @@ class ManualController(RaceController):
 
     def get_score_text(self):
         if self.two_players:
-            if self.players[0].score > self.players[1].score:
-                return 'Player 1'
-            else:
-                return 'Player 2'
+            diff = self.players[1].score - self.players[0].score
+            if diff == 0:
+                return '=='
+            return 'Player 1' if diff > 0 else 'Player 2'
         return 'Score: {:.0f}'.format(self.players[0].score)
 
     def update_player_states(self, dt):
