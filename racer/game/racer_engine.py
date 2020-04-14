@@ -16,10 +16,6 @@ CAR_FRICTION = 0.98
 MIN_SPEED = 10
 
 
-def ignore_speed(speed):
-    return abs(speed) < MIN_SPEED
-
-
 class PlayerOperation:
     FWD_IX = 0
     REV_IX = 1
@@ -97,9 +93,12 @@ class PlayerState:
 
     @property
     def relevant_speed(self):
-        if ignore_speed(self.speed):
+        if self.__ignore_speed():
             return 0
         return self.speed
+
+    def __ignore_speed(self):
+        return abs(self.speed) < MIN_SPEED
 
     def update(self, dt, operations: PlayerOperation):
         self.speed *= CAR_FRICTION
@@ -107,10 +106,10 @@ class PlayerState:
         if move_fact:
             new_speed = self.speed + MAX_CAR_SPEED * dt * move_fact
             self.speed = min(MAX_CAR_SPEED, max(-MAX_CAR_SPEED, new_speed))
-        elif ignore_speed(self.speed):
+        elif self.__ignore_speed():
             self.speed = 0
 
-        if not ignore_speed(self.speed):
+        if not self.__ignore_speed():
             turn_fact = operations.get_turn_factor() * math.copysign(1, self.speed)
             allowed_rot = MAX_CAR_ROTATION * ((abs(self.speed) / MAX_CAR_SPEED) ** 0.5)
             self.rotation += allowed_rot * dt * turn_fact
