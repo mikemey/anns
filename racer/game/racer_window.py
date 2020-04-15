@@ -85,6 +85,9 @@ class WarmupController:
                 pyglet.clock.schedule_once(self.next_screen, delay)
 
 
+import math
+
+
 class RacerWindow(pyglet.window.Window):
     BG_COLOR = 0.5, 0.8, 0.4, 1
     WINDOW_POS = 20, 0
@@ -106,6 +109,9 @@ class RacerWindow(pyglet.window.Window):
         self.cars = [CarGraphics(show_traces) for _ in range(self.controller.get_player_count())]
         self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
         self.end_overlay = None
+        self.timer = 0
+        self.min_dt = math.inf
+        self.max_dt = -math.inf
 
     def on_reset(self):
         self.end_overlay = None
@@ -141,6 +147,13 @@ class RacerWindow(pyglet.window.Window):
         self.controller.focus_lost()
 
     def update(self, dt):
+        self.timer += 1
+        if dt > self.max_dt:
+            self.max_dt = dt
+        if dt < self.min_dt:
+            self.min_dt = dt
+        if self.timer % 10 == 0:
+            print('delta-time: {:.3f} - {:.3f} <-> {:.3f}'.format(dt, self.min_dt, self.max_dt))
         if self.warmup_controller.control_released:
             self.controller.update_player_states(dt)
         player_states = self.controller.get_player_states()
