@@ -93,6 +93,7 @@ class ShowcaseController(RaceController):
         self.neural_racer = [NeuralRacer(genome, config) for genome in genomes]
         self.window = RacerWindow(self, show_traces=False)
         self.seconds_to_close = self.DELAY_AUTO_CLOSE_SECS
+        self.closing = False
 
     def showcase(self):
         self.window.start()
@@ -103,13 +104,8 @@ class ShowcaseController(RaceController):
 
     # TODO use NeuralMaster.pool to distribute player updates
     def update_player_states(self, dt):
-        if not self.show_end_screen:
-            all_lost = True
-            for racer in self.neural_racer:
-                if not racer.engine.game_over:
-                    all_lost = False
-                    racer.next_step(dt)
-            self.show_end_screen = all_lost
+        if self.closing:
+            return
 
         if self.show_end_screen:
             if self.seconds_to_close == self.DELAY_AUTO_CLOSE_SECS:
@@ -117,6 +113,14 @@ class ShowcaseController(RaceController):
             self.seconds_to_close -= dt
             if self.seconds_to_close < 0:
                 self.window.close()
+                self.closing = True
+        else:
+            all_lost = True
+            for racer in self.neural_racer:
+                if not racer.engine.game_over:
+                    all_lost = False
+                    racer.next_step(dt)
+            self.show_end_screen = all_lost
 
     def get_player_states(self) -> List[PlayerState]:
         return [racer.get_state() for racer in self.neural_racer]
