@@ -1,42 +1,25 @@
 import numpy as np
 
-MEANS = [0.0168, 0.025, 0.037]
-DEVIATIONS = [0.0006, [0.01, 0.02], 0.003]
-DISTRIBUTION_RATIOS = [0.72, 0.87]
-PICK_DIST_0_RATIO = 0.7
-PICK_DIST_1_RATIO = 0.85
+MEANS = [0.017, 0.025]
+DEVIATIONS = [0.001, 0.015]
+DISTRIBUTION_RATIOS = [0.75]
 
 LIMITS_DIGITS = 3
-HARD_LIMIT_LOW = 0.010
-HARD_LIMIT_HIGH = 0.060
-
-SIMPLE_MEAN = 0.017
-SIMPLE_DEVIATION = 0.001
-SIMPLE_LIMIT_LOW = 0.015
-SIMPLE_LIMIT_HIGH = 0.019
+LIMIT_LOW = 0.010
+LIMIT_HIGH = 0.050
 
 
 def random_dt():
-    return __simple_random_dt()
-
-
-def __simple_random_dt():
-    dt = np.random.normal(SIMPLE_MEAN, SIMPLE_DEVIATION, 1)[0]
-    round_dt = np.round(dt, LIMITS_DIGITS)
-    if round_dt < SIMPLE_LIMIT_LOW:
-        return __simple_random_dt()
-    if round_dt > SIMPLE_LIMIT_HIGH:
-        return __simple_random_dt()
-    return dt
+    return __random_dt()
 
 
 def __random_dt(ix=None):
     ix = __pick_ix(ix)
     dt = np.random.normal(MEANS[ix], DEVIATIONS[ix], 1)[0]
     round_dt = np.round(dt, LIMITS_DIGITS)
-    if round_dt < HARD_LIMIT_LOW:
+    if round_dt < LIMIT_LOW:
         return __random_dt(ix)
-    if round_dt > HARD_LIMIT_HIGH:
+    if round_dt > LIMIT_HIGH:
         return __random_dt(ix)
     return dt
 
@@ -53,37 +36,39 @@ def __pick_ix(ix=None):
 
 
 # Distribution sample printing:
-SAMPLE_SIZE = 1000
+SAMPLE_SIZE = 600
 DELTA_TIME_STEP = 0.001
 
 DT_FORMAT = '{:.3f}'
-LOG_HEADER = 'time\tdist_1\tdist_2\tdist_3\ttotal'
-DT_LOG = DT_FORMAT + '\t{}\t{}\t{}\t{}'
-EMPTY_DT_LOG = DT_FORMAT + '\t0\t0\t0\t0'
+LOG_HEADER = 'time\t' + '\t'.join(['dist_{}'.format(i + 1) for i in range(len(MEANS))]) + '\ttotal'
+DT_LOG = DT_FORMAT + '\t{}' * (len(MEANS) + 1)
+EMPTY_DT_LOG = DT_FORMAT + '\t0' * (len(MEANS) + 1)
+
+START_COUNTS = [0] * len(MEANS)
 
 
 def __print_dts_distribution():
     distribution = {}
     for _ in range(0, SAMPLE_SIZE):
-        ix = 0
-        # ix = __pick_ix()
-        dt = np.round(__simple_random_dt(), LIMITS_DIGITS)
-        times = distribution.setdefault(dt, [0, 0, 0])
+        # ix = 0
+        ix = __pick_ix()
+        dt = np.round(__random_dt(ix), LIMITS_DIGITS)
+        times = distribution.setdefault(dt, START_COUNTS.copy())
         times[ix] += 1
         distribution.update(({dt: times}))
 
     print(LOG_HEADER)
-    last_time = SIMPLE_LIMIT_LOW
+    last_time = LIMIT_LOW
     sorted_dist = sorted(list(distribution.items()))
-    for key, [dist_1, dist_2, dist_3] in sorted_dist:
+    for key, counters in sorted_dist:
         curr_time = float(key)
         while curr_time > last_time:
             print(EMPTY_DT_LOG.format(last_time))
             last_time += DELTA_TIME_STEP
-        print(DT_LOG.format(key, dist_1, dist_2, dist_3, sum((dist_1, dist_2, dist_3))))
+        print(DT_LOG.format(key, *counters, sum(counters)))
         last_time += DELTA_TIME_STEP
 
-    while last_time <= SIMPLE_LIMIT_HIGH + DELTA_TIME_STEP:
+    while last_time <= LIMIT_HIGH + DELTA_TIME_STEP:
         print(EMPTY_DT_LOG.format(last_time))
         last_time += DELTA_TIME_STEP
 
