@@ -80,7 +80,7 @@ class NeuralMaster:
         def showcase_best():
             racer = sorted(genomes, key=lambda gen: gen.fitness, reverse=True)[:self.training_config.showcase_racer_count]
             print('Showcase racer fitness:', [math.floor(r.fitness) for r in racer])
-            ShowcaseController(racer, config).showcase()
+            ShowcaseController(racer, config, self.pool).showcase()
 
         self.reporter.run_post_batch(showcase_best)
 
@@ -88,9 +88,11 @@ class NeuralMaster:
 class ShowcaseController(RaceController):
     DELAY_AUTO_CLOSE_SECS = 3
 
-    def __init__(self, genomes, config):
+    def __init__(self, genomes, config, pool):
         super().__init__()
-        self.neural_racer = [NeuralRacer(genome, config) for genome in genomes]
+        self.__neural_racer = [NeuralRacer(genome, config) for genome in genomes]
+        self.__pool = pool
+
         self.window = RacerWindow(self, show_traces=False)
         self.seconds_to_close = self.DELAY_AUTO_CLOSE_SECS
         self.closing = False
@@ -99,10 +101,9 @@ class ShowcaseController(RaceController):
         self.window.start()
 
     def get_score_text(self):
-        highest_score = max([racer.score for racer in self.neural_racer])
+        highest_score = max([racer.score for racer in self.__neural_racer])
         return 'max: {:.0f}'.format(highest_score)
 
-    # TODO use NeuralMaster.pool to distribute player updates
     def update_player_states(self, dt):
         if self.closing:
             return
@@ -115,20 +116,23 @@ class ShowcaseController(RaceController):
                 self.window.close()
                 self.closing = True
         else:
-            all_lost = True
-            for racer in self.neural_racer:
-                if not racer.engine.game_over:
-                    all_lost = False
-                    racer.next_step(dt)
-            self.show_end_screen = all_lost
+            pool_params = [(racer, dt) for racer in self.__neural_racer]
+            self.__neural_racer = self.__pool.starmap(update_player_state, pool_params)
+            self.show_end_screen = all([racer.engine.game_over for racer in self.__neural_racer])
 
     def get_player_states(self) -> List[PlayerState]:
-        return [racer.get_state() for racer in self.neural_racer]
+        return [racer.get_state() for racer in self.__neural_racer]
 
     def get_player_count(self):
-        return len(self.neural_racer)
+        return len(self.__neural_racer)
 
     def get_end_text(self):
         return '', 'waiting {} seconds to exit...'.format(self.DELAY_AUTO_CLOSE_SECS), ''
 
     # TODO add stats text on screen
+
+
+def update_player_state(racer, dt):
+    if not racer.engine.game_over:
+        racer.next_step(dt)
+    return racer
