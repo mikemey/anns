@@ -65,6 +65,7 @@ class NeuralMaster:
         if self.pool:
             self.pool.close()
             self.pool.join()
+            self.pool = None
             print('process pool closed.')
             exit(0)
 
