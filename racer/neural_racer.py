@@ -1,3 +1,5 @@
+from signal import signal, SIGINT
+
 import neat
 
 from game.racer_engine import RacerEngine, PlayerOperation
@@ -10,8 +12,18 @@ MIN_SPS_OFFSET = 2
 
 
 class NeuralRacer:
+    STOPPING = False
+
+    @staticmethod
+    def sigint_received(signal_received=None, frame=None):
+        NeuralRacer.STOPPING = True
+
     @staticmethod
     def play_game(genome, config):
+        if NeuralRacer.STOPPING:
+            return 0
+
+        signal(SIGINT, NeuralRacer.sigint_received)
         return NeuralRacer(genome, config, config.fitness_threshold).get_fitness()
 
     def __init__(self, genome, config, limit=None):
@@ -27,11 +39,10 @@ class NeuralRacer:
         return self.engine.player_state
 
     def get_fitness(self):
-        while not self.engine.game_over:
+        while not (self.engine.game_over or NeuralRacer.STOPPING):
             dt = random_dt()
             self.next_step(dt)
             self.time += dt
-
         fitness = self.score
         if self.noop_timeout < 0:
             fitness -= 20
