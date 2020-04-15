@@ -3,6 +3,7 @@ import os
 from configparser import ConfigParser
 from multiprocessing import Pool
 from signal import signal, SIGINT
+from statistics import mean
 from typing import List
 
 import neat
@@ -96,6 +97,7 @@ class ShowcaseController(RaceController):
         self.window = RacerWindow(self, show_traces=False)
         self.seconds_to_close = self.DELAY_AUTO_CLOSE_SECS
         self.closing = False
+        self.dts = []
 
     def showcase(self):
         self.window.start()
@@ -111,11 +113,17 @@ class ShowcaseController(RaceController):
         if self.show_end_screen:
             if self.seconds_to_close == self.DELAY_AUTO_CLOSE_SECS:
                 print('Showcases finished, waiting {} seconds to exit...'.format(self.DELAY_AUTO_CLOSE_SECS))
+                print('avg: {:.3f}'.format(mean(self.dts)))
             self.seconds_to_close -= dt
             if self.seconds_to_close < 0:
                 self.window.close()
                 self.closing = True
         else:
+            self.dts.append(dt)
+            if len(self.dts) % 10 == 0:
+                max_dt = max(self.dts)
+                min_dt = min(self.dts)
+                print('delta-time: {:.3f} - {:.3f} <-> {:.3f}'.format(dt, min_dt, max_dt))
             pool_params = [(racer, dt) for racer in self.__neural_racer]
             self.__neural_racer = self.__pool.starmap(update_player_state, pool_params)
             self.show_end_screen = all([racer.engine.game_over for racer in self.__neural_racer])
