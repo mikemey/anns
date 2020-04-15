@@ -3,6 +3,7 @@ from os import path
 import numpy as np
 import pyglet
 from pyglet.graphics.vertexdomain import VertexList
+from shapely.geometry import Point, LinearRing
 
 from .racer_engine import PlayerState, CAR_BOUND_POINTS, CAR_BOUNDS
 from .tracers import get_trace_points
@@ -12,8 +13,11 @@ resource_dir = path.join(path.abspath(path.dirname(__file__)), 'resources')
 pyglet.resource.path = [resource_dir]
 pyglet.resource.reindex()
 car_frame_img = pyglet.resource.image('car-frame.png')
-car_frame_img.anchor_x = car_frame_img.width / 3
-car_frame_img.anchor_y = car_frame_img.height / 2
+car_frame_img.anchor_x = car_frame_img.width // 3
+car_frame_img.anchor_y = car_frame_img.height // 2
+pointer_img = pyglet.resource.image('pointer.png')
+pointer_img.anchor_x = pointer_img.width // 2
+pointer_img.anchor_y = pointer_img.height // 2
 
 
 def random_color():
@@ -198,14 +202,51 @@ class FPSLabel(GraphicsElement):
 
     def __init__(self):
         super().__init__()
-        self.__label = pyglet.text.Label('0', x=5, y=TRACK_SIZE[1] - 17,
-                                         font_size=12, color=self.TEXT_COLOR,
-                                         batch=self.batch)
+        self.label = pyglet.text.Label('0', x=5, y=TRACK_SIZE[1] - 17,
+                                       font_size=12, color=self.TEXT_COLOR,
+                                       batch=self.batch)
         self.dts = []
 
     def update(self, dt):
         self.dts.append(dt)
         if len(self.dts) >= self.COLLECT_SIZE:
             fps = 1 / np.mean(self.dts)
-            self.__label.text = '{:.0f}'.format(fps)
+            self.label.text = '{:.0f}'.format(fps)
             self.dts.clear()
+
+
+class Indicator(GraphicsElement):
+    OUTER_LINE = LinearRing(np.reshape(OUTER_TRACK, (-1, 2)))
+    INNER_LINE = LinearRing(np.reshape(INNER_TRACK, (-1, 2)))
+    out_len, in_len = len(OUTER_TRACK), len(INNER_TRACK)
+    OUTER_ENDS = [(OUTER_TRACK[0], OUTER_TRACK[1]), (OUTER_TRACK[out_len - 2], OUTER_TRACK[out_len - 1])]
+    INNER_ENDS = [(INNER_TRACK[0], INNER_TRACK[1]), (INNER_TRACK[in_len - 2], INNER_TRACK[in_len - 1])]
+
+    def __init__(self):
+        super().__init__()
+        self.inner_point = pyglet.sprite.Sprite(img=pointer_img, batch=self.batch)
+        self.outer_point = pyglet.sprite.Sprite(img=pointer_img, batch=self.batch)
+        self.inner_label = pyglet.text.Label('0', font_size=14, batch=self.batch)
+        self.outer_label = pyglet.text.Label('0', font_size=14, batch=self.batch)
+
+        self.outer_offset = 3522
+        self.inner_offset = 2890
+
+    def update(self, state: PlayerState):
+        pt = Point(state.x, state.y)
+        # outd = np.round(self.OUTER_LINE.project(pt))
+        # outd = outd - self.outer_offset
+        # ind = np.round(self.INNER_LINE.project(pt))
+        # print('out: {:4f}'.format(outd - self.outer_offset))
+        self.__update_pointer(self.inner_point, self.inner_label, 2890, self.INNER_LINE, pt)
+        self.__update_pointer(self.outer_point, self.outer_label, 3522, self.OUTER_LINE, pt)
+
+    @staticmethod
+    def __update_pointer(pointer, label, offset, line, point):
+        d = line.project(point)
+        label.text = '{:.0f}'.format(d - offset)
+        p = line.interpolate(d)
+        (px, py) = list(p.coords)[0]
+        pointer.update(x=px, y=py)
+        label.x = px + 8
+        label.y = py + 8
