@@ -6,7 +6,6 @@ from signal import signal, SIGINT
 from typing import List
 
 import neat
-from neat import CompleteExtinctionException
 
 from game.racer_engine import PlayerState
 from game.racer_window import RaceController, RacerWindow
@@ -42,8 +41,8 @@ class TrainingConfig:
 
 class NeuralMaster:
     def __init__(self):
-        neat_config, self.training_config = load_configs()
-        self.population = neat.Population(neat_config)
+        self.neat_config, self.training_config = load_configs()
+        self.population = neat.Population(self.neat_config)
         self.reporter = TrainingReporter(self.training_config.showcase_batch_size)
         self.population.add_reporter(self.reporter)
         self.best_racers = []
@@ -56,8 +55,9 @@ class NeuralMaster:
         try:
             winner = self.population.run(self.eval_population, 100000)
             print('\nWinner fitness:', winner.fitness)
-        except ValueError or CompleteExtinctionException as ex:
-            print(ex)
+            ShowcaseController(winner, self.neat_config, self.pool).showcase()
+        except Exception as ex:
+            print('Training error:',ex)
         finally:
             self.stop()
 
@@ -80,7 +80,11 @@ class NeuralMaster:
         def showcase_best():
             racer = sorted(genomes, key=lambda gen: gen.fitness, reverse=True)[:self.training_config.showcase_racer_count]
             print('Showcase racer fitness:', [math.floor(r.fitness) for r in racer])
-            ShowcaseController(racer, config, self.pool).showcase()
+            try:
+                ShowcaseController(racer, config, self.pool).showcase()
+            except Exception as e:
+                msg = 'no screen available' if str(e) == 'list index out of range' else e
+                print('Showcase error:', msg)
 
         self.reporter.run_post_batch(showcase_best)
 
