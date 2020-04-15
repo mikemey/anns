@@ -4,7 +4,8 @@ from typing import List
 import pyglet
 
 from .racer_engine import PlayerState
-from .racer_graphics import CarGraphics, TrackGraphics, ScoreBox, GameOverlay, WarmupSequence
+from .racer_graphics import CarGraphics, TrackGraphics, ScoreBox, GameOverlay, \
+    WarmupSequence, FPSLabel
 from .tracks import TRACK_SIZE
 
 resource_dir = path.join(path.abspath(path.dirname(__file__)), 'resources')
@@ -89,7 +90,7 @@ class RacerWindow(pyglet.window.Window):
     BG_COLOR = 0.5, 0.8, 0.4, 1
     WINDOW_POS = 20, 0
 
-    def __init__(self, controller: RaceController, show_traces=True):
+    def __init__(self, controller: RaceController, show_traces=True, show_fps=False):
         super().__init__(*TRACK_SIZE, caption='Racer')
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
@@ -106,6 +107,7 @@ class RacerWindow(pyglet.window.Window):
         self.cars = [CarGraphics(show_traces) for _ in range(self.controller.get_player_count())]
         self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
         self.end_overlay = None
+        self.fps_label = FPSLabel() if show_fps else None
 
     def on_reset(self):
         self.end_overlay = None
@@ -129,6 +131,8 @@ class RacerWindow(pyglet.window.Window):
         elif self.controller.show_paused_screen:
             self.pause_overlay.draw()
         self.score_box.draw()
+        if self.fps_label:
+            self.fps_label.draw()
 
     def on_key_press(self, symbol, modifiers):
         super().on_key_press(symbol, modifiers)
@@ -147,3 +151,5 @@ class RacerWindow(pyglet.window.Window):
         for player_state, car in zip(player_states, self.cars):
             car.update(player_state)
         self.score_box.update_text(self.controller.get_score_text())
+        if self.fps_label:
+            self.fps_label.update(dt)

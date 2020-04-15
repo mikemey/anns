@@ -57,7 +57,7 @@ class NeuralMaster:
             print('\nWinner fitness:', winner.fitness)
             ShowcaseController(winner, self.neat_config, self.pool).showcase()
         except Exception as ex:
-            print('Training error:',ex)
+            print('Training error:', ex)
         finally:
             self.stop()
 
@@ -97,7 +97,7 @@ class ShowcaseController(RaceController):
         self.__neural_racer = [NeuralRacer(genome, config) for genome in genomes]
         self.__pool = pool
 
-        self.window = RacerWindow(self, show_traces=False)
+        self.window = RacerWindow(self, show_traces=False, show_fps=True)
         self.seconds_to_close = self.DELAY_AUTO_CLOSE_SECS
         self.closing = False
 

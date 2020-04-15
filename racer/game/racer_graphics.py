@@ -21,7 +21,7 @@ def random_color():
 
 
 def convert_data(points, color=None, color_mode='c3B'):
-    pts_count = int(len(points) / 2)
+    pts_count = len(points) // 2
     vertices = ('v2i', points)
     color_data = (color_mode, color * pts_count) if color else None
     return pts_count, vertices, color_data
@@ -190,3 +190,22 @@ class ScoreBox(GraphicsElement):
     def update_text(self, score_text):
         self.label.text = score_text
         self.label.x = self.center_x - self.label.content_width / 2
+
+
+class FPSLabel(GraphicsElement):
+    TEXT_COLOR = (0, 0, 0, 200)
+    COLLECT_SIZE = 5
+
+    def __init__(self):
+        super().__init__()
+        self.__label = pyglet.text.Label('0', x=5, y=TRACK_SIZE[1] - 17,
+                                         font_size=12, color=self.TEXT_COLOR,
+                                         batch=self.batch)
+        self.dts = []
+
+    def update(self, dt):
+        self.dts.append(dt)
+        if len(self.dts) >= self.COLLECT_SIZE:
+            fps = 1 / np.mean(self.dts)
+            self.__label.text = '{:.0f}'.format(fps)
+            self.dts.clear()
