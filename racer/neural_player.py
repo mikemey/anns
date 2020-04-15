@@ -101,13 +101,14 @@ class ShowcaseController(RaceController):
         highest_score = max([racer.score for racer in self.neural_racer])
         return 'max: {:.0f}'.format(highest_score)
 
+    # TODO use NeuralMaster.pool to distribute player updates
     def update_player_states(self, dt):
         if not self.show_end_screen:
             all_lost = True
             for racer in self.neural_racer:
                 if not racer.engine.game_over:
                     all_lost = False
-                    racer.next_step()
+                    racer.next_step(dt)
             self.show_end_screen = all_lost
 
         if self.show_end_screen:
@@ -125,3 +126,5 @@ class ShowcaseController(RaceController):
 
     def get_end_text(self):
         return '', 'waiting {} seconds to exit...'.format(self.DELAY_AUTO_CLOSE_SECS), ''
+
+    # TODO add stats text on screen

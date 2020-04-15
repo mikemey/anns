@@ -2,8 +2,8 @@ import neat
 
 from game.racer_engine import RacerEngine, PlayerOperation
 from game.tracers import get_trace_distances
+from training_dts import random_dt
 
-TRAINING_DT = 1 / 60
 NOOP_TIMEOUT_SECS = 2
 MIN_SCORE_PER_SECOND = 1
 MIN_SPS_OFFSET = 2
@@ -28,8 +28,9 @@ class NeuralRacer:
 
     def get_fitness(self):
         while not self.engine.game_over:
-            self.next_step()
-            self.time += TRAINING_DT
+            dt = random_dt()
+            self.next_step(dt)
+            self.time += dt
 
         fitness = self.score
         if self.noop_timeout < 0:
@@ -38,19 +39,21 @@ class NeuralRacer:
             fitness -= 10
         return fitness
 
-    def next_step(self):
+    def next_step(self, dt):
+        net_input = [dt]
         state = self.engine.player_state
-        distances = get_trace_distances((state.x, state.y), state.rotation)
-        output = self.net.activate(distances)
-        self.__update_operations(*output)
-        self.engine.update(TRAINING_DT, self.operations)
+        net_input.extend(get_trace_distances((state.x, state.y), state.rotation))
+
+        net_output = self.net.activate(net_input)
+        self.__update_operations(dt, *net_output)
+        self.engine.update(dt, self.operations)
         self.__update_score()
         if self.__under_sps_limit():
             self.engine.game_over = True
 
-    def __update_operations(self, fwd, back, left, right):
+    def __update_operations(self, dt, fwd, back, left, right):
         self.operations.stop_all()
-        self.noop_timeout -= TRAINING_DT
+        self.noop_timeout -= dt
         if fwd > 0.5 or back > 0.5:
             self.noop_timeout = NOOP_TIMEOUT_SECS
             if fwd > back:
