@@ -6,19 +6,34 @@ DISTRIBUTION_RATIOS = [0.72, 0.87]
 PICK_DIST_0_RATIO = 0.7
 PICK_DIST_1_RATIO = 0.85
 
-HARD_LIMIT_DIGITS = 3
+LIMITS_DIGITS = 3
 HARD_LIMIT_LOW = 0.010
 HARD_LIMIT_HIGH = 0.060
 
+SIMPLE_MEAN = 0.017
+SIMPLE_DEVIATION = 0.001
+SIMPLE_LIMIT_LOW = 0.015
+SIMPLE_LIMIT_HIGH = 0.019
+
 
 def random_dt():
-    return __random_dt()
+    return __simple_random_dt()
+
+
+def __simple_random_dt():
+    dt = np.random.normal(SIMPLE_MEAN, SIMPLE_DEVIATION, 1)[0]
+    round_dt = np.round(dt, LIMITS_DIGITS)
+    if round_dt < SIMPLE_LIMIT_LOW:
+        return __simple_random_dt()
+    if round_dt > SIMPLE_LIMIT_HIGH:
+        return __simple_random_dt()
+    return dt
 
 
 def __random_dt(ix=None):
     ix = __pick_ix(ix)
     dt = np.random.normal(MEANS[ix], DEVIATIONS[ix], 1)[0]
-    round_dt = np.round(dt, HARD_LIMIT_DIGITS)
+    round_dt = np.round(dt, LIMITS_DIGITS)
     if round_dt < HARD_LIMIT_LOW:
         return __random_dt(ix)
     if round_dt > HARD_LIMIT_HIGH:
@@ -50,14 +65,15 @@ EMPTY_DT_LOG = DT_FORMAT + '\t0\t0\t0\t0'
 def __print_dts_distribution():
     distribution = {}
     for _ in range(0, SAMPLE_SIZE):
-        ix = __pick_ix()
-        dt = np.round(__random_dt(ix), HARD_LIMIT_DIGITS)
+        ix = 0
+        # ix = __pick_ix()
+        dt = np.round(__simple_random_dt(), LIMITS_DIGITS)
         times = distribution.setdefault(dt, [0, 0, 0])
         times[ix] += 1
         distribution.update(({dt: times}))
 
     print(LOG_HEADER)
-    last_time = HARD_LIMIT_LOW
+    last_time = SIMPLE_LIMIT_LOW
     sorted_dist = sorted(list(distribution.items()))
     for key, [dist_1, dist_2, dist_3] in sorted_dist:
         curr_time = float(key)
@@ -67,7 +83,7 @@ def __print_dts_distribution():
         print(DT_LOG.format(key, dist_1, dist_2, dist_3, sum((dist_1, dist_2, dist_3))))
         last_time += DELTA_TIME_STEP
 
-    while last_time <= HARD_LIMIT_HIGH + DELTA_TIME_STEP:
+    while last_time <= SIMPLE_LIMIT_HIGH + DELTA_TIME_STEP:
         print(EMPTY_DT_LOG.format(last_time))
         last_time += DELTA_TIME_STEP
 
@@ -75,7 +91,7 @@ def __print_dts_distribution():
 if __name__ == '__main__':
     __print_dts_distribution()
 
-# Recorded delta-times to replicate:
+# Recorded delta-times to replicate (single-threaded, obsolete after parallel processing):
 # 0.009	1
 # 0.010	1
 # 0.011	0
