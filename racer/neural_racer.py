@@ -43,13 +43,13 @@ class NeuralRacer:
         while not (self.engine.game_over or NeuralRacer.STOPPING):
             dt = random_dt()
             self.next_step(dt)
-            self.time += dt
         fitness = self.score
         if self.__under_sps_limit():
             fitness -= 10
         return fitness
 
     def next_step(self, dt):
+        self.time += dt
         net_input = [dt] + self.__normalized_distances()
         net_output = self.net.activate(net_input)
 
