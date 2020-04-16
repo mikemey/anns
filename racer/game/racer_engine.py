@@ -1,7 +1,7 @@
 import math
 
 import numpy as np
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, LinearRing, Point
 
 from .tracks import OUTER_TRACK, OUTER_TRACK_OFFSET, \
     INNER_TRACK, INNER_TRACK_OFFSET, \
@@ -96,11 +96,16 @@ class RacerEngine:
 
 
 class PlayerState:
+    EMPTY_DELTAS = ((0, (-100, -100)),) * 2
+
     def __init__(self):
         [self.x, self.y], self.rotation = INIT_CAR_POSITION, INIT_CAR_ROTATION
         self.speed = 0
         self.boundaries = Polygon(np.reshape(CAR_BOUND_POINTS, (-1, 2)))
         self.is_alive = True
+        self.distance = 0
+        self.last_deltas = self.EMPTY_DELTAS
+        self.__distance_tracker = DistanceTracker()
 
     @property
     def relevant_speed(self):
@@ -130,6 +135,7 @@ class PlayerState:
         self.x += cosine * self.speed * dt
         self.y -= sine * self.speed * dt
         self.__update_boundaries__(cosine, sine)
+        self.__update_distance__()
 
     def __update_boundaries__(self, cosine, sine):
         j = np.array([[cosine, sine], [-sine, cosine]])
@@ -140,21 +146,55 @@ class PlayerState:
             new_boundaries.append(moved)
         self.boundaries = Polygon(new_boundaries)
 
+    def __update_distance__(self):
+        deltas = self.__distance_tracker.get_deltas(self.x, self.y)
+        self.distance += deltas[0][0] + deltas[1][0]
+        self.last_deltas = deltas
+
     def flattened_boundaries(self):
         return np.array(self.boundaries.coords[:-1]).flatten()
 
 
 class Track:
     def __init__(self):
-        self.__outside = TrackLines(OUTER_TRACK, OUTER_TRACK_OFFSET)
-        self.__inside = TrackLines(INNER_TRACK, INNER_TRACK_OFFSET)
+        self.__outside = Polygon(np.reshape(OUTER_TRACK, (-1, 2)))
+        self.__inside = Polygon(np.reshape(INNER_TRACK, (-1, 2)))
 
     def contains(self, geometry):
-        return self.__outside.area.contains(geometry) and \
-               not self.__inside.area.intersects(geometry)
+        return self.__outside.contains(geometry) and \
+               not self.__inside.intersects(geometry)
 
 
-class TrackLines:
+class DistanceTracker:
+    def __init__(self):
+        self.__outside_tracker = LineDistanceTracker(OUTER_TRACK, OUTER_TRACK_OFFSET)
+        self.__inside_tracker = LineDistanceTracker(INNER_TRACK, INNER_TRACK_OFFSET)
+
+    def get_deltas(self, x, y):
+        point = Point(x, y)
+        return self.__outside_tracker.get_delta(point), self.__inside_tracker.get_delta(point)
+
+
+class LineDistanceTracker:
     def __init__(self, track, offset):
-        points = np.reshape(track, (-1, 2))
-        self.area = Polygon(points)
+        self.__line = LinearRing(np.reshape(track, (-1, 2)))
+        self.__prev_d = offset
+        self.__line_length = np.round(self.__line.length)
+        self.__delta_limit = self.__line_length - 100
+
+    def get_delta(self, point):
+        dist = np.round(self.__line.project(point))
+        return self.__get_delta_score(dist), self.__get_line_point(dist)
+
+    def __get_delta_score(self, dist):
+        delta_score = dist - self.__prev_d
+        if delta_score < -self.__delta_limit:
+            delta_score = self.__line_length - self.__prev_d + dist
+        elif delta_score > self.__delta_limit:
+            delta_score = -(self.__prev_d + self.__line_length - dist)
+        self.__prev_d = dist
+        return delta_score
+
+    def __get_line_point(self, dist):
+        pts = self.__line.interpolate(dist)
+        return list(pts.coords)[0]
