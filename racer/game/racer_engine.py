@@ -9,7 +9,7 @@ CAR_BOUNDS = (-15, -11, 33, 11)
 CAR_BOUND_POINTS = (CAR_BOUNDS[0], CAR_BOUNDS[1], CAR_BOUNDS[2], CAR_BOUNDS[1],
                     CAR_BOUNDS[2], CAR_BOUNDS[3], CAR_BOUNDS[0], CAR_BOUNDS[3]
                     )
-CAR_COLL_BOX = np.reshape(CAR_BOUND_POINTS, (-1, 2)) * 0.9
+CAR_COLL_BOX = np.reshape(CAR_BOUND_POINTS, (-1, 2)) * 0.95
 MAX_CAR_SPEED = 300
 MAX_CAR_ROTATION = 200
 CAR_FRICTION = 0.98
@@ -89,7 +89,7 @@ class RacerEngine:
 
     def update(self, dt, operations):
         self.player_state.update(dt, operations)
-        if not self.track.contains_points(self.player_state.boundaries):
+        if not self.track.contains_path(self.player_state.boundaries):
             self.game_over = True
 
 
@@ -97,7 +97,7 @@ class PlayerState:
     def __init__(self):
         [self.x, self.y], self.rotation = INIT_CAR_POSITION, INIT_CAR_ROTATION
         self.speed = 0
-        self.boundaries = []
+        self.boundaries = mpath.Path(np.reshape(CAR_BOUND_POINTS, (-1, 2)), closed=True)
         self.is_alive = True
 
     @property
@@ -127,23 +127,24 @@ class PlayerState:
         cosine, sine = math.cos(rot), math.sin(rot)
         self.x += cosine * self.speed * dt
         self.y -= sine * self.speed * dt
-        self.boundaries = self.__update_boundaries__(cosine, sine)
+        self.__update_boundaries__(cosine, sine)
 
     def __update_boundaries__(self, cosine, sine):
         j = np.array([[cosine, sine], [-sine, cosine]])
+        for ix in range(len(CAR_COLL_BOX)):
+            m = np.dot(j, CAR_COLL_BOX[ix])
+            moved = np.array((self.x, self.y)) + m.T
+            self.boundaries.vertices.put([ix * 2, ix * 2 + 1], moved)
 
-        def move_rotate_pt(pt):
-            m = np.dot(j, pt)
-            return np.array((self.x, self.y)) + m.T
-
-        return [move_rotate_pt(pt) for pt in CAR_COLL_BOX]
+    def flattened_boundaries(self):
+        return self.boundaries.vertices.flatten()
 
 
 class Track:
     def __init__(self):
-        self.outside = mpath.Path(np.reshape(OUTER_TRACK, (-1, 2)))
-        self.inside = mpath.Path(np.reshape(INNER_TRACK, (-1, 2)))
+        self.outside = mpath.Path(np.reshape(OUTER_TRACK, (-1, 2)), closed=True)
+        self.inside = mpath.Path(np.reshape(INNER_TRACK, (-1, 2)), closed=True)
 
-    def contains_points(self, points):
-        return all(self.outside.contains_points(points)) and \
-               not any(self.inside.contains_points(points))
+    def contains_path(self, path):
+        return self.outside.contains_path(path) and \
+               not self.inside.intersects_path(path)
