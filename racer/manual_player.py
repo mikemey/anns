@@ -116,6 +116,4 @@ class ManualPlayer:
     def update(self, dt):
         if not self.engine.game_over:
             self.engine.update(dt, self.operation)
-            relevant_speed = self.engine.player_state.relevant_speed
-            amp = 0.002 if relevant_speed < 0 else 0.001
-            self.score += relevant_speed * amp
+            self.score = self.engine.player_state.distance // 10

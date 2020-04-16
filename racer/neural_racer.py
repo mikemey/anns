@@ -80,9 +80,7 @@ class NeuralRacer:
             self.engine.game_over = True
 
     def __update_score(self):
-        relevant_speed = self.engine.player_state.relevant_speed
-        amp = 0.002 if relevant_speed < 0 else 0.001
-        self.score += relevant_speed * amp
+        self.score = self.engine.player_state.distance // 10
         if self.score < 0:
             self.engine.game_over = True
         if self.limit and self.score >= self.limit:
