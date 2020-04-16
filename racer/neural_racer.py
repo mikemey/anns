@@ -6,9 +6,11 @@ from game.racer_engine import RacerEngine, PlayerOperation
 from game.tracers import get_trace_distances
 from training_dts import random_dt
 
-NOOP_TIMEOUT_SECS = 2
-MIN_SCORE_PER_SECOND = 1
+MIN_SCORE_PER_SECOND = 10
 MIN_SPS_OFFSET = 2
+
+NORM_MIN_DISTANCE = 10
+NORM_DISTANCE_RANGE = 650
 
 
 class NeuralRacer:
@@ -30,7 +32,6 @@ class NeuralRacer:
         self.engine = RacerEngine()
         self.net = neat.nn.FeedForwardNetwork.create(genome, config)
         self.operations = PlayerOperation()
-        self.noop_timeout = NOOP_TIMEOUT_SECS
         self.time = 0
         self.score = 0
         self.limit = limit
@@ -44,29 +45,28 @@ class NeuralRacer:
             self.next_step(dt)
             self.time += dt
         fitness = self.score
-        if self.noop_timeout < 0:
-            fitness -= 20
         if self.__under_sps_limit():
             fitness -= 10
         return fitness
 
     def next_step(self, dt):
-        net_input = [dt]
-        state = self.engine.player_state
-        net_input.extend(get_trace_distances((state.x, state.y), state.rotation))
-
+        net_input = [dt] + self.__normalized_distances()
         net_output = self.net.activate(net_input)
-        self.__update_operations(dt, *net_output)
+
+        self.__update_operations(*net_output)
         self.engine.update(dt, self.operations)
         self.__update_score()
         if self.__under_sps_limit():
             self.engine.game_over = True
 
-    def __update_operations(self, dt, fwd, back, left, right):
+    def __normalized_distances(self):
+        state = self.engine.player_state
+        distances = get_trace_distances((state.x, state.y), state.rotation)
+        return [(dist - NORM_MIN_DISTANCE) / NORM_DISTANCE_RANGE for dist in distances]
+
+    def __update_operations(self, fwd, back, left, right):
         self.operations.stop_all()
-        self.noop_timeout -= dt
         if fwd > 0.5 or back > 0.5:
-            self.noop_timeout = NOOP_TIMEOUT_SECS
             if fwd > back:
                 self.operations.accelerate()
             else:
@@ -76,8 +76,6 @@ class NeuralRacer:
                 self.operations.turn_left()
             else:
                 self.operations.turn_right()
-        if self.noop_timeout < 0:
-            self.engine.game_over = True
 
     def __update_score(self):
         self.score = self.engine.player_state.distance // 10
@@ -90,14 +88,3 @@ class NeuralRacer:
         if self.time > MIN_SPS_OFFSET:
             return self.score / self.time < MIN_SCORE_PER_SECOND
         return False
-
-
-# TODO experiment with normalized inputs:
-MIN_DISTANCE = 10
-DISTANCE_RANGE = 650
-
-
-def normalized_distances(self):
-    state = self.engine.player_state
-    distances = get_trace_distances((state.x, state.y), state.rotation)
-    return [(dist - MIN_DISTANCE) / DISTANCE_RANGE for dist in distances]
