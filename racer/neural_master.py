@@ -9,7 +9,7 @@ import neat
 
 from game.racer_engine import PlayerState
 from game.racer_window import RaceController, RacerWindow
-from neural_racer import NeuralPlayer
+from neural_player import NeuralPlayer
 from training_reporter import TrainingReporter
 
 LOCAL_DIR = os.path.dirname(__file__)
