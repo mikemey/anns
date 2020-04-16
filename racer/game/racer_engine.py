@@ -1,9 +1,11 @@
 import math
 
-import matplotlib.path as mpath
 import numpy as np
+from shapely.geometry import Polygon
 
-from .tracks import OUTER_TRACK, INNER_TRACK, INIT_CAR_POSITION, INIT_CAR_ROTATION
+from .tracks import OUTER_TRACK, OUTER_TRACK_OFFSET, \
+    INNER_TRACK, INNER_TRACK_OFFSET, \
+    INIT_CAR_POSITION, INIT_CAR_ROTATION
 
 CAR_BOUNDS = (-15, -11, 33, 11)
 CAR_BOUND_POINTS = (CAR_BOUNDS[0], CAR_BOUNDS[1], CAR_BOUNDS[2], CAR_BOUNDS[1],
@@ -89,7 +91,7 @@ class RacerEngine:
 
     def update(self, dt, operations):
         self.player_state.update(dt, operations)
-        if not self.track.contains_path(self.player_state.boundaries):
+        if not self.track.contains(self.player_state.boundaries):
             self.game_over = True
 
 
@@ -97,7 +99,7 @@ class PlayerState:
     def __init__(self):
         [self.x, self.y], self.rotation = INIT_CAR_POSITION, INIT_CAR_ROTATION
         self.speed = 0
-        self.boundaries = mpath.Path(np.reshape(CAR_BOUND_POINTS, (-1, 2)), closed=True)
+        self.boundaries = Polygon(np.reshape(CAR_BOUND_POINTS, (-1, 2)))
         self.is_alive = True
 
     @property
@@ -131,20 +133,28 @@ class PlayerState:
 
     def __update_boundaries__(self, cosine, sine):
         j = np.array([[cosine, sine], [-sine, cosine]])
+        new_boundaries = []
         for ix in range(len(CAR_COLL_BOX)):
             m = np.dot(j, CAR_COLL_BOX[ix])
             moved = np.array((self.x, self.y)) + m.T
-            self.boundaries.vertices.put([ix * 2, ix * 2 + 1], moved)
+            new_boundaries.append(moved)
+        self.boundaries = Polygon(new_boundaries)
 
     def flattened_boundaries(self):
-        return self.boundaries.vertices.flatten()
+        return np.array(self.boundaries.coords[:-1]).flatten()
 
 
 class Track:
     def __init__(self):
-        self.outside = mpath.Path(np.reshape(OUTER_TRACK, (-1, 2)), closed=True)
-        self.inside = mpath.Path(np.reshape(INNER_TRACK, (-1, 2)), closed=True)
+        self.__outside = TrackLines(OUTER_TRACK, OUTER_TRACK_OFFSET)
+        self.__inside = TrackLines(INNER_TRACK, INNER_TRACK_OFFSET)
 
-    def contains_path(self, path):
-        return self.outside.contains_path(path) and \
-               not self.inside.intersects_path(path)
+    def contains(self, geometry):
+        return self.__outside.area.contains(geometry) and \
+               not self.__inside.area.intersects(geometry)
+
+
+class TrackLines:
+    def __init__(self, track, offset):
+        points = np.reshape(track, (-1, 2))
+        self.area = Polygon(points)
