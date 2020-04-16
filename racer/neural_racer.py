@@ -13,20 +13,20 @@ NORM_MIN_DISTANCE = 10
 NORM_DISTANCE_RANGE = 650
 
 
-class NeuralRacer:
+class NeuralPlayer:
     STOPPING = False
 
     @staticmethod
     def sigint_received(signal_received=None, frame=None):
-        NeuralRacer.STOPPING = True
+        NeuralPlayer.STOPPING = True
 
     @staticmethod
     def play_game(genome, config):
-        if NeuralRacer.STOPPING:
+        if NeuralPlayer.STOPPING:
             return 0
 
-        signal(SIGINT, NeuralRacer.sigint_received)
-        return NeuralRacer(genome, config, config.fitness_threshold * 1.5).get_fitness()
+        signal(SIGINT, NeuralPlayer.sigint_received)
+        return NeuralPlayer(genome, config, config.fitness_threshold * 1.5).get_fitness()
 
     def __init__(self, genome, config, limit=None):
         self.engine = RacerEngine()
@@ -40,7 +40,7 @@ class NeuralRacer:
         return self.engine.player_state
 
     def get_fitness(self):
-        while not (self.engine.game_over or NeuralRacer.STOPPING):
+        while not (self.engine.game_over or NeuralPlayer.STOPPING):
             dt = random_dt()
             self.next_step(dt)
         fitness = self.score

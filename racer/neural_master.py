@@ -9,7 +9,7 @@ import neat
 
 from game.racer_engine import PlayerState
 from game.racer_window import RaceController, RacerWindow
-from neural_racer import NeuralRacer
+from neural_racer import NeuralPlayer
 from training_reporter import TrainingReporter
 
 LOCAL_DIR = os.path.dirname(__file__)
@@ -73,7 +73,7 @@ class NeuralMaster:
         separated_tup = list(zip(*key_genomes))
         genomes = list(separated_tup[1])
         genome_configs = [(genome, config) for genome in genomes]
-        pop_fitness = self.pool.starmap(NeuralRacer.play_game, genome_configs)
+        pop_fitness = self.pool.starmap(NeuralPlayer.play_game, genome_configs)
 
         for fitness, genome in zip(pop_fitness, genomes):
             genome.fitness = fitness
@@ -95,7 +95,7 @@ class ShowcaseController(RaceController):
 
     def __init__(self, genomes, config, pool):
         super().__init__()
-        self.__neural_racer = [NeuralRacer(genome, config) for genome in genomes]
+        self.__neural_racer = [NeuralPlayer(genome, config) for genome in genomes]
         self.__pool = pool
 
         self.window = RacerWindow(self, show_traces=False, show_fps=True)
