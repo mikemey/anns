@@ -3,7 +3,6 @@ from os import path
 import numpy as np
 import pyglet
 from pyglet.graphics.vertexdomain import VertexList
-from shapely.geometry import Point, LinearRing
 
 from .racer_engine import PlayerState, CAR_BOUND_POINTS, CAR_BOUNDS
 from .tracers import get_trace_points
@@ -202,34 +201,40 @@ class ScoreBox(GraphicsElement):
         self.label.x = self.center_x - self.label.content_width / 2
 
 
-class Indicator(GraphicsElement):
-    OUTER_LINE = LinearRing(np.reshape(OUTER_TRACK, (-1, 2)))
-    INNER_LINE = LinearRing(np.reshape(INNER_TRACK, (-1, 2)))
-    out_len, in_len = len(OUTER_TRACK), len(INNER_TRACK)
-    OUTER_ENDS = [(OUTER_TRACK[0], OUTER_TRACK[1]), (OUTER_TRACK[out_len - 2], OUTER_TRACK[out_len - 1])]
-    INNER_ENDS = [(INNER_TRACK[0], INNER_TRACK[1]), (INNER_TRACK[in_len - 2], INNER_TRACK[in_len - 1])]
-
+class Indicators(GraphicsElement):
     def __init__(self):
         super().__init__()
-        self.inner_point = pyglet.sprite.Sprite(img=pointer_img, batch=self.batch)
-        self.outer_point = pyglet.sprite.Sprite(img=pointer_img, batch=self.batch)
-        self.inner_label = pyglet.text.Label('0', font_size=14, batch=self.batch)
-        self.outer_label = pyglet.text.Label('0', font_size=14, batch=self.batch)
-
-        self.outer_offset = 3522
-        self.inner_offset = 2890
+        self.inner_pointer = Pointer(self.batch)
+        self.inner_score = 0
+        self.outer_pointer = Pointer(self.batch)
+        self.outer_score = 0
 
     def update(self, state: PlayerState):
-        pt = Point(state.x, state.y)
-        self.__update_pointer(self.inner_point, self.inner_label, 2890, self.INNER_LINE, pt)
-        self.__update_pointer(self.outer_point, self.outer_label, 3522, self.OUTER_LINE, pt)
+        if state.distance == 0:
+            self.inner_score = 0
+            self.outer_score = 0
 
-    @staticmethod
-    def __update_pointer(pointer, label, offset, line, point):
-        d = line.project(point)
-        label.text = '{:.0f}'.format(d - offset)
-        p = line.interpolate(d)
-        (px, py) = list(p.coords)[0]
-        pointer.update(x=px, y=py)
-        label.x = px + 8
-        label.y = py + 8
+        if state.is_alive:
+            inner_delta, outer_delta = state.last_deltas
+
+            delta_score, (px, py) = inner_delta
+            self.inner_score += delta_score
+            self.inner_pointer.update(px, py, '{:.0f}'.format(self.inner_score))
+
+            delta_score, (px, py) = outer_delta
+            self.outer_score += delta_score
+            self.outer_pointer.update(px, py, '{:.0f}'.format(self.outer_score))
+
+
+class Pointer:
+    def __init__(self, batch):
+        super().__init__()
+        self.point = pyglet.sprite.Sprite(img=pointer_img, batch=batch)
+        self.label = pyglet.text.Label('', font_size=14, batch=batch)
+
+    def update(self, x, y, text=None):
+        if text:
+            self.label.text = text
+        self.label.x = x + 10
+        self.label.y = y + 10
+        self.point.update(x=x, y=y)

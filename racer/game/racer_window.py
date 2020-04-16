@@ -4,10 +4,11 @@ import pyglet
 
 from .racer_engine import PlayerState
 from .racer_graphics import CarGraphics, TrackGraphics, ScoreBox, GameOverlay, \
-    WarmupSequence, Indicator
+    WarmupSequence, Indicators
 from .tracks import TRACK_SIZE
 
-ENABLE_INDICATOR = False
+ENABLE_INDICATORS = False
+SHOW_FPS = False
 
 
 class RaceController:
@@ -84,7 +85,7 @@ class RacerWindow(pyglet.window.Window):
     BG_COLOR = 0.5, 0.8, 0.4, 1
     WINDOW_POS = 20, 0
 
-    def __init__(self, controller: RaceController, show_traces=True, show_fps=False):
+    def __init__(self, controller: RaceController, show_traces=True, show_fps=SHOW_FPS):
         super().__init__(*TRACK_SIZE, caption='Racer')
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
@@ -102,7 +103,7 @@ class RacerWindow(pyglet.window.Window):
         self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
         self.end_overlay = None
         self.fps_display = pyglet.window.FPSDisplay(window=self) if show_fps else None
-        self.indicator = Indicator() if ENABLE_INDICATOR else None
+        self.indicator = Indicators() if ENABLE_INDICATORS else None
 
     def on_reset(self):
         self.end_overlay = None
