@@ -2,7 +2,7 @@ import sys
 
 from demo_player import DemoMaster
 from manual_player import ManualMaster
-from neural_player import NeuralMaster
+from neural_master import NeuralMaster
 
 
 def print_help():
