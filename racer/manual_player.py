@@ -33,8 +33,10 @@ class ManualController(RaceController):
     def __setup_players(self):
         if self.two_players:
             player1 = ManualPlayer(*PLAYER1_KEYS)
-            player1.state.y += 10
+            player1.state.x += 2
+            player1.state.y += 13
             player2 = ManualPlayer(*PLAYER2_KEYS)
+            player2.state.x -= 3
             player2.state.y -= 20
             return [player2, player1]
         return [ManualPlayer(*PLAYER1_KEYS)]
