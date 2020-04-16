@@ -26,7 +26,7 @@ class NeuralRacer:
             return 0
 
         signal(SIGINT, NeuralRacer.sigint_received)
-        return NeuralRacer(genome, config, config.fitness_threshold).get_fitness()
+        return NeuralRacer(genome, config, config.fitness_threshold * 1.5).get_fitness()
 
     def __init__(self, genome, config, limit=None):
         self.engine = RacerEngine()
