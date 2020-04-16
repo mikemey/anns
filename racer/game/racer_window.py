@@ -142,6 +142,10 @@ class RacerWindow(pyglet.window.Window):
     def on_deactivate(self):
         self.controller.focus_lost()
 
+    def on_mouse_motion(self, x, y, dx, dy):
+        if self.indicator:
+            self.indicator.update_mouse(x, y)
+
     def update(self, dt):
         if self.warmup_controller.control_released:
             self.controller.update_player_states(dt)

@@ -4,7 +4,7 @@ import numpy as np
 import pyglet
 from pyglet.graphics.vertexdomain import VertexList
 
-from .racer_engine import PlayerState, CAR_BOUND_POINTS, CAR_BOUNDS
+from .racer_engine import PlayerState, CAR_BOUND_POINTS, CAR_BOUNDS, DistanceTracker
 from .tracers import get_trace_points
 from .tracks import OUTER_TRACK, INNER_TRACK, TRACK_SIZE
 
@@ -208,6 +208,13 @@ class Indicators(GraphicsElement):
         self.inner_score = 0
         self.outer_pointer = Pointer(self.batch)
         self.outer_score = 0
+        self.tracker = DistanceTracker()
+        self.mouse_label = pyglet.text.Label('', font_size=14, batch=self.batch)
+
+    def update_mouse(self, x, y):
+        self.mouse_label.text = '{}/{}'.format(x, y)
+        self.mouse_label.x = x + 10
+        self.mouse_label.y = y + 10
 
     def update(self, state: PlayerState):
         if state.distance == 0:
