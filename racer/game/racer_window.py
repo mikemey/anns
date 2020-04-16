@@ -1,11 +1,10 @@
-from os import path
 from typing import List
 
 import pyglet
 
 from .racer_engine import PlayerState
 from .racer_graphics import CarGraphics, TrackGraphics, ScoreBox, GameOverlay, \
-    WarmupSequence, FPSLabel, Indicator
+    WarmupSequence, Indicator
 from .tracks import TRACK_SIZE
 
 ENABLE_INDICATOR = False
@@ -102,7 +101,7 @@ class RacerWindow(pyglet.window.Window):
         self.cars = [CarGraphics(show_traces) for _ in range(self.controller.get_player_count())]
         self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
         self.end_overlay = None
-        self.fps_label = FPSLabel() if show_fps else None
+        self.fps_display = pyglet.window.FPSDisplay(window=self) if show_fps else None
         self.indicator = Indicator() if ENABLE_INDICATOR else None
 
     def on_reset(self):
@@ -127,8 +126,8 @@ class RacerWindow(pyglet.window.Window):
         elif self.controller.show_paused_screen:
             self.pause_overlay.draw()
         self.score_box.draw()
-        if self.fps_label:
-            self.fps_label.draw()
+        if self.fps_display:
+            self.fps_display.draw()
         if self.indicator:
             self.indicator.draw()
 
@@ -149,7 +148,5 @@ class RacerWindow(pyglet.window.Window):
         for player_state, car in zip(player_states, self.cars):
             car.update(player_state)
         self.score_box.update_text(self.controller.get_score_text())
-        if self.fps_label:
-            self.fps_label.update(dt)
         if self.indicator:
-            self.indicator.update(player_states[0])
+            self.indicator.update(player_states[-1])

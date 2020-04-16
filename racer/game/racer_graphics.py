@@ -202,25 +202,6 @@ class ScoreBox(GraphicsElement):
         self.label.x = self.center_x - self.label.content_width / 2
 
 
-class FPSLabel(GraphicsElement):
-    TEXT_COLOR = (0, 0, 0, 200)
-    COLLECT_SIZE = 5
-
-    def __init__(self):
-        super().__init__()
-        self.label = pyglet.text.Label('0', x=5, y=TRACK_SIZE[1] - 17,
-                                       font_size=12, color=self.TEXT_COLOR,
-                                       batch=self.batch)
-        self.dts = []
-
-    def update(self, dt):
-        self.dts.append(dt)
-        if len(self.dts) >= self.COLLECT_SIZE:
-            fps = 1 / np.mean(self.dts)
-            self.label.text = '{:.0f}'.format(fps)
-            self.dts.clear()
-
-
 class Indicator(GraphicsElement):
     OUTER_LINE = LinearRing(np.reshape(OUTER_TRACK, (-1, 2)))
     INNER_LINE = LinearRing(np.reshape(INNER_TRACK, (-1, 2)))
