@@ -1,59 +1,35 @@
 import math
-import os
-from configparser import ConfigParser
 from multiprocessing import Pool
 from signal import signal, SIGINT
 from typing import List
 
 import neat
 
+from best_player_keep import BestPlayerKeep
 from game.racer_engine import PlayerState
 from game.racer_window import RaceController, RacerWindow
 from neural_player import NeuralPlayer
+from training_configs import load_configs
 from training_reporter import TrainingReporter
 
-LOCAL_DIR = os.path.dirname(__file__)
 DT_IGNORE_LIMIT = 0.5
-
-def load_configs(file_name='training.cfg'):
-    config_path = os.path.join(LOCAL_DIR, file_name)
-    print('loading config file: <{}>'.format(os.path.abspath(config_path)))
-    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                         config_path)
-    return config, TrainingConfig(config_path)
-
-
-class TrainingConfig:
-    SECTION = 'TRAINING'
-
-    def __init__(self, config_path):
-        parameters = ConfigParser()
-        with open(config_path, 'r') as f:
-            parameters.read_file(f)
-        if not parameters.has_section(self.SECTION):
-            raise RuntimeError('"{}" section not found in NEAT configuration file.'.format(self.SECTION))
-
-        self.processes = parameters.getint(self.SECTION, 'processes')
-        self.showcase_batch_size = parameters.getint(self.SECTION, 'showcase_every_gen')
-        self.showcase_racer_count = parameters.getint(self.SECTION, 'showcase_racer_count')
 
 
 class NeuralMaster:
     def __init__(self):
         self.neat_config, self.training_config = load_configs()
-        self.population = neat.Population(self.neat_config)
         self.reporter = TrainingReporter(self.training_config.showcase_batch_size)
-        self.population.add_reporter(self.reporter)
-        self.best_racers = []
+        self.best_keep = BestPlayerKeep(self.neat_config, self.training_config)
 
         self.pool = None
         signal(SIGINT, self.stop)
         self.pool = Pool(processes=self.training_config.processes)
 
-    def run(self):
+    def train(self):
+        population = neat.Population(self.neat_config)
+        population.add_reporter(self.reporter)
         try:
-            winner = self.population.run(self.eval_population, 100000)
+            winner = population.run(self.eval_population, 100000)
             print('\nWinner fitness:', winner.fitness)
             ShowcaseController(winner, self.neat_config, self.pool).showcase()
         except Exception as ex:
@@ -72,22 +48,30 @@ class NeuralMaster:
     def eval_population(self, key_genomes, config: neat.config.Config):
         separated_tup = list(zip(*key_genomes))
         genomes = list(separated_tup[1])
-        genome_configs = [(genome, config) for genome in genomes]
-        pop_fitness = self.pool.starmap(NeuralPlayer.play_game, genome_configs)
+        genome_configs = [(genome, config, self.training_config) for genome in genomes]
+        eval_result = self.pool.starmap(NeuralPlayer.evaluate_genome, genome_configs)
 
-        for fitness, genome in zip(pop_fitness, genomes):
+        pop_result = []
+        for (fitness, *game_stats), genome in zip(eval_result, genomes):
             genome.fitness = fitness
+            pop_result.append((genome, *game_stats))
+        self.best_keep.add_population_result(pop_result)
 
         def showcase_best():
-            player = sorted(genomes, key=lambda gen: gen.fitness, reverse=True)[:self.training_config.showcase_racer_count]
-            print('Showcase player fitness:', [math.floor(r.fitness) for r in player])
-            try:
-                ShowcaseController(player, config, self.pool).showcase()
-            except Exception as e:
-                msg = 'no screen available' if str(e) == 'list index out of range' else e
-                print('Showcase error:', msg)
+            sorted_genomes = sorted(genomes, key=lambda gen: gen.fitness, reverse=True)
+            best_player_genomes = sorted_genomes[:self.training_config.showcase_racer_count]
+            self.showcase(config, best_player_genomes)
 
         self.reporter.run_post_batch(showcase_best)
+
+    def showcase(self, config, genomes):
+        print('Showcase player fitness:', [math.floor(r.fitness) for r in genomes])
+        try:
+            ShowcaseController(genomes, config, self.pool).showcase()
+            print('Showcases finished, waiting {} seconds to exit...'.format(ShowcaseController.DELAY_AUTO_CLOSE_SECS))
+        except Exception as e:
+            msg = 'no screen available' if str(e) == 'list index out of range' else e
+            print('Showcase error:', msg)
 
 
 class ShowcaseController(RaceController):
@@ -114,8 +98,6 @@ class ShowcaseController(RaceController):
             return
 
         if self.show_end_screen:
-            if self.seconds_to_close == self.DELAY_AUTO_CLOSE_SECS:
-                print('Showcases finished, waiting {} seconds to exit...'.format(self.DELAY_AUTO_CLOSE_SECS))
             self.seconds_to_close -= dt
             if self.seconds_to_close < 0:
                 self.window.close()

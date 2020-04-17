@@ -18,12 +18,12 @@ class NeuralPlayer:
         NeuralPlayer.STOPPING = True
 
     @staticmethod
-    def play_game(genome, config):
+    def evaluate_genome(genome, neat_config, train_config):
         if NeuralPlayer.STOPPING:
             return 0
 
         signal(SIGINT, NeuralPlayer.sigint_received)
-        return NeuralPlayer(genome, config, config.fitness_threshold * 1.5).get_fitness()
+        return NeuralPlayer(genome, neat_config, train_config.game_limit).__evaluate()
 
     def __init__(self, genome, config, limit=None):
         self.engine = RacerEngine()
@@ -36,14 +36,16 @@ class NeuralPlayer:
     def get_state(self):
         return self.engine.player_state
 
-    def get_fitness(self):
+    def __evaluate(self):
         while not (self.engine.game_over or NeuralPlayer.STOPPING):
             dt = random_dt()
             self.next_step(dt)
         fitness = self.score
+        if self.score >= self.limit:
+            fitness += round(self.__get_score_per_second() * 10)
         if self.__under_sps_limit():
             fitness -= 10
-        return fitness
+        return fitness, self.__get_score_per_second()
 
     def next_step(self, dt):
         self.time += dt
@@ -77,7 +79,10 @@ class NeuralPlayer:
         if self.limit and self.score >= self.limit:
             self.engine.game_over = True
 
+    def __get_score_per_second(self):
+        return self.score / self.time
+
     def __under_sps_limit(self):
         if self.time > MIN_SPS_OFFSET:
-            return self.score / self.time < MIN_SCORE_PER_SECOND
+            return self.__get_score_per_second() < MIN_SCORE_PER_SECOND
         return False
