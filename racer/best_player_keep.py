@@ -45,9 +45,6 @@ class BestPlayerKeep:
 
     def __store_top_list(self):
         top_stats = list(filter(lambda s: s.genome, self.top_list))
-        sps_log = ', '.join(sorted(['{:.0f}'.format(stats.score_per_second) for stats in top_stats], reverse=True))
-        print('storing new top-list ({} genomes), scores/seconds: {}'.format(len(top_stats), sps_log))
-
         store_format = self.config, *[stats.genome for stats in top_stats]
         with open(self.file_name, 'wb') as f:
             pickle.dump(store_format, f, protocol=pickle.HIGHEST_PROTOCOL)
