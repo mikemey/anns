@@ -116,8 +116,10 @@ class RacerWindow(pyglet.window.Window):
     def on_draw(self):
         self.clear()
         self.track.draw()
-        for car in self.cars:
-            car.draw()
+        for stopped_car in filter(lambda car: car.show_dead_x, self.cars):
+            stopped_car.draw()
+        for active_car in filter(lambda car: not car.show_dead_x, self.cars):
+            active_car.draw()
         if self.warmup_controller.show_warmup_screen:
             self.warmup_screen.draw()
         elif self.controller.show_end_screen:
@@ -149,9 +151,11 @@ class RacerWindow(pyglet.window.Window):
     def update(self, dt):
         if self.warmup_controller.control_released:
             self.controller.update_player_states(dt)
+
         player_states = self.controller.get_player_states()
         for player_state, car in zip(player_states, self.cars):
             car.update(player_state)
+
         self.score_box.update_text(self.controller.get_score_text())
         if self.indicator:
             self.indicator.update(player_states[-1])
