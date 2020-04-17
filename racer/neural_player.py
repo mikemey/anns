@@ -6,11 +6,8 @@ from game.racer_engine import RacerEngine, PlayerOperation
 from game.tracers import get_trace_distances
 from training_dts import random_dt
 
-MIN_SCORE_PER_SECOND = 10
-MIN_SPS_OFFSET = 2
-
-NORM_MIN_DISTANCE = 10
-NORM_DISTANCE_RANGE = 650
+MIN_SCORE_PER_SECOND = 20
+MIN_SPS_OFFSET = 3
 
 
 class NeuralPlayer:
@@ -50,7 +47,8 @@ class NeuralPlayer:
 
     def next_step(self, dt):
         self.time += dt
-        net_input = [dt] + self.__normalized_distances()
+        state = self.engine.player_state
+        net_input = [dt] + get_trace_distances((state.x, state.y), state.rotation)
         net_output = self.net.activate(net_input)
 
         self.__update_operations(*net_output)
@@ -58,11 +56,6 @@ class NeuralPlayer:
         self.__update_score()
         if self.__under_sps_limit():
             self.engine.game_over = True
-
-    def __normalized_distances(self):
-        state = self.engine.player_state
-        distances = get_trace_distances((state.x, state.y), state.rotation)
-        return [(dist - NORM_MIN_DISTANCE) / NORM_DISTANCE_RANGE for dist in distances]
 
     def __update_operations(self, fwd, back, left, right):
         self.operations.stop_all()
