@@ -13,7 +13,7 @@ from neural_player import NeuralPlayer
 from training_reporter import TrainingReporter
 
 LOCAL_DIR = os.path.dirname(__file__)
-
+DT_IGNORE_LIMIT = 0.5
 
 def load_configs(file_name='training.cfg'):
     config_path = os.path.join(LOCAL_DIR, file_name)
@@ -110,7 +110,7 @@ class ShowcaseController(RaceController):
         return 'max: {:.0f}'.format(highest_score)
 
     def update_player_states(self, dt):
-        if self.closing:
+        if self.closing or dt > DT_IGNORE_LIMIT:
             return
 
         if self.show_end_screen:
