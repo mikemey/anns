@@ -67,7 +67,7 @@ class NeuralMaster:
         self.showcase(top_players[:self.training_config.showcase_racer_count])
 
     def showcase(self, players: List[PlayerData]):
-        fitness_sps_log = ['{:.0f}-{:.1f}'.format(data.genome.fitness, data.score_per_second) for data in players]
+        fitness_sps_log = ['{:.0f}/{:.1f}'.format(data.genome.fitness, data.score_per_second) for data in players]
         print('Showcase: {} players (fit/sps) {}'.format(len(players), ', '.join(fitness_sps_log)))
         try:
             ShowcaseController(players, self.pool).showcase()

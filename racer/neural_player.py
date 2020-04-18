@@ -31,7 +31,7 @@ class NeuralPlayer:
         self.operations = PlayerOperation()
         self.time = 0
         self.score = 0
-        self.limit = limit
+        self.game_limit = limit
 
     def get_state(self):
         return self.engine.player_state
@@ -41,7 +41,7 @@ class NeuralPlayer:
             dt = random_dt()
             self.next_step(dt)
         fitness = self.score
-        if self.score >= self.limit:
+        if self.score >= self.game_limit:
             fitness += round(self.__get_score_per_second() * 10)
         if self.__under_sps_limit():
             fitness -= 10
@@ -55,8 +55,8 @@ class NeuralPlayer:
 
         self.__update_operations(*net_output)
         self.engine.update(dt, self.operations)
-        self.__update_score()
-        if self.__under_sps_limit():
+        self.score = self.engine.player_state.distance // 10
+        if self.__under_sps_limit() or self.__score_out_of_bounds():
             self.engine.game_over = True
 
     def __update_operations(self, fwd, back, left, right):
@@ -72,12 +72,9 @@ class NeuralPlayer:
             else:
                 self.operations.turn_right()
 
-    def __update_score(self):
-        self.score = self.engine.player_state.distance // 10
-        if self.score < 0:
-            self.engine.game_over = True
-        if self.limit and self.score >= self.limit:
-            self.engine.game_over = True
+    def __score_out_of_bounds(self):
+        return self.score < 0 or \
+               (self.game_limit and self.score >= self.game_limit)
 
     def __get_score_per_second(self):
         return self.score / self.time
