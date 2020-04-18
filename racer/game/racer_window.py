@@ -4,7 +4,7 @@ import pyglet
 
 from .racer_engine import PlayerState
 from .racer_graphics import CarGraphics, TrackGraphics, ScoreBox, GameOverlay, \
-    WarmupSequence, Indicators
+    WarmupSequence, Indicators, RankingBox
 from .tracks import TRACK_SIZE
 
 ENABLE_INDICATORS = False
@@ -49,6 +49,9 @@ class RaceController:
 
     def get_score_text(self):
         raise NotImplementedError()
+
+    def get_ranking(self):
+        pass
 
     def get_end_text(self):
         raise NotImplementedError()
@@ -104,6 +107,7 @@ class RacerWindow(pyglet.window.Window):
         self.end_overlay = None
         self.fps_display = pyglet.window.FPSDisplay(window=self) if show_fps else None
         self.indicator = Indicators() if ENABLE_INDICATORS else None
+        self.ranking = RankingBox()
 
     def on_reset(self):
         self.end_overlay = None
@@ -120,6 +124,7 @@ class RacerWindow(pyglet.window.Window):
             stopped_car.draw()
         for active_car in filter(lambda car: not car.show_dead_x, self.cars):
             active_car.draw()
+
         if self.warmup_controller.show_warmup_screen:
             self.warmup_screen.draw()
         elif self.controller.show_end_screen:
@@ -128,7 +133,9 @@ class RacerWindow(pyglet.window.Window):
             self.end_overlay.draw()
         elif self.controller.show_paused_screen:
             self.pause_overlay.draw()
+
         self.score_box.draw()
+        self.ranking.draw()
         if self.fps_display:
             self.fps_display.draw()
         if self.indicator:
@@ -157,5 +164,6 @@ class RacerWindow(pyglet.window.Window):
             car.update(player_state)
 
         self.score_box.update_text(self.controller.get_score_text())
+        self.ranking.update(self.controller.get_ranking())
         if self.indicator:
             self.indicator.update(player_states[-1])

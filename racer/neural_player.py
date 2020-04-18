@@ -26,6 +26,7 @@ class NeuralPlayer:
         return NeuralPlayer(genome, neat_config, train_config.game_limit).__evaluate()
 
     def __init__(self, genome, config, limit=None):
+        self.name = 'g_{}'.format(genome.key)
         self.engine = RacerEngine()
         self.net = neat.nn.FeedForwardNetwork.create(genome, config)
         self.operations = PlayerOperation()

@@ -96,6 +96,14 @@ class ShowcaseController(RaceController):
         highest_score = max([player.score for player in self.__neural_player])
         return 'max: {:.0f}'.format(highest_score)
 
+    def get_ranking(self):
+        ranking = sorted(self.__neural_player, key=lambda pl: pl.score, reverse=True)
+        names = scores = ''
+        for player in ranking:
+            names += '{}\n'.format(player.name)
+            scores += '{:.0f}\n'.format(player.score)
+        return names, scores
+
     def update_player_states(self, dt):
         if self.closing or dt > DT_IGNORE_LIMIT:
             return

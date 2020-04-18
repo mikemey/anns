@@ -32,14 +32,14 @@ class ManualController(RaceController):
 
     def __setup_players(self):
         if self.two_players:
-            player1 = ManualPlayer(*PLAYER1_KEYS)
+            player1 = ManualPlayer(1, *PLAYER1_KEYS)
             player1.state.x += 2
             player1.state.y += 13
-            player2 = ManualPlayer(*PLAYER2_KEYS)
+            player2 = ManualPlayer(2, *PLAYER2_KEYS)
             player2.state.x -= 3
             player2.state.y -= 20
             return [player2, player1]
-        return [ManualPlayer(*PLAYER1_KEYS)]
+        return [ManualPlayer(1, *PLAYER1_KEYS)]
 
     def get_player_count(self):
         return len(self.players)
@@ -66,8 +66,19 @@ class ManualController(RaceController):
             diff = self.players[1].score - self.players[0].score
             if diff == 0:
                 return '=='
-            return 'Player 1' if diff > 0 else 'Player 2'
+            return self.players[1].name if diff > 0 else self.players[0].name
         return 'Score: {:.0f}'.format(self.players[0].score)
+
+    def get_ranking(self):
+        if self.two_players:
+            ranking = sorted(self.players, key=lambda pl: pl.score, reverse=True)
+            names = scores = ''
+            for player in ranking:
+                names += '{}\n'.format(player.name)
+                scores += '{:.0f}\n'.format(player.score)
+            return names, scores
+        else:
+            return None
 
     def update_player_states(self, dt):
         if not (self.show_paused_screen or self.show_end_screen):
@@ -87,7 +98,8 @@ class ManualController(RaceController):
 
 
 class ManualPlayer:
-    def __init__(self, up, down, left, right):
+    def __init__(self, player_id, up, down, left, right):
+        self.name = 'Player {}'.format(player_id)
         self.score = 0
         self.engine = RacerEngine()
         self.operation = PlayerOperation()
