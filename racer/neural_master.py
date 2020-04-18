@@ -1,11 +1,10 @@
-import math
 from multiprocessing import Pool
 from signal import signal, SIGINT
 from typing import List
 
 import neat
 
-from best_player_keep import BestPlayerKeep
+from best_player_keep import BestPlayerKeep, PlayerData, load_player_data
 from game.racer_engine import PlayerState
 from game.racer_window import RaceController, RacerWindow
 from neural_player import NeuralPlayer
@@ -19,7 +18,7 @@ class NeuralMaster:
     def __init__(self):
         self.neat_config, self.training_config = load_configs()
         self.reporter = TrainingReporter(self.training_config.showcase_batch_size)
-        self.best_keep = BestPlayerKeep(self.neat_config, self.training_config)
+        self.best_keep = BestPlayerKeep(self.training_config)
 
         self.pool = None
         signal(SIGINT, self.stop)
@@ -29,9 +28,7 @@ class NeuralMaster:
         population = neat.Population(self.neat_config)
         population.add_reporter(self.reporter)
         try:
-            winner = population.run(self.eval_population, 100000)
-            print('\nWinner fitness:', winner.fitness)
-            ShowcaseController(winner, self.neat_config, self.pool).showcase()
+            population.run(self.eval_population)
         except Exception as ex:
             print('Training error:', ex)
         finally:
@@ -54,20 +51,26 @@ class NeuralMaster:
         pop_result = []
         for (fitness, *game_stats), genome in zip(eval_result, genomes):
             genome.fitness = fitness
-            pop_result.append((genome, *game_stats))
+            pop_result.append((genome, config, *game_stats))
         self.best_keep.add_population_result(pop_result)
 
         def showcase_best():
-            sorted_genomes = sorted(genomes, key=lambda gen: gen.fitness, reverse=True)
-            best_player_genomes = sorted_genomes[:self.training_config.showcase_racer_count]
-            self.showcase(config, best_player_genomes)
+            sorted_results = sorted(pop_result, key=lambda result: result[0].fitness, reverse=True)
+            top_results = sorted_results[:self.training_config.showcase_racer_count]
+            self.showcase([PlayerData(*result) for result in top_results])
 
         self.reporter.run_post_batch(showcase_best)
 
-    def showcase(self, config, genomes):
-        print('Showcase player fitness:', [math.floor(r.fitness) for r in genomes])
+    def showcase_from_files(self, player_files):
+        players = [data for file in player_files for data in load_player_data(file)]
+        top_players = sorted(players, key=lambda data: data.genome.fitness, reverse=True)
+        self.showcase(top_players[:self.training_config.showcase_racer_count])
+
+    def showcase(self, players: List[PlayerData]):
+        fitness_sps_log = ['{:.0f}-{:.1f}'.format(data.genome.fitness, data.score_per_second) for data in players]
+        print('Showcase: {} players (fit/sps) {}'.format(len(players), ', '.join(fitness_sps_log)))
         try:
-            ShowcaseController(genomes, config, self.pool).showcase()
+            ShowcaseController(players, self.pool).showcase()
             print('Showcases finished, waiting {} seconds to exit...'.format(ShowcaseController.DELAY_AUTO_CLOSE_SECS))
         except Exception as e:
             msg = 'no screen available' if str(e) == 'list index out of range' else e
@@ -77,9 +80,9 @@ class NeuralMaster:
 class ShowcaseController(RaceController):
     DELAY_AUTO_CLOSE_SECS = 3
 
-    def __init__(self, genomes, config, pool):
+    def __init__(self, players: List[PlayerData], pool):
         super().__init__()
-        self.__neural_player = [NeuralPlayer(genome, config) for genome in genomes]
+        self.__neural_player = [NeuralPlayer(data.genome, data.config) for data in players]
         self.__pool = pool
 
         self.window = RacerWindow(self, show_traces=False, show_fps=True)

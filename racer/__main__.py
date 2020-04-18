@@ -1,18 +1,17 @@
 import sys
 
-from best_player_keep import load_top_list
 from demo_player import DemoMaster
 from manual_player import ManualMaster
 from neural_master import NeuralMaster
 
 
-def print_help():
+def __print_help():
     print('Parameters:')
     print('\t[none]     \tsingle-player mode')
     print('\t2          \t2-player mode')
     print('\tdemo       \tdemo mode')
     print('\ttrain      \ttraining mode')
-    print('\tplay <file]\tload players from <file> and showcase a race')
+    print('\tplay <files>\tshowcase best players from <files>')
 
 
 if len(sys.argv) > 1:
@@ -24,9 +23,9 @@ if len(sys.argv) > 1:
     elif cmd == 'train':
         NeuralMaster().train()
     elif cmd == 'play' and len(sys.argv) > 2:
-        player_file = sys.argv[2]
-        NeuralMaster().showcase(*load_top_list(player_file))
+        files = sys.argv[2:]
+        NeuralMaster().showcase_from_files(files)
     else:
-        print_help()
+        __print_help()
 else:
     ManualMaster().run()
