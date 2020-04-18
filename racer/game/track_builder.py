@@ -38,6 +38,7 @@ class TrackBuilderWindow(pyglet.window.Window):
         pyglet.text.Label('print track:', x=830, y=630, batch=self.batch)
         pyglet.text.Label('\'p\'', x=940, y=630, batch=self.batch)
 
+        self.mouse_label = pyglet.text.Label('', font_size=12, batch=self.batch)
         self.select_mode = True
         self.select_point_ix = -1
         self.closest_point = (0, 0)
@@ -85,10 +86,16 @@ class TrackBuilderWindow(pyglet.window.Window):
         return True
 
     def on_mouse_motion(self, x, y, dx, dy):
-        self.mouse = [x, y]
+        self.update_mouse(x, y)
         if self.select_point_ix >= 0:
             self.track[self.select_point_ix] = x
             self.track[self.select_point_ix + 1] = y
+
+    def update_mouse(self, x, y):
+        self.mouse = [x, y]
+        self.mouse_label.text = '{}/{}'.format(x, y)
+        self.mouse_label.x = x + 10
+        self.mouse_label.y = y + 10
 
     def update(self, dt):
         point_ix = self.get_closest_point_ix()
