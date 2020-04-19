@@ -22,6 +22,7 @@ class BestPlayerKeep:
     def __init__(self, train_config: TrainingConfig):
         self.file_name = create_training_file_name()
         self.top_list = [PlayerData()] * train_config.keep_best_players
+        self.genome_keys = []
         self.min_ix = 0
         self.limit = train_config.game_limit
 
@@ -41,13 +42,24 @@ class BestPlayerKeep:
         if score_per_second < self.top_list[self.min_ix].score_per_second:
             return False
 
-        self.top_list[self.min_ix] = PlayerData(genome, config, score_per_second)
+        existing_ix = self.genome_keys.index(genome.key) if genome.key in self.genome_keys else -1
+        if existing_ix >= 0:
+            if self.top_list[existing_ix].score_per_second < score_per_second:
+                self.__replace_position(existing_ix, genome, config, score_per_second)
+                return True
+            return False
+
+        self.__replace_position(self.min_ix, genome, config, score_per_second)
+        return True
+
+    def __replace_position(self, data_ix, genome, config, score_per_second):
+        self.top_list[data_ix] = PlayerData(genome, config, score_per_second)
         current_min = math.inf
         for ix, player_data in enumerate(self.top_list):
             if player_data.score_per_second < current_min:
                 self.min_ix = ix
                 current_min = player_data.score_per_second
-        return True
+        self.genome_keys = [data.genome.key for data in self.top_list if data.genome]
 
     def __store_player_data(self):
         top_players = list(filter(lambda s: s.genome, self.top_list))
