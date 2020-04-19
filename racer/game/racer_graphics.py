@@ -51,8 +51,10 @@ class CarGraphics(GraphicsElement):
     TRACE_COLOR = 100, 100, 255
     DEAD_COLOR = 255, 70, 70
     DEAD_BG_COLOR = 70, 70, 70, 150
+    DEAD_X_LINE_1 = [CAR_BOUNDS[0] + 1, CAR_BOUNDS[1] + 2, CAR_BOUNDS[2] - 1, CAR_BOUNDS[3] - 1]
+    DEAD_X_LINE_2 = [CAR_BOUNDS[0] + 1, CAR_BOUNDS[3] - 1, CAR_BOUNDS[2] - 1, CAR_BOUNDS[1] + 2]
 
-    def __init__(self, show_traces=True, show_collision_box=False):
+    def __init__(self, num, show_traces=True, show_collision_box=False):
         super().__init__()
         self.show_traces = show_traces
         self.car_frame = pyglet.sprite.Sprite(img=car_frame_img, batch=self.batch)
@@ -61,12 +63,15 @@ class CarGraphics(GraphicsElement):
         color_data = 'c3B', random_color() + random_color() + random_color() + random_color()
         pts, vertices, _ = convert_data(CAR_BOUND_POINTS)
         self.car_color = pyglet.graphics.vertex_list(pts, vertices, color_data)
+        car_text = pyglet.text.decode_text(str(num))
+        car_num_col = (255, 255, 255, 255) if np.average(color_data[1]) <= 127 else (0, 0, 0, 255)
+        car_text.set_style(0, len(car_text.text), dict(font_name='Arial', font_size=8, color=car_num_col))
+        self.car_num = pyglet.text.layout.TextLayout(car_text, width=30)
+        self.car_num.x, self.car_num.y = -4, -2
 
-        line_1 = [CAR_BOUNDS[0] + 1, CAR_BOUNDS[1] + 2, CAR_BOUNDS[2] - 1, CAR_BOUNDS[3] - 1]
-        line_2 = [CAR_BOUNDS[0] + 1, CAR_BOUNDS[3] - 1, CAR_BOUNDS[2] - 1, CAR_BOUNDS[1] + 2]
         self.dead_x = [create_vertex_list(CAR_BOUND_POINTS, self.DEAD_BG_COLOR, color_mode='c4B'),
-                       create_vertex_list(line_1, self.DEAD_COLOR),
-                       create_vertex_list(line_2, self.DEAD_COLOR)]
+                       create_vertex_list(self.DEAD_X_LINE_1, self.DEAD_COLOR),
+                       create_vertex_list(self.DEAD_X_LINE_2, self.DEAD_COLOR)]
         self.show_dead_x = False
         self.collision_box = create_vertex_list(CAR_BOUND_POINTS, self.DEAD_COLOR, vertices_mode='v2f') \
             if show_collision_box else None
@@ -75,12 +80,17 @@ class CarGraphics(GraphicsElement):
         if self.show_traces:
             self.__draw_traces()
 
-        self.__draw_at_car_position(lambda: self.car_color.draw(pyglet.gl.GL_POLYGON))
+        self.__draw_at_car_position(self.__draw_car_frame)
         self.batch.draw()
         if self.collision_box:
             self.collision_box.draw(pyglet.gl.GL_POLYGON)
         if self.show_dead_x:
             self.__draw_at_car_position(self.__draw_dead_x)
+
+    def __draw_car_frame(self):
+        self.car_color.draw(pyglet.gl.GL_POLYGON)
+        pyglet.gl.glRotatef(-90, 0, 0, 1.0)
+        self.car_num.draw()
 
     def __draw_traces(self):
         pyglet.gl.glLineWidth(1)
