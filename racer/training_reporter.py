@@ -5,7 +5,7 @@ import neat
 
 FITNESS_FORMAT = '{:4.0f}'
 TRAINING_STATS_TEMPLATE = 'g: {{:2}}, p/s: {{}}/{{:2}}, avg: {0}, max a/f: {0}[{{:3}}]/{0}[{{:3}}], ' \
-                          'gen a/b: {0}/{0} (#{{}} {{:2}}-{{:2}})'.format(FITNESS_FORMAT)
+                          'gen a/b: {0}/{0} ({{:2}}-{{:2}} #{{}})'.format(FITNESS_FORMAT)
 BATCH_STATS_TEMPLATE = '_' * 50 + '▏batch fitness: {:8,.0f}'
 
 
@@ -43,8 +43,7 @@ class TrainingReporter(neat.reporting.BaseReporter):
             self.max_avg[0], self.max_avg[1],
             self.max_fit[0], self.max_fit[1],
             pop_fit_sum / pop_count,
-            best_genome.fitness, best_genome.key,
-            best_genome.size()[0], best_genome.size()[1]
+            best_genome.fitness, best_genome.size()[0], best_genome.size()[1], best_genome.key
         ))
         if (self.generations % self.batch_size) == 0:
             self.__dump_batch_stats__()
