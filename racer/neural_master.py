@@ -9,9 +9,10 @@ from game.racer_engine import PlayerState
 from game.racer_window import RaceController, RacerWindow
 from neural_player import NeuralPlayer
 from training_configs import load_configs
+from training_dts import LIMIT_HIGH
 from training_reporter import TrainingReporter
 
-DT_IGNORE_LIMIT = 0.5
+DT_IGNORE_LIMIT = LIMIT_HIGH
 
 
 class NeuralMaster:
