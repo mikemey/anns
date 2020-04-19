@@ -64,12 +64,8 @@ class NeuralMaster:
 
     def showcase_from_files(self, player_files):
         players = [data for file in player_files for data in load_player_data(file)]
-        unique_keys, unique_players = [], []
-        for player in sorted(players, key=lambda data: data.genome.fitness, reverse=True):
-            if player.genome.key not in unique_keys:
-                unique_keys.append(player.genome.key)
-                unique_players.append(player)
-        self.showcase(unique_players[:self.training_config.showcase_racer_count], False)
+        top_players = sorted(players, key=lambda data: data.genome.fitness, reverse=True)
+        self.showcase(top_players[:self.training_config.showcase_racer_count], False)
 
     def showcase(self, players: List[PlayerData], auto_close=True):
         fitness_sps_log = ['{:.0f}/{:.1f}'.format(data.genome.fitness, data.score_per_second) for data in players]
