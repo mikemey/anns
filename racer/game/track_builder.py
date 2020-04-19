@@ -19,13 +19,16 @@ pointer_img = pyglet.resource.image("pointer.png")
 center_image(player_img)
 center_image(pointer_img)
 
-INNER_COLOR = (160, 20, 180)
-OUTER_COLOR = (210, 120, 30)
+TRACK_COLOR = 160, 10, 60
+ACTIVE_TRACK_COLOR = 230, 50, 100
+COORDS_COLOR = 100, 100, 100, 255
 
 
 class TrackBuilderWindow(pyglet.window.Window):
     def __init__(self):
         super().__init__(1000, 700, caption='Track builder')
+        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
+        pyglet.gl.glEnable(pyglet.gl.GL_LINE_SMOOTH)
         pyglet.gl.glClearColor(0.5, 0.8, 0.4, 1)
         self.batch = pyglet.graphics.Batch()
         self.player = pyglet.sprite.Sprite(img=player_img, batch=self.batch)
@@ -38,11 +41,15 @@ class TrackBuilderWindow(pyglet.window.Window):
         pyglet.text.Label('print track:', x=830, y=630, batch=self.batch)
         pyglet.text.Label('\'p\'', x=940, y=630, batch=self.batch)
 
-        self.mouse_label = pyglet.text.Label('', font_size=12, batch=self.batch)
+        self.track_point_highlighter = TrackPoint(batch=self.batch)
+        pyglet.text.Label('Mouse:', x=860, y=600, multiline=True, width=50,
+                          font_size=12, batch=self.batch)
+        self.mouse_label = pyglet.text.Label('', x=930, y=600, multiline=True, width=50,
+                                             font_name='Verdana', font_size=12,
+                                             batch=self.batch, color=COORDS_COLOR)
         self.select_mode = True
         self.select_point_ix = -1
         self.closest_point = (0, 0)
-        self.pointer = pyglet.sprite.Sprite(img=pointer_img, batch=self.batch)
         self.mouse = [0, 0]
         self.all_tracks = (OUTER_TRACK, INNER_TRACK)
         self.track_ix = 0
@@ -50,16 +57,17 @@ class TrackBuilderWindow(pyglet.window.Window):
 
     def on_draw(self):
         self.clear()
-        pyglet.gl.glLineWidth(4)
-        self.draw_track(0, OUTER_COLOR)
-        self.draw_track(1, INNER_COLOR)
+        pyglet.gl.glLineWidth(5)
+        self.draw_track(0)
+        self.draw_track(1)
         self.batch.draw()
 
-    def draw_track(self, track_ix, color):
+    def draw_track(self, track_ix):
         pts = self.all_tracks[track_ix].copy()
         if not self.select_mode and self.track_ix == track_ix:
             pts.extend(self.mouse)
         pt_count = int(len(pts) / 2)
+        color = ACTIVE_TRACK_COLOR if self.track_ix == track_ix else TRACK_COLOR
         pyglet.graphics.draw(pt_count, pyglet.gl.GL_LINE_STRIP,
                              ('v2i', pts), ('c3B', color * pt_count)
                              )
@@ -93,13 +101,12 @@ class TrackBuilderWindow(pyglet.window.Window):
 
     def update_mouse(self, x, y):
         self.mouse = [x, y]
-        self.mouse_label.text = '{}/{}'.format(x, y)
-        self.mouse_label.x = x + 10
-        self.mouse_label.y = y + 10
+        self.mouse_label.text = coord_format(x, y)
 
     def update(self, dt):
         point_ix = self.get_closest_point_ix()
-        self.pointer.position = (self.track[point_ix], self.track[point_ix + 1])
+        px, py = self.track[point_ix], self.track[point_ix + 1]
+        self.track_point_highlighter.update(px, py)
 
     def get_closest_point_ix(self):
         mouse = np.array(self.mouse)
@@ -112,6 +119,25 @@ class TrackBuilderWindow(pyglet.window.Window):
                 min_distance = dist
                 closest_ix = ix
         return closest_ix
+
+
+class TrackPoint:
+    def __init__(self, batch, font_size=8, offset=15):
+        super().__init__()
+        self.point = pyglet.sprite.Sprite(img=pointer_img, batch=batch)
+        self.label = pyglet.text.Label('', font_size=font_size, batch=batch, font_name='Verdana',
+                                       color=COORDS_COLOR, multiline=True, width=50)
+        self.offset = offset
+
+    def update(self, x, y):
+        self.point.update(x=x, y=y)
+        self.label.x = x + self.offset
+        self.label.y = y + self.offset / 2
+        self.label.text = coord_format(x, y)
+
+
+def coord_format(x, y):
+    return 'x={}\ny={}'.format(x, y)
 
 
 if __name__ == '__main__':
