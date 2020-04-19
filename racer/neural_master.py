@@ -69,13 +69,13 @@ class NeuralMaster:
             if player.genome.key not in unique_keys:
                 unique_keys.append(player.genome.key)
                 unique_players.append(player)
-        self.showcase(unique_players[:self.training_config.showcase_racer_count])
+        self.showcase(unique_players[:self.training_config.showcase_racer_count], False)
 
-    def showcase(self, players: List[PlayerData]):
+    def showcase(self, players: List[PlayerData], auto_close=True):
         fitness_sps_log = ['{:.0f}/{:.1f}'.format(data.genome.fitness, data.score_per_second) for data in players]
         print('Showcase: {} players (fit/sps) {}'.format(len(players), ', '.join(fitness_sps_log)))
         try:
-            ShowcaseController(players, self.pool).showcase()
+            ShowcaseController(players, self.pool, auto_close).showcase()
             print('Showcases finished, waiting {} seconds to exit...'.format(ShowcaseController.DELAY_AUTO_CLOSE_SECS))
         except Exception as e:
             msg = 'no screen available' if str(e) == 'list index out of range' else e
@@ -85,12 +85,13 @@ class NeuralMaster:
 class ShowcaseController(RaceController):
     DELAY_AUTO_CLOSE_SECS = 3
 
-    def __init__(self, players: List[PlayerData], pool):
+    def __init__(self, players: List[PlayerData], pool: Pool, auto_close: bool):
         super().__init__()
         self.__neural_player = [NeuralPlayer(data.genome, data.config) for data in players]
         self.__pool = pool
 
         self.window = RacerWindow(self, show_traces=False, show_fps=True)
+        self.auto_close = auto_close
         self.seconds_to_close = self.DELAY_AUTO_CLOSE_SECS
         self.closing = False
 
@@ -113,7 +114,7 @@ class ShowcaseController(RaceController):
         if self.closing or dt > DT_IGNORE_LIMIT:
             return
 
-        if self.show_end_screen:
+        if self.show_end_screen and self.auto_close:
             self.seconds_to_close -= dt
             if self.seconds_to_close < 0:
                 self.window.close()
@@ -130,7 +131,10 @@ class ShowcaseController(RaceController):
         return len(self.__neural_player)
 
     def get_end_text(self):
-        return '', 'waiting {} seconds to exit...'.format(self.DELAY_AUTO_CLOSE_SECS), ''
+        if self.auto_close:
+            return '', 'waiting {} seconds to exit...'.format(self.DELAY_AUTO_CLOSE_SECS), ''
+        else:
+            return '', ''
 
 
 def update_player_state(player, dt):
