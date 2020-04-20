@@ -58,20 +58,21 @@ class NeuralMaster:
         def showcase_best():
             sorted_results = sorted(pop_result, key=lambda result: result[0].fitness, reverse=True)
             top_results = sorted_results[:self.training_config.showcase_racer_count]
-            self.showcase([PlayerData(*result) for result in top_results])
+            self.showcase([PlayerData(*result) for result in top_results],
+                          limit=self.training_config.game_limit)
 
         self.reporter.run_post_batch(showcase_best)
 
     def showcase_from_files(self, player_files):
         players = [player_data for pl_file in player_files for player_data in load_player_data(pl_file)]
         top_players = sorted(players, key=lambda data: data.genome.fitness, reverse=True)
-        self.showcase(top_players[:self.training_config.showcase_racer_count], False)
+        self.showcase(top_players[:self.training_config.showcase_racer_count], auto_close=False)
 
-    def showcase(self, players: List[PlayerData], auto_close=True):
+    def showcase(self, players: List[PlayerData], limit=None, auto_close=True):
         fitness_sps_log = ['{:.0f}/{:.1f}'.format(data.genome.fitness, data.score_per_second) for data in players]
         print('Showcase: {} players (fit/sps) {}'.format(len(players), ', '.join(fitness_sps_log)))
         try:
-            ShowcaseController(players, self.pool, auto_close).showcase()
+            ShowcaseController(players, self.pool, limit, auto_close).showcase()
             print('Showcases finished, waiting {} seconds to exit...'.format(ShowcaseController.DELAY_AUTO_CLOSE_SECS))
         except Exception as e:
             msg = 'no screen available' if str(e) == 'list index out of range' else e
@@ -81,10 +82,10 @@ class NeuralMaster:
 class ShowcaseController(RaceController):
     DELAY_AUTO_CLOSE_SECS = 3
 
-    def __init__(self, players: List[PlayerData], pool: Pool, auto_close: bool):
+    def __init__(self, players: List[PlayerData], pool: Pool, limit: int, auto_close: bool):
         super().__init__()
-        self.__neural_player = [NeuralPlayer(data.genome, data.config, name=data.name)
-                              for data in players]
+        self.__neural_player = [NeuralPlayer(data.genome, data.config, limit, name=data.name)
+                                for data in players]
         self.__pool = pool
 
         self.window = RacerWindow(self, show_traces=False, show_fps=True)
