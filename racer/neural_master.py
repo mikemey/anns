@@ -63,7 +63,7 @@ class NeuralMaster:
         self.reporter.run_post_batch(showcase_best)
 
     def showcase_from_files(self, player_files):
-        players = [data for file in player_files for data in load_player_data(file)]
+        players = [player_data for pl_file in player_files for player_data in load_player_data(pl_file)]
         top_players = sorted(players, key=lambda data: data.genome.fitness, reverse=True)
         self.showcase(top_players[:self.training_config.showcase_racer_count], False)
 
@@ -83,7 +83,8 @@ class ShowcaseController(RaceController):
 
     def __init__(self, players: List[PlayerData], pool: Pool, auto_close: bool):
         super().__init__()
-        self.__neural_player = [NeuralPlayer(data.genome, data.config) for data in players]
+        self.__neural_player = [NeuralPlayer(data.genome, data.config, name=data.name)
+                              for data in players]
         self.__pool = pool
 
         self.window = RacerWindow(self, show_traces=False, show_fps=True)

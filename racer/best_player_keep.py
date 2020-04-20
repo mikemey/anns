@@ -68,8 +68,9 @@ class BestPlayerKeep:
 
 
 class PlayerData:
-    def __init__(self, genome=None, config=None, score_per_second=None):
+    def __init__(self, genome=None, config=None, score_per_second=None, name=None):
         self.genome = genome
+        self.name = name
         self.config = config
         self.score_per_second = score_per_second or -math.inf
 

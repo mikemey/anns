@@ -23,10 +23,10 @@ class NeuralPlayer:
             return 0
 
         signal(SIGINT, NeuralPlayer.sigint_received)
-        return NeuralPlayer(genome, neat_config, train_config.game_limit).__evaluate()
+        return NeuralPlayer(genome, neat_config, limit=train_config.game_limit).__evaluate()
 
-    def __init__(self, genome, config, limit=None):
-        self.name = 'g_{}'.format(genome.key)
+    def __init__(self, genome, config, limit=None, name=None):
+        self.name = name if name else '{}'.format(genome.key)
         self.engine = RacerEngine()
         self.net = neat.nn.FeedForwardNetwork.create(genome, config)
         self.operations = PlayerOperation()
