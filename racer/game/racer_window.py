@@ -104,7 +104,7 @@ class RacerWindow(pyglet.window.Window):
         self.score_box = ScoreBox()
 
         car_count = self.controller.get_player_count()
-        self.cars = [CarGraphics(car_count - ix, show_traces) for ix in range(car_count)]
+        self.cars = ([CarGraphics(ix + 1, show_traces) for ix in range(car_count)])
         self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
         self.end_overlay = None
         self.fps_display = pyglet.window.FPSDisplay(window=self) if show_fps else None

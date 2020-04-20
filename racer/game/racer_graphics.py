@@ -191,7 +191,7 @@ class GameOverlay(GraphicsElement):
 
 class ScoreBox(GraphicsElement):
     BG_COLOR = 50, 50, 200
-    SCORE_BOX = 125, 40
+    SCORE_BOX = 150, 40
 
     def __init__(self):
         super().__init__()
@@ -213,17 +213,17 @@ class ScoreBox(GraphicsElement):
 
 class RankingBox(GraphicsElement):
     TEXT_COLOR = 40, 40, 40, 255
-    NAMES_WIDTH = 70
+    NAMES_WIDTH = 105
     SCORES_WIDTH = 30
-    RANKING_POS = TRACK_SIZE[0] - 120, TRACK_SIZE[1] - 70
+    RANKING_POS = TRACK_SIZE[0] - 150, TRACK_SIZE[1] - 70
 
     def __init__(self):
         super().__init__()
         self.names = pyglet.text.Label(x=self.RANKING_POS[0], y=self.RANKING_POS[1],
-                                       width=self.NAMES_WIDTH, color=self.TEXT_COLOR, font_size=10,
+                                       width=self.NAMES_WIDTH, color=self.TEXT_COLOR, font_size=9,
                                        batch=self.batch, multiline=True)
         self.scores = pyglet.text.Label(x=self.RANKING_POS[0] + self.NAMES_WIDTH, y=self.RANKING_POS[1],
-                                        width=self.SCORES_WIDTH, color=self.TEXT_COLOR, font_size=10,
+                                        width=self.SCORES_WIDTH, color=self.TEXT_COLOR, font_size=9,
                                         batch=self.batch, multiline=True)
 
     def update(self, ranking):
