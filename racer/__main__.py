@@ -1,17 +1,22 @@
+import os
 import sys
 
 from demo_player import DemoMaster
 from manual_player import ManualMaster
 from neural_master import NeuralMaster
 
+LOCAL_DIR = os.path.dirname(__file__)
+TOP_PLAYERS_FILE = os.path.join(LOCAL_DIR, 'examples', 'top_players.pd')
+
 
 def __print_help():
     print('Parameters:')
-    print('\t[none]     \tsingle-player mode')
-    print('\t2          \t2-player mode')
-    print('\tdemo       \tdemo mode')
-    print('\ttrain      \ttraining mode')
+    print('\t[none]      \tsingle-player mode')
+    print('\t2           \ttwo-player mode')
+    print('\tdemo        \tdemo mode')
+    print('\ttrain       \ttraining mode')
     print('\tplay <files>\tshowcase best players from <files>')
+    print('\ttop         \tshowcase random players from \'{}\''.format(TOP_PLAYERS_FILE))
 
 
 if len(sys.argv) > 1:
@@ -25,6 +30,8 @@ if len(sys.argv) > 1:
     elif cmd == 'play' and len(sys.argv) > 2:
         files = sys.argv[2:]
         NeuralMaster().showcase_from_files(files)
+    elif cmd == 'top':
+        NeuralMaster().showcase_from_files([TOP_PLAYERS_FILE], select_random=True)
     else:
         __print_help()
 else:

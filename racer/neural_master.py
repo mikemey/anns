@@ -1,3 +1,4 @@
+import random
 from multiprocessing import Pool
 from signal import signal, SIGINT
 from typing import List
@@ -63,10 +64,13 @@ class NeuralMaster:
 
         self.reporter.run_post_batch(showcase_best)
 
-    def showcase_from_files(self, player_files):
+    def showcase_from_files(self, player_files, select_random=False):
         players = [player_data for pl_file in player_files for player_data in load_player_data(pl_file)]
-        top_players = sorted(players, key=lambda data: data.genome.fitness, reverse=True)
-        self.showcase(top_players[:self.training_config.showcase_racer_count], auto_close=False)
+        if select_random:
+            random.shuffle(players)
+        else:
+            players = sorted(players, key=lambda data: data.genome.fitness, reverse=True)
+        self.showcase(players[:self.training_config.showcase_racer_count], auto_close=False)
 
     def showcase(self, players: List[PlayerData], limit=None, auto_close=True):
         fitness_sps_log = ['{:.0f}/{:.1f}'.format(data.genome.fitness, data.score_per_second) for data in players]
