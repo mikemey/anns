@@ -105,10 +105,10 @@ class ShowcaseController(RaceController):
         return 'max: {:.0f}'.format(highest_score)
 
     def get_ranking(self):
-        ranking = sorted(self.__neural_player, key=lambda pl: pl.score, reverse=True)
-        names = scores = ''
-        for player in ranking:
-            names += '{}\n'.format(player.name)
+        ranking = sorted(enumerate(self.__neural_player), key=lambda pl: pl[1].score, reverse=True)
+        names, scores = '#  name\n────────────\n', 'score\n\n'
+        for ix, player in ranking:
+            names += '{}  {}\n'.format(ix + 1, player.name)
             scores += '{:.0f}\n'.format(player.score)
         return names, scores
 

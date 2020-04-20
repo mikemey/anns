@@ -38,7 +38,7 @@ class ManualController(RaceController):
             player2 = ManualPlayer(2, *PLAYER2_KEYS)
             player2.state.x -= 3
             player2.state.y -= 20
-            return [player2, player1]
+            return [player1, player2]
         return [ManualPlayer(1, *PLAYER1_KEYS)]
 
     def get_player_count(self):
@@ -72,7 +72,7 @@ class ManualController(RaceController):
     def get_ranking(self):
         if self.two_players:
             ranking = sorted(self.players, key=lambda pl: pl.score, reverse=True)
-            names = scores = ''
+            names, scores = 'name\n──────────\n', 'score\n───\n'
             for player in ranking:
                 names += '{}\n'.format(player.name)
                 scores += '{:.0f}\n'.format(player.score)
