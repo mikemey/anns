@@ -11,6 +11,7 @@ from .tracks import default_level
 TRACK_COLOR = 160, 10, 60
 ACTIVE_TRACK_COLOR = 230, 50, 100
 COORDS_COLOR = 100, 100, 100, 255
+MODE_COLOR = 45, 45, 45, 255
 
 
 class TrackBuilderWindow(pyglet.window.Window):
@@ -21,27 +22,23 @@ class TrackBuilderWindow(pyglet.window.Window):
         pyglet.gl.glEnable(pyglet.gl.GL_LINE_SMOOTH)
         pyglet.gl.glClearColor(0.5, 0.8, 0.4, 1)
         self.batch = pyglet.graphics.Batch()
-        self.car = CarAdapter()
+        self.description_lbl = pyglet.text.Label(
+            'Quit:\nSwitch mode:\nPrint level:\nSwitch track:\nDrive:', align='right',
+            x=870, y=685, width=80, font_size=8, multiline=True, batch=self.batch)
+        self.keys_lbl = pyglet.text.Label(
+            "Esc\nSpace\np\nEnter\n↑↓← →",
+            x=960, y=685, width=100, font_size=8, multiline=True, batch=self.batch)
 
         self.state = EditState()
         self.modes = [AddPointMode(self.state),
                       EditPointsMode(self.state, self.batch),
                       InsertPointMode(self.state, self.batch)]
         self.mode_ix = -1
-        self.mode_lbl = pyglet.text.Label(x=890, y=635, width=80, font_size=10,
-                                          color=(45, 45, 45, 255), batch=self.batch)
+        self.mode_lbl = pyglet.text.Label(x=890, y=615, font_size=10, color=MODE_COLOR, batch=self.batch)
         self.__next_mode()
 
-        self.description_lbl = pyglet.text.Label(
-            'Quit:\nSwitch mode:\nPrint level:\nSwitch track:',
-            x=890, y=690, width=80, font_size=8, multiline=True, batch=self.batch)
-        self.keys_lbl = pyglet.text.Label(
-            "Esc\nSpace\np\nEnter",
-            x=960, y=690, width=100, font_size=8, multiline=True, batch=self.batch)
-        pyglet.text.Label('Mouse:', x=890, y=610, width=50, font_size=9, batch=self.batch)
-        self.mouse_lbl = pyglet.text.Label(
-            'x=?\ny=?', x=940, y=610, width=50, font_size=10, font_name='Verdana',
-            multiline=True, color=COORDS_COLOR, batch=self.batch)
+        self.mouse_coords = CoordinateLabel(self.batch, 'Mouse:', 890, 590)
+        self.car = CarAdapter(self.batch, 890, 550)
 
     @property
     def mode(self):
@@ -52,7 +49,7 @@ class TrackBuilderWindow(pyglet.window.Window):
             self.mode.set_visible(False)
         self.mode_ix = (self.mode_ix + 1) % len(self.modes)
         self.mode.set_visible(True)
-        self.mode_lbl.text = 'mode: ' + self.mode.name()
+        self.mode_lbl.text = 'mode:  ' + self.mode.name()
 
     def run(self):
         pyglet.clock.schedule_interval(self.update, 1 / 120.0)
@@ -90,7 +87,7 @@ class TrackBuilderWindow(pyglet.window.Window):
 
     def on_mouse_motion(self, x, y, dx, dy):
         self.mode.mouse_motion(x, y)
-        self.mouse_lbl.text = coord_format(x, y)
+        self.mouse_coords.update(x, y)
 
     def update(self, dt):
         self.car.update(dt)
@@ -166,7 +163,7 @@ class AddPointMode(EditMode):
         super().__init__(state)
 
     def name(self):
-        return 'add points'
+        return 'ADD'
 
     def mouse_press(self, x, y):
         self.state.track += [x, y]
@@ -186,7 +183,7 @@ class EditPointsMode(EditMode):
         self.select_point_ix = -1
 
     def name(self):
-        return 'edit points'
+        return 'EDIT'
 
     def set_visible(self, visible):
         self.track_point.set_visible(visible)
@@ -214,7 +211,7 @@ class InsertPointMode(EditMode):
         self.insert_ix = -1
 
     def name(self):
-        return 'insert point'
+        return 'INSERT'
 
     def set_visible(self, visible):
         for pt in self.track_points:
@@ -269,15 +266,29 @@ class TrackPoint:
             self.label.text = coord_format(x, y)
 
 
+class CoordinateLabel:
+    def __init__(self, batch, title, pos_x, pos_y):
+        pyglet.text.Label(title, x=pos_x, y=pos_y, width=50, font_size=9, batch=batch)
+        self.coords = pyglet.text.Label(
+            coord_format(0, 0), font_name='Verdana', color=COORDS_COLOR,
+            x=pos_x + 50, y=pos_y, width=50, font_size=10, multiline=True, batch=batch)
+
+    def update(self, x, y, rot=None):
+        self.coords.text = coord_format(x, y)
+        if rot:
+            self.coords.text += '\nr={:.0f}'.format(rot)
+
+
 def coord_format(x, y):
-    return 'x={}\ny={}'.format(x, y)
+    return 'x={:.0f}\ny={:.0f}'.format(x, y)
 
 
 class CarAdapter:
-    def __init__(self):
+    def __init__(self, batch, label_x, label_y):
         self.car_graphics = CarGraphics(1, default_level, show_traces=False)
         self.operation = PlayerOperation()
         self.engine = RacerEngine(default_level)
+        self.car_lbl = CoordinateLabel(batch, 'Car:', label_x, label_y)
 
     def on_key_press(self, symbol):
         if symbol == key.UP:
@@ -300,6 +311,7 @@ class CarAdapter:
     def update(self, dt):
         self.car_graphics.update(self.engine.player_state)
         self.engine.update(dt, self.operation)
+        self.car_lbl.update(self.engine.player_state.x, self.engine.player_state.y, self.engine.player_state.rotation)
 
     def draw(self):
         self.car_graphics.draw()
