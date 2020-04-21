@@ -3,9 +3,7 @@ import math
 import numpy as np
 from shapely.geometry import Polygon, LinearRing, Point
 
-from .tracks import OUTER_TRACK, OUTER_TRACK_OFFSET, \
-    INNER_TRACK, INNER_TRACK_OFFSET, \
-    INIT_CAR_POSITION, INIT_CAR_ROTATION
+from .tracks import Level
 
 CAR_BOUNDS = (-15, -11, 33, 11)
 CAR_BOUND_POINTS = (CAR_BOUNDS[0], CAR_BOUNDS[1], CAR_BOUNDS[2], CAR_BOUNDS[1],
@@ -75,9 +73,9 @@ class PlayerOperation:
 
 
 class RacerEngine:
-    def __init__(self):
-        self.player_state = PlayerState()
-        self.track = Track()
+    def __init__(self, level):
+        self.player_state = PlayerState(level)
+        self.track = Track(level)
         self.__game_over = False
 
     @property
@@ -98,14 +96,14 @@ class RacerEngine:
 class PlayerState:
     EMPTY_DELTAS = ((0, (-100, -100)),) * 2
 
-    def __init__(self):
-        [self.x, self.y], self.rotation = INIT_CAR_POSITION, INIT_CAR_ROTATION
+    def __init__(self, level: Level):
+        self.x, self.y, self.rotation = level.single_car.x, level.single_car.y, level.single_car.rot
         self.speed = 0
         self.boundaries = Polygon(np.reshape(CAR_BOUND_POINTS, (-1, 2)))
         self.is_alive = True
         self.distance = 0
         self.last_deltas = self.EMPTY_DELTAS
-        self.__distance_tracker = DistanceTracker()
+        self.__distance_tracker = DistanceTracker(level)
 
     @property
     def relevant_speed(self):
@@ -156,9 +154,9 @@ class PlayerState:
 
 
 class Track:
-    def __init__(self):
-        self.__outside = Polygon(np.reshape(OUTER_TRACK, (-1, 2)))
-        self.__inside = Polygon(np.reshape(INNER_TRACK, (-1, 2)))
+    def __init__(self, level: Level):
+        self.__outside = Polygon(np.reshape(level.outer_track, (-1, 2)))
+        self.__inside = Polygon(np.reshape(level.inner_track, (-1, 2)))
 
     def contains(self, geometry):
         return self.__outside.contains(geometry) and \
@@ -166,9 +164,9 @@ class Track:
 
 
 class DistanceTracker:
-    def __init__(self):
-        self.__outside_tracker = LineDistanceTracker(OUTER_TRACK, OUTER_TRACK_OFFSET)
-        self.__inside_tracker = LineDistanceTracker(INNER_TRACK, INNER_TRACK_OFFSET)
+    def __init__(self, level: Level):
+        self.__outside_tracker = LineDistanceTracker(level.outer_track, level.outer_track_offset)
+        self.__inside_tracker = LineDistanceTracker(level.inner_track, level.inner_track_offset)
 
     def get_deltas(self, x, y):
         point = Point(x, y)

@@ -3,7 +3,7 @@ from signal import signal, SIGINT
 import neat
 
 from game.racer_engine import RacerEngine, PlayerOperation
-from game.tracers import get_trace_distances
+from game.tracers import TracerLines
 from training_dts import random_dt
 
 MIN_SCORE_PER_SECOND = 20
@@ -18,16 +18,17 @@ class NeuralPlayer:
         NeuralPlayer.STOPPING = True
 
     @staticmethod
-    def evaluate_genome(genome, neat_config, train_config):
+    def evaluate_genome(level, genome, neat_config, train_config):
         if NeuralPlayer.STOPPING:
             return 0
 
         signal(SIGINT, NeuralPlayer.sigint_received)
-        return NeuralPlayer(genome, neat_config, train_config.game_limit).__evaluate()
+        return NeuralPlayer(level, genome, neat_config, train_config.game_limit).__evaluate()
 
-    def __init__(self, genome, config, limit, name=None):
+    def __init__(self, level, genome, config, limit, name=None):
         self.name = name if name else '{}'.format(genome.key)
-        self.engine = RacerEngine()
+        self.engine = RacerEngine(level)
+        self.tracers = TracerLines(level)
         self.net = neat.nn.FeedForwardNetwork.create(genome, config)
         self.operations = PlayerOperation()
         self.time = 0
@@ -51,7 +52,7 @@ class NeuralPlayer:
     def next_step(self, dt):
         self.time += dt
         state = self.engine.player_state
-        net_input = [dt] + get_trace_distances((state.x, state.y), state.rotation)
+        net_input = [dt] + self.tracers.get_trace_distances((state.x, state.y), state.rotation)
         net_output = self.net.activate(net_input)
 
         self.__update_operations(*net_output)

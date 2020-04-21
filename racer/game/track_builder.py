@@ -6,7 +6,7 @@ from pyglet.window import key
 
 from .racer_engine import RacerEngine, PlayerOperation
 from .racer_graphics import CarGraphics, pointer_img
-from .tracks import INNER_TRACK, OUTER_TRACK
+from .tracks import default_level
 
 TRACK_COLOR = 160, 10, 60
 ACTIVE_TRACK_COLOR = 230, 50, 100
@@ -39,7 +39,7 @@ class TrackBuilderWindow(pyglet.window.Window):
         self.select_point_ix = -1
         self.closest_point = (0, 0)
         self.mouse = [0, 0]
-        self.all_tracks = (OUTER_TRACK, INNER_TRACK)
+        self.all_tracks = (default_level.outer_track, default_level.inner_track)
         self.track_ix = 0
         self.track = self.all_tracks[self.track_ix]
 
@@ -141,9 +141,9 @@ def coord_format(x, y):
 
 class CarAdapter:
     def __init__(self):
-        self.car_graphics = CarGraphics(1)
+        self.car_graphics = CarGraphics(1, default_level)
         self.operation = PlayerOperation()
-        self.engine = RacerEngine()
+        self.engine = RacerEngine(default_level)
 
     def on_key_press(self, symbol):
         if symbol == key.UP:

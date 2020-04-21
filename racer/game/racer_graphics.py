@@ -4,9 +4,9 @@ import numpy as np
 import pyglet
 from pyglet.graphics.vertexdomain import VertexList
 
-from .racer_engine import PlayerState, CAR_BOUND_POINTS, CAR_BOUNDS, DistanceTracker
-from .tracers import get_trace_points
-from .tracks import OUTER_TRACK, INNER_TRACK, TRACK_SIZE
+from .racer_engine import PlayerState, CAR_BOUND_POINTS, CAR_BOUNDS
+from .tracers import TracerLines
+from .tracks import Level
 
 resource_dir = path.join(path.abspath(path.dirname(__file__)), 'resources')
 pyglet.resource.path = [resource_dir]
@@ -54,9 +54,9 @@ class CarGraphics(GraphicsElement):
     DEAD_X_LINE_1 = [CAR_BOUNDS[0] + 1, CAR_BOUNDS[1] + 2, CAR_BOUNDS[2] - 1, CAR_BOUNDS[3] - 1]
     DEAD_X_LINE_2 = [CAR_BOUNDS[0] + 1, CAR_BOUNDS[3] - 1, CAR_BOUNDS[2] - 1, CAR_BOUNDS[1] + 2]
 
-    def __init__(self, num, show_traces=True, show_collision_box=False):
+    def __init__(self, num, level: Level, show_traces=True, show_collision_box=False):
         super().__init__()
-        self.show_traces = show_traces
+        self.tracer = TracerLines(level) if show_traces else None
         self.car_frame = pyglet.sprite.Sprite(img=car_frame_img, batch=self.batch)
         self.car_frame.scale = 0.5
 
@@ -77,7 +77,7 @@ class CarGraphics(GraphicsElement):
             if show_collision_box else None
 
     def draw(self):
-        if self.show_traces:
+        if self.tracer:
             self.__draw_traces()
 
         self.__draw_at_car_position(self.__draw_car_frame)
@@ -94,7 +94,7 @@ class CarGraphics(GraphicsElement):
 
     def __draw_traces(self):
         pyglet.gl.glLineWidth(1)
-        for pos in get_trace_points(self.car_frame.position, self.car_frame.rotation):
+        for pos in self.tracer.get_trace_points(self.car_frame.position, self.car_frame.rotation):
             pyglet.graphics.draw(2, pyglet.gl.GL_LINE_STRIP,
                                  ('v2f', self.car_frame.position + pos),
                                  ('c3B', self.TRACE_COLOR * 2)
@@ -124,10 +124,10 @@ class CarGraphics(GraphicsElement):
 class TrackGraphics(GraphicsElement):
     TRACK_COLOR = 160, 10, 60
 
-    def __init__(self):
+    def __init__(self, level: Level):
         super().__init__()
-        self.add_points(OUTER_TRACK, self.TRACK_COLOR)
-        self.add_points(INNER_TRACK, self.TRACK_COLOR)
+        self.add_points(level.outer_track, self.TRACK_COLOR)
+        self.add_points(level.inner_track, self.TRACK_COLOR)
 
     def draw(self):
         pyglet.gl.glLineWidth(5)
@@ -135,9 +135,11 @@ class TrackGraphics(GraphicsElement):
 
 
 class WarmupSequence:
-    def __init__(self):
-        self.__overlays = [(GameOverlay('3', ''), 1.0), (GameOverlay('2', ''), 1.0),
-                           (GameOverlay('1', ''), 1.0), (GameOverlay('', 'GO !!!', '', text_only=True), 0.7)]
+    def __init__(self, level: Level):
+        self.__overlays = [(GameOverlay(level, '3', ''), 1.0),
+                           (GameOverlay(level, '2', ''), 1.0),
+                           (GameOverlay(level, '1', ''), 1.0),
+                           (GameOverlay(level, '', 'GO !!!', '', text_only=True), 0.7)]
         self.__current_ix = -1
 
     def reset(self):
@@ -165,37 +167,37 @@ class GameOverlay(GraphicsElement):
     REGULAR_COLORS = [(255, 255, 0, 255), (255, 255, 150, 255), (30, 30, 30, 150)]
     TEXT_ONLY_COLORS = [(60, 60, 60, 255), (60, 60, 60, 255), (0, 0, 0, 0)]
 
-    def __init__(self, main_txt, support_txt, exit_txt='"Esc" to quit', text_only=False):
+    def __init__(self, level: Level, main_txt, support_txt, exit_txt='"Esc" to quit', text_only=False):
         super().__init__()
         colors = self.TEXT_ONLY_COLORS if text_only else self.REGULAR_COLORS
         background = pyglet.graphics.OrderedGroup(0)
         cnt, vertices, transparent = convert_data(
-            [0, 0, TRACK_SIZE[0], 0, TRACK_SIZE[0], TRACK_SIZE[1], 0, TRACK_SIZE[1]],
+            [0, 0, level.width, 0, level.width, level.height, 0, level.height],
             colors[2], color_mode='c4B')
         self.batch.add(4, pyglet.gl.GL_POLYGON, background, vertices, transparent)
 
         foreground = pyglet.graphics.OrderedGroup(1)
         main_lbl = pyglet.text.Label(main_txt, batch=self.batch, group=foreground,
                                      color=colors[0], font_size=22, bold=True)
-        main_lbl.x = TRACK_SIZE[0] / 2 - main_lbl.content_width / 2
-        main_lbl.y = TRACK_SIZE[1] / 2 - main_lbl.content_height / 2
+        main_lbl.x = level.width / 2 - main_lbl.content_width / 2
+        main_lbl.y = level.height / 2 - main_lbl.content_height / 2
         support_lbl = pyglet.text.Label(support_txt, batch=self.batch, group=foreground,
                                         color=colors[1], font_size=16)
-        support_lbl.x = TRACK_SIZE[0] / 2 - support_lbl.content_width / 2
-        support_lbl.y = TRACK_SIZE[1] / 2 - main_lbl.content_height - support_lbl.content_height
+        support_lbl.x = level.width / 2 - support_lbl.content_width / 2
+        support_lbl.y = level.height / 2 - main_lbl.content_height - support_lbl.content_height
         exit_lbl = pyglet.text.Label(exit_txt, batch=self.batch, group=foreground,
                                      color=colors[1], font_size=16)
-        exit_lbl.x = TRACK_SIZE[0] / 2 - exit_lbl.content_width / 2
-        exit_lbl.y = TRACK_SIZE[1] / 2 - main_lbl.content_height - exit_lbl.content_height * 2.3
+        exit_lbl.x = level.width / 2 - exit_lbl.content_width / 2
+        exit_lbl.y = level.height / 2 - main_lbl.content_height - exit_lbl.content_height * 2.3
 
 
 class ScoreBox(GraphicsElement):
     BG_COLOR = 50, 50, 200
     SCORE_BOX = 150, 40
 
-    def __init__(self):
+    def __init__(self, level: Level):
         super().__init__()
-        offset = np.array(TRACK_SIZE) - self.SCORE_BOX
+        offset = np.array((level.width, level.height)) - self.SCORE_BOX
         box = np.append(offset, offset + self.SCORE_BOX)
         self.center_x = offset[0] + self.SCORE_BOX[0] / 2
 
@@ -203,7 +205,7 @@ class ScoreBox(GraphicsElement):
         foreground = pyglet.graphics.OrderedGroup(1)
         bg_box = [box[0], box[1], box[2], box[1], box[2], box[3], box[0], box[3], box[0], box[1]]
         self.add_points(bg_box, self.BG_COLOR, pyglet.gl.GL_POLYGON, background)
-        self.label = pyglet.text.Label(x=TRACK_SIZE[0] - 100, y=TRACK_SIZE[1] - 25,
+        self.label = pyglet.text.Label(x=level.width - 100, y=level.height - 25,
                                        batch=self.batch, group=foreground)
 
     def update_text(self, score_text):
@@ -215,14 +217,14 @@ class RankingBox(GraphicsElement):
     TEXT_COLOR = 40, 40, 40, 255
     NAMES_WIDTH = 105
     SCORES_WIDTH = 30
-    RANKING_POS = TRACK_SIZE[0] - 150, TRACK_SIZE[1] - 70
 
-    def __init__(self):
+    def __init__(self, level: Level):
         super().__init__()
-        self.names = pyglet.text.Label(x=self.RANKING_POS[0], y=self.RANKING_POS[1],
+        pos_x, pos_y = level.width - 150, level.height - 70
+        self.names = pyglet.text.Label(x=pos_x, y=pos_y,
                                        width=self.NAMES_WIDTH, color=self.TEXT_COLOR, font_size=9,
                                        batch=self.batch, multiline=True)
-        self.scores = pyglet.text.Label(x=self.RANKING_POS[0] + self.NAMES_WIDTH, y=self.RANKING_POS[1],
+        self.scores = pyglet.text.Label(x=pos_x + self.NAMES_WIDTH, y=pos_y,
                                         width=self.SCORES_WIDTH, color=self.TEXT_COLOR, font_size=9,
                                         batch=self.batch, multiline=True)
 
@@ -238,7 +240,6 @@ class Indicators(GraphicsElement):
         self.inner_score = 0
         self.outer_pointer = Pointer(self.batch)
         self.outer_score = 0
-        self.tracker = DistanceTracker()
         self.mouse_label = pyglet.text.Label('', font_size=14, batch=self.batch)
 
     def update_mouse(self, x, y):

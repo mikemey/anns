@@ -12,7 +12,7 @@ class DemoMaster:
         self.controller = DemoController()
 
     def run(self):
-        w = RacerWindow(self.controller, show_traces=False)
+        w = RacerWindow(self.controller, show_warmup_screen=False, show_traces=False)
         w.start()
 
 
@@ -54,10 +54,10 @@ MOVES = [
 
 class DemoController(RaceController):
     def __init__(self):
-        super().__init__(show_warmup_screen=False)
+        super().__init__()
         self.time = 0
-        self.player1 = DemoPlayer()
-        self.player2 = DemoPlayer(1.5)
+        self.player1 = DemoPlayer(self.level)
+        self.player2 = DemoPlayer(self.level, 1.5)
 
     def get_player_count(self):
         return 2
@@ -93,9 +93,9 @@ class DemoController(RaceController):
 
 
 class DemoPlayer:
-    def __init__(self, time_delay=0):
-        self.time_delay = time_delay
-        self.engine = RacerEngine()
+    def __init__(self, level, time_delay=0):
+        self.time_delay, self.level = time_delay, level
+        self.engine = RacerEngine(self.level)
         self.next_step_ix = -1
         self.next_step = None
         self.__set_next_step__()
@@ -105,7 +105,7 @@ class DemoPlayer:
         self.next_step = MOVES[self.next_step_ix]
 
     def reset(self):
-        self.engine = RacerEngine()
+        self.engine = RacerEngine(self.level)
         self.next_step_ix = -1
         self.next_step = None
         self.__set_next_step__()

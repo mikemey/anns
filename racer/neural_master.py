@@ -8,6 +8,7 @@ import neat
 from best_player_keep import BestPlayerKeep, PlayerData, load_player_data
 from game.racer_engine import PlayerState
 from game.racer_window import RaceController, RacerWindow
+from game.tracks import default_level
 from neural_player import NeuralPlayer
 from training_configs import load_configs
 from training_dts import LIMIT_HIGH
@@ -47,8 +48,8 @@ class NeuralMaster:
     def eval_population(self, key_genomes, config: neat.config.Config):
         separated_tup = list(zip(*key_genomes))
         genomes = list(separated_tup[1])
-        genome_configs = [(genome, config, self.training_config) for genome in genomes]
-        eval_result = self.pool.starmap(NeuralPlayer.evaluate_genome, genome_configs)
+        eval_params = [(default_level, genome, config, self.training_config) for genome in genomes]
+        eval_result = self.pool.starmap(NeuralPlayer.evaluate_genome, eval_params)
 
         pop_result = []
         for (fitness, *game_stats), genome in zip(eval_result, genomes):
@@ -88,7 +89,7 @@ class ShowcaseController(RaceController):
 
     def __init__(self, players: List[PlayerData], pool: Pool, limit: int, auto_close: bool):
         super().__init__()
-        self.__neural_player = [NeuralPlayer(data.genome, data.config, limit, name=data.name)
+        self.__neural_player = [NeuralPlayer(default_level, data.genome, data.config, limit, name=data.name)
                                 for data in players]
         self.__pool = pool
 

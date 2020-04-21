@@ -5,27 +5,25 @@ import pyglet
 from .racer_engine import PlayerState
 from .racer_graphics import CarGraphics, TrackGraphics, ScoreBox, GameOverlay, \
     WarmupSequence, Indicators, RankingBox
-from .tracks import TRACK_SIZE
+from .tracks import Level, default_level
 
 ENABLE_INDICATORS = False
 SHOW_FPS = False
 
 
 class RaceController:
-    def __init__(self, show_warmup_screen=True):
+    def __init__(self):
         self.show_end_screen = False
         self.show_paused_screen = False
-        self.__warmup_controller = WarmupController(show_warmup_screen)
         self.__reset_hook = None
 
     @property
-    def warmup_controller(self):
-        return self.__warmup_controller
+    def level(self) -> Level:
+        return default_level
 
     def reset(self):
         self.show_end_screen = False
         self.show_paused_screen = False
-        self.__warmup_controller.reset()
         if self.__reset_hook:
             self.__reset_hook()
 
@@ -60,63 +58,42 @@ class RaceController:
         self.__reset_hook = reset_hook
 
 
-class WarmupController:
-    RESET_DELAY = 0.5
-
-    def __init__(self, show_warmup_screen):
-        self.__default_warmup = show_warmup_screen
-        self.show_warmup_screen = self.__default_warmup
-        self.control_released = not self.__default_warmup
-        self.warmup_screen = WarmupSequence()
-
-    def reset(self):
-        self.warmup_screen.reset()
-        self.show_warmup_screen = self.__default_warmup
-        self.control_released = not self.__default_warmup
-        self.next_screen()
-
-    def next_screen(self, _=None):
-        if self.show_warmup_screen:
-            self.show_warmup_screen = next(self.warmup_screen, False)
-            if self.show_warmup_screen:
-                self.control_released = self.warmup_screen.shows_last_screen()
-                delay = self.warmup_screen.current_delay()
-                pyglet.clock.schedule_once(self.next_screen, delay)
-
-
 class RacerWindow(pyglet.window.Window):
     BG_COLOR = 0.5, 0.8, 0.4, 1
     WINDOW_POS = 20, 0
 
-    def __init__(self, controller: RaceController, show_traces=True, show_fps=SHOW_FPS):
-        super().__init__(*TRACK_SIZE, caption='Racer')
+    def __init__(self, controller: RaceController, show_warmup_screen=True, show_traces=True, show_fps=SHOW_FPS):
+        super().__init__(controller.level.width, controller.level.height, caption='Racer')
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
         pyglet.gl.glEnable(pyglet.gl.GL_LINE_SMOOTH)
         pyglet.gl.glClearColor(*self.BG_COLOR)
         self.set_location(*self.WINDOW_POS)
         self.controller = controller
-        self.controller.set_reset_hook(self.on_reset)
-        self.warmup_controller = controller.warmup_controller
-        self.warmup_screen = self.warmup_controller.warmup_screen
 
-        self.track = TrackGraphics()
-        self.score_box = ScoreBox()
+        self.show_warmup_screen = show_warmup_screen
+        self.warmup = WarmupControl(controller.level, show_warmup_screen)
+        self.track = TrackGraphics(controller.level)
+        self.score_box = ScoreBox(controller.level)
 
         car_count = self.controller.get_player_count()
-        self.cars = ([CarGraphics(ix + 1, show_traces) for ix in range(car_count)])
-        self.pause_overlay = GameOverlay('Paused', '"p" to continue...')
+        self.cars = [CarGraphics(ix + 1, controller.level, show_traces=show_traces)
+                     for ix in range(car_count)]
+        self.pause_overlay = GameOverlay(controller.level, 'Paused', '"p" to continue...')
         self.end_overlay = None
         self.fps_display = pyglet.window.FPSDisplay(window=self) if show_fps else None
         self.indicator = Indicators() if ENABLE_INDICATORS else None
-        self.ranking = RankingBox()
+        self.ranking = RankingBox(controller.level)
+
+        self.controller.set_reset_hook(self.on_reset)
 
     def on_reset(self):
         self.end_overlay = None
+        self.warmup.reset()
 
     def start(self):
         pyglet.clock.schedule_interval(self.update, 1 / 120.0)
-        self.warmup_controller.next_screen()
+        self.warmup.next_screen()
         pyglet.app.run()
 
     def on_draw(self):
@@ -127,11 +104,11 @@ class RacerWindow(pyglet.window.Window):
         for active_car in filter(lambda car: not car.show_dead_x, self.cars):
             active_car.draw()
 
-        if self.warmup_controller.show_warmup_screen:
-            self.warmup_screen.draw()
+        if self.warmup.show:
+            self.warmup.screen.draw()
         elif self.controller.show_end_screen:
             if not self.end_overlay:
-                self.end_overlay = GameOverlay(*self.controller.get_end_text())
+                self.end_overlay = GameOverlay(self.controller.level, *self.controller.get_end_text())
             self.end_overlay.draw()
         elif self.controller.show_paused_screen:
             self.pause_overlay.draw()
@@ -158,7 +135,7 @@ class RacerWindow(pyglet.window.Window):
             self.indicator.update_mouse(x, y)
 
     def update(self, dt):
-        if self.warmup_controller.control_released:
+        if self.warmup.control_released:
             self.controller.update_player_states(dt)
 
         player_states = self.controller.get_player_states()
@@ -169,3 +146,25 @@ class RacerWindow(pyglet.window.Window):
         self.ranking.update(self.controller.get_ranking())
         if self.indicator:
             self.indicator.update(player_states[-1])
+
+
+class WarmupControl:
+    def __init__(self, level, show_warmup_screen):
+        self.__default_warmup = show_warmup_screen
+        self.show = self.__default_warmup
+        self.control_released = not self.__default_warmup
+        self.screen = WarmupSequence(level)
+
+    def reset(self):
+        self.screen.reset()
+        self.show = self.__default_warmup
+        self.control_released = not self.__default_warmup
+        self.next_screen()
+
+    def next_screen(self, _=None):
+        if self.show:
+            self.show = next(self.screen, False)
+            if self.show:
+                self.control_released = self.screen.shows_last_screen()
+                delay = self.screen.current_delay()
+                pyglet.clock.schedule_once(self.next_screen, delay)

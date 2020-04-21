@@ -5,6 +5,7 @@ from pyglet.window import key
 from game.racer_engine import RacerEngine, PlayerOperation
 from game.racer_window import RaceController, PlayerState
 from game.racer_window import RacerWindow
+from game.tracks import Level, CarPosition
 
 
 class ManualMaster:
@@ -32,14 +33,10 @@ class ManualController(RaceController):
 
     def __setup_players(self):
         if self.two_players:
-            player1 = ManualPlayer(1, *PLAYER1_KEYS)
-            player1.state.x += 2
-            player1.state.y += 13
-            player2 = ManualPlayer(2, *PLAYER2_KEYS)
-            player2.state.x -= 3
-            player2.state.y -= 20
+            player1 = ManualPlayer(self.level, 1, self.level.two_cars[0], *PLAYER1_KEYS)
+            player2 = ManualPlayer(self.level, 2, self.level.two_cars[1], *PLAYER2_KEYS)
             return [player1, player2]
-        return [ManualPlayer(1, *PLAYER1_KEYS)]
+        return [ManualPlayer(self.level, 1, self.level.single_car, *PLAYER1_KEYS)]
 
     def get_player_count(self):
         return len(self.players)
@@ -98,12 +95,15 @@ class ManualController(RaceController):
 
 
 class ManualPlayer:
-    def __init__(self, player_id, up, down, left, right):
+    def __init__(self, level: Level, player_id, start_pos: CarPosition, up, down, left, right):
+        self.engine = RacerEngine(level)
         self.name = 'Player {}'.format(player_id)
         self.score = 0
-        self.engine = RacerEngine()
-        self.operation = PlayerOperation()
+        # player2.state.x -= 3
+        # player2.state.y -= 20
+        self.state.x, self.state.y, self.state.rotation = start_pos.x, start_pos.y, start_pos.rot
         self.up, self.down, self.left, self.right = up, down, left, right
+        self.__operation = PlayerOperation()
 
     @property
     def state(self):
@@ -111,23 +111,23 @@ class ManualPlayer:
 
     def on_key_press(self, symbol):
         if symbol == self.up:
-            self.operation.accelerate()
+            self.__operation.accelerate()
         if symbol == self.down:
-            self.operation.reverse()
+            self.__operation.reverse()
         if symbol == self.left:
-            self.operation.turn_left()
+            self.__operation.turn_left()
         if symbol == self.right:
-            self.operation.turn_right()
+            self.__operation.turn_right()
 
     def on_key_release(self, symbol):
         if symbol in (self.up, self.down):
-            self.operation.stop_direction()
+            self.__operation.stop_direction()
         if symbol == self.left:
-            self.operation.stop_left()
+            self.__operation.stop_left()
         if symbol == self.right:
-            self.operation.stop_right()
+            self.__operation.stop_right()
 
     def update(self, dt):
         if not self.engine.game_over:
-            self.engine.update(dt, self.operation)
+            self.engine.update(dt, self.__operation)
             self.score = self.engine.player_state.distance // 10
