@@ -4,7 +4,7 @@ import numpy as np
 import pyglet
 from pyglet.window import key
 
-from tracks import INNER_TRACK, OUTER_TRACK
+from .tracks import INNER_TRACK, OUTER_TRACK
 
 
 def center_image(image):
@@ -34,18 +34,18 @@ class TrackBuilderWindow(pyglet.window.Window):
         self.player = pyglet.sprite.Sprite(img=player_img, batch=self.batch)
         self.player.scale = 0.5
         self.player.position = (100, 100)
-        pyglet.text.Label('switch track:', x=830, y=670, batch=self.batch)
-        pyglet.text.Label('\'Enter\'', x=940, y=670, batch=self.batch)
-        pyglet.text.Label('switch mode:', x=830, y=650, batch=self.batch)
-        pyglet.text.Label('\'a\'', x=940, y=650, batch=self.batch)
-        pyglet.text.Label('print track:', x=830, y=630, batch=self.batch)
-        pyglet.text.Label('\'p\'', x=940, y=630, batch=self.batch)
+
+        description = 'quit:\nswitch track:\nswitch mode:\nprint track:'
+        keys = "Esc\nEnter\na\np"
+        pyglet.text.Label(description, x=890, y=690, width=80, font_size=8,
+                          batch=self.batch, multiline=True)
+        pyglet.text.Label(keys, x=960, y=690, width=100, font_size=8,
+                          batch=self.batch, multiline=True)
 
         self.track_point_highlighter = TrackPoint(batch=self.batch)
-        pyglet.text.Label('Mouse:', x=860, y=600, multiline=True, width=50,
-                          font_size=12, batch=self.batch)
-        self.mouse_label = pyglet.text.Label('', x=930, y=600, multiline=True, width=50,
-                                             font_name='Verdana', font_size=12,
+        pyglet.text.Label('Mouse:', x=890, y=630, width=50, font_size=9, batch=self.batch)
+        self.mouse_label = pyglet.text.Label('x=?\ny=?', x=940, y=630, multiline=True, width=50,
+                                             font_name='Verdana', font_size=10,
                                              batch=self.batch, color=COORDS_COLOR)
         self.select_mode = True
         self.select_point_ix = -1
@@ -54,6 +54,10 @@ class TrackBuilderWindow(pyglet.window.Window):
         self.all_tracks = (OUTER_TRACK, INNER_TRACK)
         self.track_ix = 0
         self.track = self.all_tracks[self.track_ix]
+
+    def run(self):
+        pyglet.clock.schedule_interval(self.update, 1 / 120.0)
+        pyglet.app.run()
 
     def on_draw(self):
         self.clear()
@@ -138,9 +142,3 @@ class TrackPoint:
 
 def coord_format(x, y):
     return 'x={}\ny={}'.format(x, y)
-
-
-if __name__ == '__main__':
-    w = TrackBuilderWindow()
-    pyglet.clock.schedule_interval(w.update, 1 / 120.0)
-    pyglet.app.run()

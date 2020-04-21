@@ -1,5 +1,19 @@
 # Track race
 
+- Getting started
+	- [Requirements](#requirements)
+	- [Install dependencies](#install-dependencies)
+- Play
+	- [Single-player](#single-player-mode)
+	- [Two-player](#two-player-mode)
+	- [automatic play demonstration](#demo-auto-player)
+- [Train networks](#train-neat-network)
+	- [Configuration](#configuration)
+	- [Start training](#start-training)
+	- [Run race with stored players](#replay-stored-players)
+	- [Run race with top players](#replay-top-players)
+- [Build your own track](#track-builder)
+
 <table>
     <tbody>
         <tr></tr>
@@ -40,6 +54,7 @@ Parameters:
 	train       	training mode
 	play <files>	showcase best players from <files>
 	top         	showcase random players from 'racer/examples/top_players.pd'
+	build       	open track builder
 ```
 
 #### Single-player mode
@@ -48,7 +63,7 @@ Parameters:
 [project-root-dir] $ python3 racer
 ```
 
-#### 2-player mode
+#### Two-player mode
 
 ```bash
 [project-root-dir] $ python3 racer 2
@@ -151,4 +166,12 @@ A shortcut to run a random selection of these top players it `top`:
 
 ```bash
 [project-root-dir] $ python3 racer top
+```
+
+### Track builder
+
+Start a simple app to build your own track:
+
+```bash
+[project-root-dir] $ python3 racer build
 ```
