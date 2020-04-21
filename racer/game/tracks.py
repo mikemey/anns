@@ -53,5 +53,5 @@ default_level = Level(
     inner_track_offset=2890,
     single_car=TrackPosition(505, 344, 180),
     two_cars=(TrackPosition(507, 357, 180), TrackPosition(502, 324, 180)),
-    obstacles=[TrackPosition(126, 157, 2), TrackPosition(675, 550, 7), TrackPosition(800, 145, -5)]
+    obstacles=[TrackPosition(126, 157, 2), TrackPosition(675, 550, 7), TrackPosition(800, 145, -5), TrackPosition(59, 647, 59)]
 )

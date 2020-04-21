@@ -15,6 +15,8 @@ MAX_CAR_ROTATION = 200
 CAR_FRICTION = 0.98
 MIN_SPEED = 10
 
+BOX_COLL_BOX = np.array([[-18, -18], [18, -18], [18, 18], [-18, 18]])
+
 
 class PlayerOperation:
     FWD_IX = 0
@@ -132,17 +134,8 @@ class PlayerState:
         cosine, sine = math.cos(rot), math.sin(rot)
         self.x += cosine * self.speed * dt
         self.y -= sine * self.speed * dt
-        self.__update_boundaries__(cosine, sine)
+        self.boundaries = create_collision_box(CAR_COLL_BOX, self.x, self.y, cosine, sine)
         self.__update_distance__()
-
-    def __update_boundaries__(self, cosine, sine):
-        j = np.array([[cosine, sine], [-sine, cosine]])
-        new_boundaries = []
-        for ix in range(len(CAR_COLL_BOX)):
-            m = np.dot(j, CAR_COLL_BOX[ix])
-            moved = np.array((self.x, self.y)) + m.T
-            new_boundaries.append(moved)
-        self.boundaries = Polygon(new_boundaries)
 
     def __update_distance__(self):
         deltas = self.__distance_tracker.get_deltas(self.x, self.y)
@@ -150,17 +143,23 @@ class PlayerState:
         self.last_deltas = deltas
 
     def flattened_boundaries(self):
-        return np.array(self.boundaries.coords[:-1]).flatten()
+        return np.array(self.boundaries.exterior.coords[:-1]).flatten()
 
 
 class Track:
     def __init__(self, level: Level):
         self.__outside = Polygon(np.reshape(level.outer_track, (-1, 2)))
         self.__inside = Polygon(np.reshape(level.inner_track, (-1, 2)))
+        self.__obstacles = []
+        for pt in level.obstacles:
+            rot = math.radians(pt.rot)
+            cosine, sine = math.cos(rot), math.sin(rot)
+            self.__obstacles.append(create_collision_box(BOX_COLL_BOX, pt.x, pt.y, cosine, sine))
 
     def contains(self, geometry):
         return self.__outside.contains(geometry) and \
-               not self.__inside.intersects(geometry)
+               not self.__inside.intersects(geometry) and \
+               not any([obs.intersects(geometry) for obs in self.__obstacles])
 
 
 class DistanceTracker:
@@ -196,3 +195,13 @@ class LineDistanceTracker:
     def __get_line_point(self, dist):
         pts = self.__line.interpolate(dist)
         return list(pts.coords)[0]
+
+
+def create_collision_box(box, x, y, cosine, sine):
+    j = np.array([[cosine, sine], [-sine, cosine]])
+    new_boundaries = []
+    for ix in range(len(box)):
+        m = np.dot(j, box[ix])
+        moved = np.array((x, y)) + m.T
+        new_boundaries.append(moved)
+    return Polygon(new_boundaries)
