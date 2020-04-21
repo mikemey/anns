@@ -4,7 +4,7 @@ from pyglet.window import key
 from .racer_engine import RacerEngine, PlayerOperation
 from .racer_graphics import CarGraphics
 from .track_builder_modes import coord_format, EditState, AddPointMode, EditPointsMode, InsertPointMode, AddObstaclesMode
-from .tracks import default_level
+from .tracks import default_level, TrackPosition
 
 TRACK_COLOR = 160, 10, 60
 ACTIVE_TRACK_COLOR = 230, 50, 100
@@ -26,7 +26,7 @@ class TrackBuilderWindow(pyglet.window.Window):
             'Quit:\nSwitch mode:\nPrint level:\nSwitch track:\nDrive:\nRotate:', align='right',
             x=870, y=685, width=80, font_size=8, multiline=True, batch=self.batch)
         self.keys_lbl = pyglet.text.Label(
-            "Esc\nSpace\np\nEnter\n↑↓← →\nc / v",
+            "Esc\nSpace\np\nEnter\n↑↓← →\na / d",
             x=960, y=685, width=100, font_size=8, multiline=True, batch=self.batch)
 
         self.state = EditState(EDIT_LEVEL)
@@ -67,10 +67,12 @@ class TrackBuilderWindow(pyglet.window.Window):
         if symbol == key.SPACE:
             self.__next_mode()
         elif symbol == key.P:
-            print('Outer track:')
-            print(self.state.all_tracks[0])
-            print('Inner track:')
-            print((self.state.all_tracks[1]))
+            print('=' * 80)
+            print('outer_track:', self.state.all_tracks[0])
+            print('inner_track:', self.state.all_tracks[1])
+            print('car        :', TrackPosition(self.car.state.x, self.car.state.y, self.car.state.rotation))
+            print('obstacles  :', self.state.obstacles)
+            print('=' * 80)
         elif symbol == key.ENTER:
             self.mode.switch_track()
         else:
@@ -117,6 +119,10 @@ class CarAdapter:
         self.engine = RacerEngine(level)
         self.car_lbl = CoordinateLabel(batch, 'Car:', label_x, label_y)
 
+    @property
+    def state(self):
+        return self.engine.player_state
+
     def on_key_press(self, symbol):
         if symbol == key.UP:
             self.operation.accelerate()
@@ -136,9 +142,9 @@ class CarAdapter:
             self.operation.stop_right()
 
     def update(self, dt):
-        self.car_graphics.update(self.engine.player_state)
+        self.car_graphics.update(self.state)
         self.engine.update(dt, self.operation)
-        self.car_lbl.update(self.engine.player_state.x, self.engine.player_state.y, self.engine.player_state.rotation)
+        self.car_lbl.update(self.state.x, self.state.y, self.state.rotation)
 
     def draw(self):
         self.car_graphics.draw()

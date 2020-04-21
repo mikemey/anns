@@ -204,13 +204,13 @@ class AddObstaclesMode(EditMode):
         self.__add_box_sprite(x, y, self.mouse_sprite.rotation)
 
     def on_key_press(self, symbol):
-        if symbol == key.C:
+        if symbol == key.A:
             self.box_rotation = -0.5
-        if symbol == key.V:
+        if symbol == key.D:
             self.box_rotation = 0.5
 
     def on_key_release(self, symbol):
-        if symbol == key.C or symbol == key.V:
+        if symbol == key.A or symbol == key.D:
             self.box_rotation = 0
 
     def update(self):

@@ -19,6 +19,9 @@ class TrackPosition:
     def __init__(self, x, y, rot):
         self.x, self.y, self.rot = x, y, rot
 
+    def __repr__(self):
+        return 'TrackPosition({:.0f}, {:.0f}, {:.0f})'.format(self.x, self.y, self.rot)
+
 
 class Level:
     def __init__(self, width, height,
