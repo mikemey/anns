@@ -170,8 +170,11 @@ A shortcut to run a random selection of these top players it `top`:
 
 ### Track builder
 
-Start a simple app to build your own track:
+<p align="center"><img src="docs/track-builder.png" width="700"/></p>
+
+To start building your own track:
 
 ```bash
 [project-root-dir] $ python3 racer build
 ```
+
