@@ -11,12 +11,18 @@ from .tracks import Level
 resource_dir = path.join(path.abspath(path.dirname(__file__)), 'resources')
 pyglet.resource.path = [resource_dir]
 pyglet.resource.reindex()
-car_frame_img = pyglet.resource.image('car-frame.png')
-car_frame_img.anchor_x = car_frame_img.width // 3
-car_frame_img.anchor_y = car_frame_img.height // 2
-pointer_img = pyglet.resource.image('pointer.png')
-pointer_img.anchor_x = pointer_img.width // 2
-pointer_img.anchor_y = pointer_img.height // 2
+
+
+def load_and_anchor_image(name, x_ratio=2, y_ratio=2):
+    img = pyglet.resource.image(name)
+    img.anchor_x = img.width // x_ratio
+    img.anchor_y = img.height // y_ratio
+    return img
+
+
+car_frame_img = load_and_anchor_image('car-frame.png', x_ratio=3)
+pointer_img = load_and_anchor_image('pointer.png')
+box_img = load_and_anchor_image('box.png')
 
 
 def random_color():
@@ -128,6 +134,12 @@ class TrackGraphics(GraphicsElement):
         super().__init__()
         self.add_points(level.outer_track, self.TRACK_COLOR)
         self.add_points(level.inner_track, self.TRACK_COLOR)
+
+        self.obstacles = []  # keep obstacle-sprite refs to avoid removal
+        for obs_pos in level.obstacles:
+            sprite = pyglet.sprite.Sprite(x=obs_pos.x, y=obs_pos.y, img=box_img, batch=self.batch)
+            sprite.update(scale=0.4, rotation=obs_pos.rot)
+            self.obstacles.append(sprite)
 
     def draw(self):
         pyglet.gl.glLineWidth(5)
