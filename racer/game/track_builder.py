@@ -24,7 +24,9 @@ class TrackBuilderWindow(pyglet.window.Window):
         self.car = CarAdapter()
 
         self.state = EditState()
-        self.modes = [AddPointMode(self.state), EditPointsMode(self.state, self.batch), InsertPointMode(self.state)]
+        self.modes = [AddPointMode(self.state),
+                      EditPointsMode(self.state, self.batch),
+                      InsertPointMode(self.state, self.batch)]
         self.mode_ix = -1
         self.mode_lbl = pyglet.text.Label(x=890, y=635, width=80, font_size=10,
                                           color=(45, 45, 45, 255), batch=self.batch)
@@ -34,7 +36,7 @@ class TrackBuilderWindow(pyglet.window.Window):
             'Quit:\nSwitch mode:\nPrint level:\nSwitch track:',
             x=890, y=690, width=80, font_size=8, multiline=True, batch=self.batch)
         self.keys_lbl = pyglet.text.Label(
-            "Esc\nm\np\nEnter",
+            "Esc\nSpace\np\nEnter",
             x=960, y=690, width=100, font_size=8, multiline=True, batch=self.batch)
         pyglet.text.Label('Mouse:', x=890, y=610, width=50, font_size=9, batch=self.batch)
         self.mouse_lbl = pyglet.text.Label(
@@ -47,9 +49,9 @@ class TrackBuilderWindow(pyglet.window.Window):
 
     def __next_mode(self):
         if self.mode_ix >= 0:
-            self.mode.hide()
+            self.mode.set_visible(False)
         self.mode_ix = (self.mode_ix + 1) % len(self.modes)
-        self.mode.show()
+        self.mode.set_visible(True)
         self.mode_lbl.text = 'mode: ' + self.mode.name()
 
     def run(self):
@@ -64,7 +66,7 @@ class TrackBuilderWindow(pyglet.window.Window):
 
     def on_key_press(self, symbol, modifiers):
         super().on_key_press(symbol, modifiers)
-        if symbol == key.M:
+        if symbol == key.SPACE:
             self.__next_mode()
         elif symbol == key.P:
             print('Outer track:')
@@ -100,20 +102,20 @@ class EditState:
         self.all_tracks = (default_level.outer_track, default_level.inner_track)
         self.track_ix = 0
         self.track = self.all_tracks[self.track_ix]
-        self.mouse = []
+        self.mouse = [0, 0]
+
+    def coords(self, ix):
+        return self.track[ix], self.track[ix + 1]
 
 
 class EditMode:
-    def __init__(self, state):
+    def __init__(self, state: EditState):
         self.state = state
 
     def name(self):
         raise NotImplementedError()
 
-    def show(self):
-        pass
-
-    def hide(self):
+    def set_visible(self, visible):
         pass
 
     def switch_track(self):
@@ -143,7 +145,7 @@ class EditMode:
     def get_track_points(self, track_ix):
         return self.state.all_tracks[track_ix]
 
-    def get_closest_point_ix(self):
+    def closest_track_point_ix_to_mouse(self):
         mouse = np.array(self.state.mouse)
         min_distance = math.inf
         closest_ix = -1
@@ -179,22 +181,19 @@ class AddPointMode(EditMode):
 class EditPointsMode(EditMode):
     def __init__(self, state, batch):
         super().__init__(state)
-        self.track_point_highlighter = TrackPoint(batch=batch)
-        self.track_point_highlighter.set_visible(False)
+        self.track_point = TrackPoint(batch=batch)
+        self.set_visible(False)
         self.select_point_ix = -1
-
-    def show(self):
-        self.track_point_highlighter.set_visible(True)
-
-    def hide(self):
-        self.track_point_highlighter.set_visible(False)
 
     def name(self):
         return 'edit points'
 
+    def set_visible(self, visible):
+        self.track_point.set_visible(visible)
+
     def mouse_press(self, x, y):
         self.select_point_ix = -1 if self.select_point_ix >= 0 \
-            else self.get_closest_point_ix()
+            else self.closest_track_point_ix_to_mouse()
 
     def mouse_motion(self, x, y):
         super().mouse_motion(x, y)
@@ -203,36 +202,71 @@ class EditPointsMode(EditMode):
             self.state.track[self.select_point_ix + 1] = y
 
     def update(self):
-        point_ix = self.get_closest_point_ix()
-        px, py = self.state.track[point_ix], self.state.track[point_ix + 1]
-        self.track_point_highlighter.update(px, py)
+        px, py = self.state.coords(self.closest_track_point_ix_to_mouse())
+        self.track_point.update(px, py)
 
 
 class InsertPointMode(EditMode):
-    def __init__(self, state):
+    def __init__(self, state, batch):
         super().__init__(state)
+        self.track_points = [TrackPoint(batch=batch, show_xy=False), TrackPoint(batch=batch, show_xy=False)]
+        self.set_visible(False)
+        self.insert_ix = -1
 
     def name(self):
         return 'insert point'
 
+    def set_visible(self, visible):
+        for pt in self.track_points:
+            pt.set_visible(visible)
+
+    def mouse_press(self, x, y):
+        self.insert_ix = -1 if self.insert_ix >= 0 \
+            else self.closest_track_point_ix_to_mouse() + 2
+
+        if self.insert_ix >= 0:
+            self.set_visible(False)
+            self.state.track.insert(self.insert_ix, self.state.mouse[1])
+            self.state.track.insert(self.insert_ix, self.state.mouse[0])
+        else:
+            self.set_visible(True)
+
+    def mouse_motion(self, x, y):
+        super().mouse_motion(x, y)
+        if self.insert_ix >= 0:
+            self.state.track[self.insert_ix] = x
+            self.state.track[self.insert_ix + 1] = y
+
+    def update(self):
+        ix = self.closest_track_point_ix_to_mouse()
+        self.track_points[0].update(*self.state.coords(ix))
+
+        second_ix = ix + 2
+        if second_ix >= len(self.state.track):
+            second_ix = ix - 2
+        self.track_points[1].update(*self.state.coords(second_ix))
+
 
 class TrackPoint:
-    def __init__(self, batch, font_size=8, offset=15):
+    def __init__(self, batch, font_size=8, offset=15, show_xy=True):
         super().__init__()
         self.point = pyglet.sprite.Sprite(img=pointer_img, batch=batch)
         self.label = pyglet.text.Label('', font_size=font_size, batch=batch, font_name='Verdana',
-                                       color=COORDS_COLOR, multiline=True, width=50)
+                                       color=COORDS_COLOR, multiline=True, width=50) \
+            if show_xy else None
         self.offset = offset
 
     def set_visible(self, visible):
         self.point.visible = visible
-        self.label.text = ''
+        if self.label:
+            self.label.text = ''
 
     def update(self, x, y):
         self.point.update(x=x, y=y)
-        self.label.x = x + self.offset
-        self.label.y = y + self.offset / 2
-        self.label.text = coord_format(x, y)
+        if self.label:
+            self.label.x = x + self.offset
+            self.label.y = y + self.offset / 2
+            self.label.text = coord_format(x, y)
 
 
 def coord_format(x, y):
