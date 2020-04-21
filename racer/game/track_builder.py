@@ -4,20 +4,9 @@ import numpy as np
 import pyglet
 from pyglet.window import key
 
+from .racer_engine import RacerEngine, PlayerOperation
+from .racer_graphics import CarGraphics, pointer_img
 from .tracks import INNER_TRACK, OUTER_TRACK
-
-
-def center_image(image):
-    image.anchor_x = image.width / 2
-    image.anchor_y = image.height / 2
-
-
-pyglet.resource.path = ['resources']
-pyglet.resource.reindex()
-player_img = pyglet.resource.image("car-frame.png")
-pointer_img = pyglet.resource.image("pointer.png")
-center_image(player_img)
-center_image(pointer_img)
 
 TRACK_COLOR = 160, 10, 60
 ACTIVE_TRACK_COLOR = 230, 50, 100
@@ -27,13 +16,12 @@ COORDS_COLOR = 100, 100, 100, 255
 class TrackBuilderWindow(pyglet.window.Window):
     def __init__(self):
         super().__init__(1000, 700, caption='Track builder')
+        self.set_location(0, 0)
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
         pyglet.gl.glEnable(pyglet.gl.GL_LINE_SMOOTH)
         pyglet.gl.glClearColor(0.5, 0.8, 0.4, 1)
         self.batch = pyglet.graphics.Batch()
-        self.player = pyglet.sprite.Sprite(img=player_img, batch=self.batch)
-        self.player.scale = 0.5
-        self.player.position = (100, 100)
+        self.car = CarAdapter()
 
         description = 'quit:\nswitch track:\nswitch mode:\nprint track:'
         keys = "Esc\nEnter\na\np"
@@ -61,6 +49,7 @@ class TrackBuilderWindow(pyglet.window.Window):
 
     def on_draw(self):
         self.clear()
+        self.car.draw()
         pyglet.gl.glLineWidth(5)
         self.draw_track(0)
         self.draw_track(1)
@@ -88,6 +77,11 @@ class TrackBuilderWindow(pyglet.window.Window):
         elif symbol == key.ENTER:
             self.track_ix = 0 if self.track_ix == 1 else 1
             self.track = self.all_tracks[self.track_ix]
+        else:
+            self.car.on_key_press(symbol)
+
+    def on_key_release(self, symbol, modifiers):
+        self.car.on_key_release(symbol)
 
     def on_mouse_press(self, x, y, button, modifiers):
         if self.select_mode:
@@ -111,6 +105,7 @@ class TrackBuilderWindow(pyglet.window.Window):
         point_ix = self.get_closest_point_ix()
         px, py = self.track[point_ix], self.track[point_ix + 1]
         self.track_point_highlighter.update(px, py)
+        self.car.update(dt)
 
     def get_closest_point_ix(self):
         mouse = np.array(self.mouse)
@@ -142,3 +137,35 @@ class TrackPoint:
 
 def coord_format(x, y):
     return 'x={}\ny={}'.format(x, y)
+
+
+class CarAdapter:
+    def __init__(self):
+        self.car_graphics = CarGraphics(1)
+        self.operation = PlayerOperation()
+        self.engine = RacerEngine()
+
+    def on_key_press(self, symbol):
+        if symbol == key.UP:
+            self.operation.accelerate()
+        if symbol == key.DOWN:
+            self.operation.reverse()
+        if symbol == key.LEFT:
+            self.operation.turn_left()
+        if symbol == key.RIGHT:
+            self.operation.turn_right()
+
+    def on_key_release(self, symbol):
+        if symbol in (key.UP, key.DOWN):
+            self.operation.stop_direction()
+        if symbol == key.LEFT:
+            self.operation.stop_left()
+        if symbol == key.RIGHT:
+            self.operation.stop_right()
+
+    def update(self, dt):
+        self.car_graphics.update(self.engine.player_state)
+        self.engine.update(dt, self.operation)
+
+    def draw(self):
+        self.car_graphics.draw()
