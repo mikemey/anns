@@ -10,12 +10,12 @@ OUTER_LINE = LineString(np.reshape(OUTER_TRACK, (-1, 2)))
 INNER_LINE = LineString(np.reshape(INNER_TRACK, (-1, 2)))
 
 TRACE_LEN = TRACK_SIZE[0]
-DEG_20 = math.pi / 9
-DEG_40 = math.pi / 9 * 2
-DEG_65 = math.pi / 36 * 13
+DEG_15 = math.pi / 12
+DEG_30 = math.pi / 6
+DEG_45 = math.pi / 4
 DEG_90 = math.pi / 2
 
-TRACE_LINE_ANGLES = [DEG_90, DEG_65, DEG_40, DEG_20, 0, -DEG_20, -DEG_40, -DEG_65, -DEG_90]
+TRACE_LINE_ANGLES = [DEG_90, DEG_45, DEG_30, DEG_15, 0, -DEG_15, -DEG_30, -DEG_45, -DEG_90]
 
 
 def get_trace_distances(pos, rotation_grad):
