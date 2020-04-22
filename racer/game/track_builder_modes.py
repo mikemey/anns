@@ -18,14 +18,56 @@ def coord_format(x, y):
 
 class EditState:
     def __init__(self, level: Level):
-        self.all_tracks = (level.outer_track, level.inner_track)
-        self.track_ix = 0
-        self.track = self.all_tracks[self.track_ix]
         self.mouse = [0, 0]
         self.obstacles = level.obstacles
+        self.__all_tracks = [level.outer_track, level.inner_track]
+        self.__track_ix = 0
+
+    @property
+    def __active_track(self):
+        return self.__all_tracks[self.__track_ix]
+
+    @property
+    def active_track_length(self):
+        return len(self.__active_track)
+
+    @property
+    def outer_track(self):
+        return self.__all_tracks[0].copy()
+
+    @property
+    def inner_track(self):
+        return self.__all_tracks[1].copy()
 
     def coords(self, ix):
-        return self.track[ix], self.track[ix + 1]
+        return self.__active_track[ix], self.__active_track[ix + 1]
+
+    def switch_track(self):
+        self.__track_ix = 0 if self.__track_ix == 1 else 1
+
+    def is_track_active(self, track_ix):
+        return self.__track_ix == track_ix
+
+    def get_track_points(self, track_ix):
+        return self.__all_tracks[track_ix]
+
+    def add_track_point(self, x, y):
+        track = self.__active_track
+        track += [x, y]
+
+    def track_point_xy(self, ix):
+        return self.__active_track[ix], self.__active_track[ix + 1]
+
+    def update_track_point_xy(self, ix, x, y):
+        self.__active_track[ix] = x
+        self.__active_track[ix + 1] = y
+
+    def insert_track_point(self, insert_ix, x, y):
+        self.__active_track.insert(insert_ix, y)
+        self.__active_track.insert(insert_ix, x)
+
+    def add_obstacle(self, x, y, rot):
+        self.obstacles.append(TrackPosition(x, y, rot))
 
 
 class EditMode:
@@ -37,10 +79,6 @@ class EditMode:
 
     def set_visible(self, visible):
         pass
-
-    def switch_track(self):
-        self.state.track_ix = 0 if self.state.track_ix == 1 else 1
-        self.state.track = self.state.all_tracks[self.state.track_ix]
 
     def on_key_press(self, symbol):
         pass
@@ -61,22 +99,24 @@ class EditMode:
     def __draw_track(self, track_ix):
         pts = self.get_track_points(track_ix)
         pt_count = int(len(pts) / 2)
-        color = ACTIVE_TRACK_COLOR if self.state.track_ix == track_ix else TRACK_COLOR
-        line_width = 5 if self.state.track_ix == track_ix else 3
+
+        color, line_width = (ACTIVE_TRACK_COLOR, 5) \
+            if self.state.is_track_active(track_ix) \
+            else (TRACK_COLOR, 3)
         pyglet.gl.glLineWidth(line_width)
         pyglet.graphics.draw(pt_count, pyglet.gl.GL_LINE_STRIP,
                              ('v2i', pts), ('c3B', color * pt_count)
                              )
 
     def get_track_points(self, track_ix):
-        return self.state.all_tracks[track_ix]
+        return self.state.get_track_points(track_ix)
 
     def closest_track_point_ix_to_mouse(self):
         mouse = np.array(self.state.mouse)
         min_distance = math.inf
         closest_ix = -1
-        for ix in range(0, len(self.state.track), 2):
-            track_pt = (self.state.track[ix], self.state.track[ix + 1])
+        for ix in range(0, self.state.active_track_length, 2):
+            track_pt = self.state.track_point_xy(ix)
             dist = np.linalg.norm(mouse - track_pt)
             if dist < min_distance:
                 min_distance = dist
@@ -95,11 +135,11 @@ class AddPointMode(EditMode):
         return 'ADD pt'
 
     def on_mouse_press(self, x, y):
-        self.state.track += [x, y]
+        self.state.add_track_point(x, y)
 
     def get_track_points(self, track_ix):
-        pts = self.state.all_tracks[track_ix].copy()
-        if self.state.track_ix == track_ix:
+        pts = self.state.get_track_points(track_ix).copy()
+        if self.state.is_track_active(track_ix):
             pts.extend(self.state.mouse)
         return pts
 
@@ -124,8 +164,7 @@ class EditPointsMode(EditMode):
     def on_mouse_motion(self, x, y):
         super().on_mouse_motion(x, y)
         if self.select_point_ix >= 0:
-            self.state.track[self.select_point_ix] = x
-            self.state.track[self.select_point_ix + 1] = y
+            self.state.update_track_point_xy(self.select_point_ix, x, y)
 
     def update(self):
         px, py = self.state.coords(self.closest_track_point_ix_to_mouse())
@@ -151,14 +190,12 @@ class InsertPointMode(EditMode):
             else self.closest_track_point_ix_to_mouse() + 2
 
         if self.insert_ix >= 0:
-            self.state.track.insert(self.insert_ix, self.state.mouse[1])
-            self.state.track.insert(self.insert_ix, self.state.mouse[0])
+            self.state.insert_track_point(self.insert_ix, *self.state.mouse)
 
     def on_mouse_motion(self, x, y):
         super().on_mouse_motion(x, y)
         if self.insert_ix >= 0:
-            self.state.track[self.insert_ix] = x
-            self.state.track[self.insert_ix + 1] = y
+            self.state.update_track_point_xy(self.insert_ix, x, y)
 
     def update(self):
         if self.insert_ix < 0:
@@ -166,7 +203,7 @@ class InsertPointMode(EditMode):
             self.track_points[0].update(*self.state.coords(ix))
 
             second_ix = ix + 2
-            if second_ix >= len(self.state.track):
+            if second_ix >= self.state.active_track_length:
                 second_ix = ix - 2
             self.track_points[1].update(*self.state.coords(second_ix))
 
@@ -195,7 +232,7 @@ class AddObstaclesMode(EditMode):
         box.update(x=x, y=y, rotation=rot, scale=0.4)
         self.sprites.append(box)
         if add_to_obstacles:
-            self.state.obstacles.append(TrackPosition(x, y, rot))
+            self.state.add_obstacle(x, y, rot)
 
     def on_mouse_motion(self, x, y):
         self.mouse_sprite.update(x=x, y=y)

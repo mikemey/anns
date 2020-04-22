@@ -68,13 +68,13 @@ class TrackBuilderWindow(pyglet.window.Window):
             self.__next_mode()
         elif symbol == key.P:
             print('=' * 80)
-            print('outer_track:', self.state.all_tracks[0])
-            print('inner_track:', self.state.all_tracks[1])
+            print('outer_track:', self.state.outer_track)
+            print('inner_track:', self.state.inner_track)
             print('car        :', TrackPosition(self.car.state.x, self.car.state.y, self.car.state.rotation))
             print('obstacles  :', self.state.obstacles)
             print('=' * 80)
         elif symbol == key.ENTER:
-            self.mode.switch_track()
+            self.state.switch_track()
         else:
             self.car.on_key_press(symbol)
             self.mode.on_key_press(symbol)
