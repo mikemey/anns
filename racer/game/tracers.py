@@ -1,9 +1,10 @@
 import math
+from functools import reduce
 
 import numpy as np
-import shapely
 from shapely.geometry import LineString
 
+from .racer_engine import create_obstacles_collision_boxes
 from .tracks import Level
 
 DEG_20 = math.pi / 9
@@ -26,8 +27,12 @@ TRACE_LINE_ANGLES = [DEG_90, DEG_65, DEG_40, DEG_20, 0, -DEG_20, -DEG_40, -DEG_6
 class TracerLines:
     def __init__(self, level: Level):
         self.trace_len = level.width
-        self.outer_line = LineString(np.reshape(level.outer_track, (-1, 2)))
-        self.inner_line = LineString(np.reshape(level.inner_track, (-1, 2)))
+        obstacle_coll_boxes = create_obstacles_collision_boxes(level.obstacles)
+        self.collision_boxes = [
+            LineString(np.reshape(level.outer_track, (-1, 2))),
+            LineString(np.reshape(level.inner_track, (-1, 2))),
+            *[LineString(coll_box.exterior.coords) for coll_box in obstacle_coll_boxes]
+        ]
 
     def get_trace_distances(self, pos, rotation_grad):
         rot = math.radians(rotation_grad)
@@ -53,11 +58,13 @@ class TracerLines:
     def __cross_points_on_line(self, pos, rot):
         trace_target = (pos[0] + math.cos(rot) * self.trace_len, pos[1] - math.sin(rot) * self.trace_len)
         tracer = LineString([pos, trace_target])
-        candidates = self.outer_line.intersection(tracer).union(self.inner_line.intersection(tracer))
+        intersections = [box.intersection(tracer) for box in self.collision_boxes]
+        candidates = reduce(lambda all_xs, curr_xs: all_xs.union(curr_xs), intersections)
+
         cross_pts = []
         if not candidates.is_empty:
-            if isinstance(candidates, shapely.geometry.MultiPoint):
-                for pts in candidates.geoms:
+            if hasattr(candidates, 'geoms'):
+                for pts in getattr(candidates, 'geoms'):
                     cross_pts.append((pts.x, pts.y))
             else:
                 cross_pts.append((candidates.x, candidates.y))

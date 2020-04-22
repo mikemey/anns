@@ -150,11 +150,7 @@ class Track:
     def __init__(self, level: Level):
         self.__outside = Polygon(np.reshape(level.outer_track, (-1, 2)))
         self.__inside = Polygon(np.reshape(level.inner_track, (-1, 2)))
-        self.__obstacles = []
-        for pt in level.obstacles:
-            rot = math.radians(pt.rot)
-            cosine, sine = math.cos(rot), math.sin(rot)
-            self.__obstacles.append(create_collision_box(BOX_COLL_BOX, pt.x, pt.y, cosine, sine))
+        self.__obstacles = create_obstacles_collision_boxes(level.obstacles)
 
     def contains(self, geometry):
         return self.__outside.contains(geometry) and \
@@ -205,3 +201,12 @@ def create_collision_box(box, x, y, cosine, sine):
         moved = np.array((x, y)) + m.T
         new_boundaries.append(moved)
     return Polygon(new_boundaries)
+
+
+def create_obstacles_collision_boxes(obstacles):
+    collision_boxes = []
+    for pt in obstacles:
+        rot = math.radians(pt.rot)
+        cosine, sine = math.cos(rot), math.sin(rot)
+        collision_boxes.append(create_collision_box(BOX_COLL_BOX, pt.x, pt.y, cosine, sine))
+    return collision_boxes
