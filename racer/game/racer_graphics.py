@@ -128,6 +128,7 @@ class CarGraphics(GraphicsElement):
 
 
 class TrackGraphics(GraphicsElement):
+    NAME_COLOR = 60, 10, 255, 200
     TRACK_COLOR = 160, 10, 60
 
     def __init__(self, level: Level):
@@ -140,6 +141,9 @@ class TrackGraphics(GraphicsElement):
             sprite = pyglet.sprite.Sprite(x=obs_pos.x, y=obs_pos.y, img=box_img, batch=self.batch)
             sprite.update(scale=0.4, rotation=obs_pos.rot)
             self.obstacles.append(sprite)
+        name_lbl = pyglet.text.Label('[ {} ]'.format(level.name), batch=self.batch, color=self.NAME_COLOR, font_size=16)
+        name_lbl.x = level.width / 2 - name_lbl.content_width / 2
+        name_lbl.y = 10
 
     def draw(self):
         pyglet.gl.glLineWidth(5)

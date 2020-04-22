@@ -10,12 +10,13 @@ class TrackPosition:
 
 
 class Level:
-    def __init__(self, width, height,
+    def __init__(self, name, width, height,
                  outer_track, outer_track_offset,
                  inner_track, inner_track_offset,
                  single_car: TrackPosition,
                  two_cars: Tuple[TrackPosition, TrackPosition],
                  obstacles: List[TrackPosition]):
+        self.name = name
         self.width = width
         self.height = height
         self.outer_track = outer_track
@@ -28,6 +29,7 @@ class Level:
 
 
 default_level = Level(
+    name='mercury',
     width=1000, height=700,
     outer_track=[465, 305, 380, 270, 288, 210, 235, 98, 161, 36, 48, 27, 14, 109, 34, 652, 104, 693, 203, 689,
                  282, 633, 322, 543, 303, 454, 237, 403, 378, 473, 435, 576, 512, 647, 638, 671, 766, 634, 875,
