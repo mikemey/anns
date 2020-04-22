@@ -90,6 +90,8 @@ class RacerWindow(pyglet.window.Window):
     def on_reset(self):
         self.end_overlay = None
         self.warmup.reset()
+        if self.indicator:
+            self.indicator.reset()
 
     def start(self):
         pyglet.clock.schedule_interval(self.update, 1 / 120.0)

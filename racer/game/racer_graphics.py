@@ -248,11 +248,13 @@ class RankingBox(GraphicsElement):
 class Indicators(GraphicsElement):
     def __init__(self):
         super().__init__()
+        self.inner_score = self.outer_score = 0
         self.inner_pointer = Pointer(self.batch)
-        self.inner_score = 0
         self.outer_pointer = Pointer(self.batch)
-        self.outer_score = 0
-        self.mouse_label = pyglet.text.Label('', font_size=14, batch=self.batch)
+        self.mouse_label = pyglet.text.Label('', font_size=10, batch=self.batch)
+
+    def reset(self):
+        self.inner_score = self.outer_score = 0
 
     def update_mouse(self, x, y):
         self.mouse_label.text = '{}/{}'.format(x, y)
@@ -269,18 +271,18 @@ class Indicators(GraphicsElement):
 
             delta_score, (px, py) = inner_delta
             self.inner_score += delta_score
-            self.inner_pointer.update(px, py, '{:.0f}'.format(self.inner_score))
+            self.inner_pointer.update(px, py, '{:.1f}'.format(self.inner_score))
 
             delta_score, (px, py) = outer_delta
             self.outer_score += delta_score
-            self.outer_pointer.update(px, py, '{:.0f}'.format(self.outer_score))
+            self.outer_pointer.update(px, py, '{:.1f}'.format(self.outer_score))
 
 
 class Pointer:
     def __init__(self, batch):
         super().__init__()
         self.point = pyglet.sprite.Sprite(img=pointer_img, batch=batch)
-        self.label = pyglet.text.Label('', font_size=14, batch=batch)
+        self.label = pyglet.text.Label('', font_size=10, batch=batch)
 
     def update(self, x, y, text=None):
         if text:
