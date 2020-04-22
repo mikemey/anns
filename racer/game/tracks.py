@@ -28,7 +28,15 @@ class Level:
         self.obstacles = obstacles
 
 
-default_level = Level(
+EMPTY_LEVEL = Level(
+    name='empty', width=1000, height=700,
+    outer_track=[80, 70, 200, 70, 180, 50], outer_track_offset=0,
+    inner_track=[80, 130, 200, 130, 180, 150], inner_track_offset=0,
+    single_car=TrackPosition(100, 100, 0), two_cars=(),
+    obstacles=[]
+)
+
+Mercury = Level(
     name='mercury',
     width=1000, height=700,
     outer_track=[465, 305, 380, 270, 288, 210, 235, 98, 161, 36, 48, 27, 14, 109, 34, 652, 104, 693, 203, 689,
@@ -43,3 +51,19 @@ default_level = Level(
     two_cars=(TrackPosition(507, 357, 180), TrackPosition(502, 324, 180)),
     obstacles=[TrackPosition(126, 157, 2), TrackPosition(675, 550, 7), TrackPosition(800, 145, -5), TrackPosition(59, 647, 59)]
 )
+
+Venus = Level(
+    name='venus', width=1000, height=700,
+    outer_track=[359, 288, 554, 292, 599, 341, 614, 403, 551, 537, 481, 606, 384, 664, 287, 685, 14, 683, 20, 18, 339, 20, 447, 34, 569, 34, 626, 15, 983, 16,
+                 984, 366, 923, 457, 837, 609, 789, 667, 720, 684, 641, 665, 572, 601, 565, 535, 587, 467, 640, 392, 719, 302, 719, 280, 713, 263, 657, 262,
+                 563, 271, 370, 267, 264, 242, 235, 265, 241, 286, 359, 288],
+    outer_track_offset=0,
+    inner_track=[359, 410, 434, 410, 458, 424, 459, 443, 393, 503, 282, 571, 134, 568, 114, 536, 114, 136, 132, 118, 277, 120, 426, 145, 604, 148, 686, 119,
+                 863, 121, 876, 133, 875, 332, 801, 441, 740, 542, 718, 543, 718, 526, 860, 332, 866, 282, 866, 190, 843, 152, 808, 142, 687, 134, 644, 156,
+                 367, 151, 278, 130, 147, 128, 121, 160, 120, 450, 158, 488, 236, 489, 305, 408, 359, 410],
+    inner_track_offset=0,
+    single_car=TrackPosition(314, 348, 0), two_cars=(),
+    obstacles=[TrackPosition(141, 433, -2), TrackPosition(687, 281, -2), TrackPosition(33, 666, -2),
+               TrackPosition(552, 575, 98), TrackPosition(847, 139, 89), TrackPosition(265, 552, 89)]
+)
+default_level = Mercury

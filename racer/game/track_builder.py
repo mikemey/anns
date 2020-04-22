@@ -1,17 +1,18 @@
 import pyglet
 from pyglet.window import key
 
-from .racer_engine import RacerEngine, PlayerOperation
-from .racer_graphics import CarGraphics
+from .racer_engine import PlayerState, PlayerOperation
+from .racer_graphics import CarGraphics, TrackGraphics
 from .track_builder_modes import coord_format, EditState, AddPointMode, EditPointsMode, InsertPointMode, AddObstaclesMode
-from .tracks import default_level, TrackPosition
+from .tracks import EMPTY_LEVEL, TrackPosition
 
-TRACK_COLOR = 160, 10, 60
+TRACK_COLOR = TrackGraphics.TRACK_COLOR
 ACTIVE_TRACK_COLOR = 230, 50, 100
 COORDS_COLOR = 100, 100, 100, 255
-MODE_COLOR = 45, 45, 45, 255
+MODE_TXT_COLOR = 45, 45, 45, 255
+NAME_COLOR = TrackGraphics.NAME_COLOR
 
-EDIT_LEVEL = default_level
+EDIT_LEVEL = EMPTY_LEVEL
 
 
 class TrackBuilderWindow(pyglet.window.Window):
@@ -28,14 +29,17 @@ class TrackBuilderWindow(pyglet.window.Window):
         self.keys_lbl = pyglet.text.Label(
             "Esc\nSpace\np\nEnter\n↑↓← →\na / d",
             x=960, y=685, width=100, font_size=8, multiline=True, batch=self.batch)
+        name_lbl = pyglet.text.Label('[ {} ]'.format(EDIT_LEVEL.name), batch=self.batch, color=NAME_COLOR, font_size=16)
+        name_lbl.x = EDIT_LEVEL.width / 2 - name_lbl.content_width / 2
+        name_lbl.y = 10
 
         self.state = EditState(EDIT_LEVEL)
         self.modes = [AddPointMode(self.state),
                       EditPointsMode(self.state, self.batch),
                       InsertPointMode(self.state, self.batch),
                       AddObstaclesMode(self.state, self.batch)]
-        self.mode_ix = -1
-        self.mode_lbl = pyglet.text.Label(x=890, y=600, font_size=10, color=MODE_COLOR, batch=self.batch)
+        self.mode_ix = 0
+        self.mode_lbl = pyglet.text.Label(x=890, y=600, font_size=10, color=MODE_TXT_COLOR, batch=self.batch)
         self.__next_mode()
 
         self.mouse_coords = CoordinateLabel(self.batch, 'Mouse:', 890, 570)
@@ -116,12 +120,8 @@ class CarAdapter:
     def __init__(self, batch, level, label_x, label_y):
         self.car_graphics = CarGraphics(1, level, show_traces=False)
         self.operation = PlayerOperation()
-        self.engine = RacerEngine(level)
+        self.state = PlayerState(level)
         self.car_lbl = CoordinateLabel(batch, 'Car:', label_x, label_y)
-
-    @property
-    def state(self):
-        return self.engine.player_state
 
     def on_key_press(self, symbol):
         if symbol == key.UP:
@@ -142,8 +142,8 @@ class CarAdapter:
             self.operation.stop_right()
 
     def update(self, dt):
+        self.state.update(dt, self.operation)
         self.car_graphics.update(self.state)
-        self.engine.update(dt, self.operation)
         self.car_lbl.update(self.state.x, self.state.y, self.state.rotation)
 
     def draw(self):
