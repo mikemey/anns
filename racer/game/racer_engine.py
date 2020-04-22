@@ -150,7 +150,10 @@ class Track:
     def __init__(self, level: Level):
         self.__outside = Polygon(np.reshape(level.outer_track, (-1, 2)))
         self.__inside = Polygon(np.reshape(level.inner_track, (-1, 2)))
-        self.__obstacles = create_obstacles_collision_boxes(level.obstacles)
+        all_obstacles = create_obstacles_collision_boxes(level.obstacles)
+        self.__obstacles = list(filter(
+            lambda obs: self.__outside.intersects(obs) and not self.__inside.covers(obs),
+            all_obstacles))
 
     def contains(self, geometry):
         return self.__outside.contains(geometry) and \
