@@ -5,6 +5,7 @@ from pyglet.window import key
 from game.racer_engine import RacerEngine, PlayerOperation, PlayerState
 from game.racer_window import RaceController
 from game.racer_window import RacerWindow
+from game.tracks import DEMO_LEVEL
 
 
 class DemoMaster:
@@ -54,7 +55,7 @@ MOVES = [
 
 class DemoController(RaceController):
     def __init__(self):
-        super().__init__()
+        super().__init__(DEMO_LEVEL)
         self.time = 0
         self.player1 = DemoPlayer(self.level)
         self.player2 = DemoPlayer(self.level, 1.5)

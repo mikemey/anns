@@ -5,21 +5,18 @@ import pyglet
 from .racer_engine import PlayerState
 from .racer_graphics import CarGraphics, TrackGraphics, ScoreBox, GameOverlay, \
     WarmupSequence, Indicators, RankingBox
-from .tracks import Level, default_level
+from .tracks import Level
 
 ENABLE_INDICATORS = False
 SHOW_FPS = False
 
 
 class RaceController:
-    def __init__(self):
+    def __init__(self, level: Level):
+        self.level = level
         self.show_end_screen = False
         self.show_paused_screen = False
         self.__reset_hook = None
-
-    @property
-    def level(self) -> Level:
-        return default_level
 
     def reset(self):
         self.show_end_screen = False

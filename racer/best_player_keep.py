@@ -22,9 +22,9 @@ class BestPlayerKeep:
     def __init__(self, train_config: TrainingConfig):
         self.file_name = create_training_file_name()
         self.top_list = [PlayerData()] * train_config.keep_best_players
+        self.limit = train_config.keep_fitness_threshold
         self.genome_keys = []
         self.min_ix = 0
-        self.limit = train_config.game_limit
 
     def add_population_result(self, population_result):
         top_list_updated = self.__update_top_list(population_result)

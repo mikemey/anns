@@ -26,7 +26,7 @@ class TrainingConfig:
             raise RuntimeError('"{}" section not found in NEAT configuration file.'.format(self.SECTION))
 
         self.processes = parameters.getint(self.SECTION, 'processes')
-        self.game_limit = parameters.getint(self.SECTION, 'game_limit')
         self.keep_best_players = parameters.getint(self.SECTION, 'keep_best_players')
+        self.keep_fitness_threshold = parameters.getint(self.SECTION, 'keep_fitness_threshold')
         self.showcase_batch_size = parameters.getint(self.SECTION, 'showcase_every_gen')
         self.showcase_racer_count = parameters.getint(self.SECTION, 'showcase_racer_count')

@@ -5,7 +5,7 @@ from pyglet.window import key
 from game.racer_engine import RacerEngine, PlayerOperation
 from game.racer_window import RaceController, PlayerState
 from game.racer_window import RacerWindow
-from game.tracks import Level, TrackPosition
+from game.tracks import MANUAL_LEVEL, Level, TrackPosition
 
 
 class ManualMaster:
@@ -23,7 +23,7 @@ PLAYER2_KEYS = key.W, key.S, key.A, key.D
 
 class ManualController(RaceController):
     def __init__(self, two_players: bool):
-        super().__init__()
+        super().__init__(MANUAL_LEVEL)
         self.two_players = two_players
         self.players = self.__setup_players()
 
