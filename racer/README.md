@@ -80,38 +80,40 @@ Demo player, mainly used during development.
 
 General introduction to NEAT training: https://neat-python.readthedocs.io/en/latest/
 
-Main fitness criteria is the distance (**= score**) travelled from start-/finish-line, until:
+Each generation is trained on all tracks specified by `TRAINING_LEVELS` in [tracks.py](game/tracks.py).
+The genome fitness criteria is sum of the distance (**= score**) travelled on all trainings tracks
+from start-/finish-line, until:
 - player touches track outlines
 - distance is negative (ie moves backwards)
 - score-points per seconds less than 20
-- `game_limit` is reached (see configuration)
+- level-limit is reached (see track definitions in [tracks.py](game/tracks.py))
 
 A training top-list is updated after every generation (see `keep_best_players` configuration). 
-If the top-list is updated, a copy is saved in directory `racer/player_store`. 
+If the top-list is updated, a copy is saved in directory `racer/best-players`. 
 
 A fitness summary is logged after each batch (see `showcase_every_gen` + `showcase_racer_count` configuration),
 and a showcase with the best genomes/players of the current generation is presented.
 
 #### Configuration
 
-NEAT configuration file: [training.cfg](training.cfg) (see also [NEAT-Python configuration](https://neat-python.readthedocs.io/en/latest/config_file.html))
+NEAT configuration file: [training.cfg](neural/training.cfg) (see also [NEAT-Python configuration](https://neat-python.readthedocs.io/en/latest/config_file.html))
 
 Additional to the NEAT-configuration, following parameters required: 
 
 ```
 [TRAINING]
-processes             = 6
-game_limit            = 6000
-keep_best_players     = 10
-showcase_every_gen    = 10
-showcase_racer_count  = 5
+processes              = 6
+keep_best_players      = 10
+keep_fitness_threshold = 6000
+showcase_every_gen     = 10
+showcase_racer_count   = 5
 ```
 
 | Key | Description |
 |---|---|
 | **processes** | number of processes used in training/showcasing |
-| **game_limit** | run training games until `game_limit` reached |
 | **keep_best_players** | number of top-players to keep during training |
+| **keep_fitness_threshold** | required minimum fitness for keeping players |
 | **showcase_every_gen** | batch-size: showcase every n-th generation |
 | **showcase_racer_count** | racers in a showcase |
 

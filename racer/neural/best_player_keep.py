@@ -4,10 +4,10 @@ import pickle
 from datetime import datetime
 from typing import List
 
-# from training_configs import TrainingConfig
+from .training_configs import TrainingConfig
 
 LOCAL_DIR = os.path.dirname(__file__)
-TRAININGS_DIR = os.path.join(LOCAL_DIR, 'player_store')
+TRAININGS_DIR = os.path.join(LOCAL_DIR, '..', 'best-players')
 if not os.path.exists(TRAININGS_DIR):
     os.mkdir(TRAININGS_DIR)
 
@@ -19,7 +19,7 @@ def create_training_file_name():
 
 
 class BestPlayerKeep:
-    def __init__(self, train_config):
+    def __init__(self, train_config: TrainingConfig):
         self.file_name = create_training_file_name()
         self.top_list = [PlayerData()] * train_config.keep_best_players
         self.limit = train_config.keep_fitness_threshold

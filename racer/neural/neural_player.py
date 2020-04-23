@@ -4,7 +4,7 @@ import neat
 
 from game.racer_engine import RacerEngine, PlayerOperation
 from game.tracers import TracerLines
-from training_dts import random_dt
+from .training_dts import random_dt
 
 MIN_SCORE_PER_SECOND = 20
 MIN_SPS_OFFSET = 3

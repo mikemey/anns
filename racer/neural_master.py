@@ -6,14 +6,14 @@ from typing import List
 
 import neat
 
-from best_player_keep import BestPlayerKeep, PlayerData, load_player_data
 from game.racer_engine import PlayerState
 from game.racer_window import RaceController, RacerWindow
 from game.tracks import TRAINING_LEVELS, SHOWCASE_FROM_FILE_LEVEL, Level
-from neural_player import NeuralPlayer
-from training_configs import load_configs
-from training_dts import LIMIT_HIGH
-from training_reporter import TrainingReporter
+from neural.best_player_keep import BestPlayerKeep, PlayerData, load_player_data
+from neural.neural_player import NeuralPlayer
+from neural.training_configs import load_configs
+from neural.training_dts import LIMIT_HIGH
+from neural.training_reporter import TrainingReporter
 
 DT_IGNORE_LIMIT = LIMIT_HIGH
 
