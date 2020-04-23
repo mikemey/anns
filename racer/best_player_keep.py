@@ -38,27 +38,27 @@ class BestPlayerKeep:
                 updated = True
         return updated
 
-    def __insert_result(self, genome, config, score_per_second):
-        if score_per_second < self.top_list[self.min_ix].score_per_second:
+    def __insert_result(self, genome, config):
+        if genome.fitness < self.top_list[self.min_ix].fitness:
             return False
 
         existing_ix = self.genome_keys.index(genome.key) if genome.key in self.genome_keys else -1
         if existing_ix >= 0:
-            if self.top_list[existing_ix].score_per_second < score_per_second:
-                self.__replace_position(existing_ix, genome, config, score_per_second)
+            if genome.fitness > self.top_list[existing_ix].fitness:
+                self.__replace_position(existing_ix, genome, config)
                 return True
             return False
 
-        self.__replace_position(self.min_ix, genome, config, score_per_second)
+        self.__replace_position(self.min_ix, genome, config)
         return True
 
-    def __replace_position(self, data_ix, genome, config, score_per_second):
-        self.top_list[data_ix] = PlayerData(genome, config, score_per_second)
+    def __replace_position(self, data_ix, genome, config):
+        self.top_list[data_ix] = PlayerData(genome, config)
         current_min = math.inf
         for ix, player_data in enumerate(self.top_list):
-            if player_data.score_per_second < current_min:
+            if player_data.fitness < current_min:
                 self.min_ix = ix
-                current_min = player_data.score_per_second
+                current_min = player_data.fitness
         self.genome_keys = [data.genome.key for data in self.top_list if data.genome]
 
     def __store_player_data(self):
@@ -68,11 +68,11 @@ class BestPlayerKeep:
 
 
 class PlayerData:
-    def __init__(self, genome=None, config=None, score_per_second=None, name=None):
+    def __init__(self, genome=None, config=None, name=None):
         self.genome = genome
         self.name = name
         self.config = config
-        self.score_per_second = score_per_second or -math.inf
+        self.fitness = genome.fitness if genome else -math.inf
 
 
 def load_player_data(file_name) -> List[PlayerData]:

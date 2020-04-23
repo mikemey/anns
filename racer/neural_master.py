@@ -52,9 +52,9 @@ class NeuralMaster:
         eval_result = self.pool.starmap(NeuralPlayer.evaluate_genome, eval_params)
 
         pop_result = []
-        for (fitness, *game_stats), genome in zip(eval_result, genomes):
+        for fitness, genome in zip(eval_result, genomes):
             genome.fitness = fitness
-            pop_result.append((genome, config, *game_stats))
+            pop_result.append((genome, config))
         self.best_keep.add_population_result(pop_result)
 
         def showcase_best():
@@ -74,8 +74,8 @@ class NeuralMaster:
         self.showcase(players[:self.training_config.showcase_racer_count], auto_close=False)
 
     def showcase(self, players: List[PlayerData], limit=None, auto_close=True):
-        fitness_sps_log = ['{:.0f}/{:.1f}'.format(data.genome.fitness, data.score_per_second) for data in players]
-        print('Showcase: {} players (fit/sps) {}'.format(len(players), ', '.join(fitness_sps_log)))
+        fitness_log = ['{:.0f}'.format(data.genome.fitness) for data in players]
+        print('Showcase: {} players, fitness: {}'.format(len(players), ', '.join(fitness_log)))
         try:
             ShowcaseController(players, self.pool, limit, auto_close).showcase()
             print('Showcases finished, waiting {} seconds to exit...'.format(ShowcaseController.DELAY_AUTO_CLOSE_SECS))

@@ -47,7 +47,7 @@ class NeuralPlayer:
             fitness += round(self.__get_score_per_second() * 10)
         if self.__under_sps_limit():
             fitness -= 10
-        return fitness, self.__get_score_per_second()
+        return fitness
 
     def next_step(self, dt):
         self.time += dt
