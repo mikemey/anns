@@ -141,9 +141,9 @@ class TrackGraphics(GraphicsElement):
             sprite = pyglet.sprite.Sprite(x=obs_pos.x, y=obs_pos.y, img=box_img, batch=self.batch)
             sprite.update(scale=0.4, rotation=obs_pos.rot)
             self.obstacles.append(sprite)
-        name_lbl = pyglet.text.Label('[ {} ]'.format(level.name), batch=self.batch, color=self.NAME_COLOR, font_size=16)
-        name_lbl.x = level.width / 2 - name_lbl.content_width / 2
-        name_lbl.y = 10
+
+        pyglet.text.Label('[ {} ]'.format(level.name), x=level.width / 2, y=10, anchor_x='center',
+                          color=self.NAME_COLOR, font_size=16, batch=self.batch)
 
     def draw(self):
         pyglet.gl.glLineWidth(5)
@@ -199,13 +199,13 @@ class GameOverlay(GraphicsElement):
             main_txt, x=center_x, y=center_y, anchor_x='center', anchor_y='center',
             color=colors[0], font_size=22, bold=True, batch=self.batch, group=foreground)
         support_lbl = pyglet.text.Label(
-            support_txt, x=center_x, anchor_x='center', anchor_y='center', align='center',
+            support_txt, x=center_x, y=main_lbl.y - main_lbl.content_height * 1.3,
+            anchor_x='center', anchor_y='center', align='center',
             multiline=True, width=level.width, color=colors[1], font_size=16, batch=self.batch, group=foreground)
-        support_lbl.y = main_lbl.y - main_lbl.content_height * 1.3
-        exit_lbl = pyglet.text.Label(
-            exit_txt, x=center_x, anchor_x='center', anchor_y='center',
+        pyglet.text.Label(
+            exit_txt, x=center_x, y=support_lbl.y - support_lbl.content_height,
+            anchor_x='center', anchor_y='center',
             color=colors[1], font_size=16, batch=self.batch, group=foreground)
-        exit_lbl.y = support_lbl.y - support_lbl.content_height
 
 
 class ScoreBox(GraphicsElement):
@@ -216,18 +216,19 @@ class ScoreBox(GraphicsElement):
         super().__init__()
         offset = np.array((level.width, level.height)) - self.SCORE_BOX
         box = np.append(offset, offset + self.SCORE_BOX)
-        self.center_x = offset[0] + self.SCORE_BOX[0] / 2
 
         background = pyglet.graphics.OrderedGroup(0)
         foreground = pyglet.graphics.OrderedGroup(1)
         bg_box = [box[0], box[1], box[2], box[1], box[2], box[3], box[0], box[3], box[0], box[1]]
         self.add_points(bg_box, self.BG_COLOR, pyglet.gl.GL_POLYGON, background)
-        self.label = pyglet.text.Label(x=level.width - 100, y=level.height - 25,
+
+        center_x = offset[0] + self.SCORE_BOX[0] / 2
+        center_y = offset[1] + self.SCORE_BOX[1] / 2
+        self.label = pyglet.text.Label(x=center_x, y=center_y, anchor_x='center', anchor_y='center',
                                        batch=self.batch, group=foreground)
 
     def update_text(self, score_text):
         self.label.text = score_text
-        self.label.x = self.center_x - self.label.content_width / 2
 
 
 class RankingBox(GraphicsElement):
