@@ -183,7 +183,7 @@ class GameOverlay(GraphicsElement):
     REGULAR_COLORS = [(255, 255, 0, 255), (255, 255, 150, 255), (30, 30, 30, 150)]
     TEXT_ONLY_COLORS = [(60, 60, 60, 255), (60, 60, 60, 255), (0, 0, 0, 0)]
 
-    def __init__(self, level: Level, main_txt, support_txt, exit_txt='"Esc" to quit', text_only=False):
+    def __init__(self, level: Level, main_txt, support_txt, exit_txt="'Esc' to quit", text_only=False):
         super().__init__()
         colors = self.TEXT_ONLY_COLORS if text_only else self.REGULAR_COLORS
         background = pyglet.graphics.OrderedGroup(0)
@@ -193,18 +193,19 @@ class GameOverlay(GraphicsElement):
         self.batch.add(4, pyglet.gl.GL_POLYGON, background, vertices, transparent)
 
         foreground = pyglet.graphics.OrderedGroup(1)
-        main_lbl = pyglet.text.Label(main_txt, batch=self.batch, group=foreground,
-                                     color=colors[0], font_size=22, bold=True)
-        main_lbl.x = level.width / 2 - main_lbl.content_width / 2
-        main_lbl.y = level.height / 2 - main_lbl.content_height / 2
-        support_lbl = pyglet.text.Label(support_txt, batch=self.batch, group=foreground,
-                                        color=colors[1], font_size=16)
-        support_lbl.x = level.width / 2 - support_lbl.content_width / 2
-        support_lbl.y = level.height / 2 - main_lbl.content_height - support_lbl.content_height
-        exit_lbl = pyglet.text.Label(exit_txt, batch=self.batch, group=foreground,
-                                     color=colors[1], font_size=16)
-        exit_lbl.x = level.width / 2 - exit_lbl.content_width / 2
-        exit_lbl.y = level.height / 2 - main_lbl.content_height - exit_lbl.content_height * 2.3
+        center_x = level.width // 2
+        center_y = level.height // 2
+        main_lbl = pyglet.text.Label(
+            main_txt, x=center_x, y=center_y, anchor_x='center', anchor_y='center',
+            color=colors[0], font_size=22, bold=True, batch=self.batch, group=foreground)
+        support_lbl = pyglet.text.Label(
+            support_txt, x=center_x, anchor_x='center', anchor_y='center', align='center',
+            multiline=True, width=level.width, color=colors[1], font_size=16, batch=self.batch, group=foreground)
+        support_lbl.y = main_lbl.y - main_lbl.content_height * 1.3
+        exit_lbl = pyglet.text.Label(
+            exit_txt, x=center_x, anchor_x='center', anchor_y='center',
+            color=colors[1], font_size=16, batch=self.batch, group=foreground)
+        exit_lbl.y = support_lbl.y - support_lbl.content_height
 
 
 class ScoreBox(GraphicsElement):

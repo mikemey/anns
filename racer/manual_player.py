@@ -5,27 +5,39 @@ from pyglet.window import key
 from game.racer_engine import RacerEngine, PlayerOperation
 from game.racer_window import RaceController, PlayerState
 from game.racer_window import RacerWindow
-from game.tracks import MANUAL_LEVEL, Level, TrackPosition
+from game.tracks import MANUAL_LEVELS, Level, TrackPosition
 
 
 class ManualMaster:
     def __init__(self, two_players=False):
-        self.controller = ManualController(two_players)
+        self.two_players = two_players
+        self.level_ix = 0
 
     def run(self):
-        w = RacerWindow(self.controller, show_traces=not self.controller.two_players)
-        w.start()
+        while self.level_ix >= 0:
+            controller = ManualController(MANUAL_LEVELS[self.level_ix], self.two_players)
+            play_next = controller.play_game()
+            self.level_ix = (self.level_ix + 1) % len(MANUAL_LEVELS) \
+                if play_next else -1
 
 
 PLAYER1_KEYS = key.UP, key.DOWN, key.LEFT, key.RIGHT
 PLAYER2_KEYS = key.W, key.S, key.A, key.D
 
+SUPPORT_TXT = "'n' Next level\n'r' Replay level"
+
 
 class ManualController(RaceController):
-    def __init__(self, two_players: bool):
-        super().__init__(MANUAL_LEVEL)
+    def __init__(self, level, two_players: bool):
+        super().__init__(level)
         self.two_players = two_players
         self.players = self.__setup_players()
+        self.window = RacerWindow(self, show_traces=not self.two_players)
+        self.play_next = False
+
+    def play_game(self):
+        self.window.start()
+        return self.play_next
 
     def reset(self):
         super().reset()
@@ -43,8 +55,11 @@ class ManualController(RaceController):
 
     def on_key_press(self, symbol):
         if self.show_end_screen:
-            if symbol == key.N:
+            if symbol == key.R:
                 self.reset()
+            elif symbol == key.N:
+                self.play_next = True
+                self.window.close()
             return
         if symbol == key.P:
             self.show_paused_screen = not self.show_paused_screen
@@ -90,8 +105,8 @@ class ManualController(RaceController):
 
     def get_end_text(self):
         if self.two_players:
-            return 'Winner:  {}'.format(self.get_score_text()), '"n" New game'
-        return 'Lost!', '"n" New game'
+            return 'Winner:  {}'.format(self.get_score_text()), SUPPORT_TXT
+        return 'Lost!', SUPPORT_TXT
 
 
 class ManualPlayer:

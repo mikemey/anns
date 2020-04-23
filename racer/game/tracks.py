@@ -75,7 +75,7 @@ Venus = Level(
                ]
 )
 
-MANUAL_LEVEL = Mercury_1
+MANUAL_LEVELS = [Mercury_1, Venus]
 
 DEMO_LEVEL = Mercury_1
 SHOWCASE_FROM_FILE_LEVEL = Mercury_1
