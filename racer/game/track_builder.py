@@ -2,17 +2,15 @@ import pyglet
 from pyglet.window import key
 
 from .racer_engine import PlayerState, PlayerOperation
-from .racer_graphics import CarGraphics, TrackGraphics
+from .racer_graphics import CarGraphics, TrackGraphics, ScoreBox
 from .track_builder_modes import coord_format, EditState, AddPointMode, EditPointsMode, InsertPointMode, AddObstaclesMode
-from .tracks import EMPTY_LEVEL, TrackPosition
+from .tracks import EDIT_LEVEL, TrackPosition
 
 TRACK_COLOR = TrackGraphics.TRACK_COLOR
 ACTIVE_TRACK_COLOR = 230, 50, 100
 COORDS_COLOR = 100, 100, 100, 255
 MODE_TXT_COLOR = 45, 45, 45, 255
 NAME_COLOR = TrackGraphics.NAME_COLOR
-
-EDIT_LEVEL = EMPTY_LEVEL
 
 
 class TrackBuilderWindow(pyglet.window.Window):
@@ -23,15 +21,17 @@ class TrackBuilderWindow(pyglet.window.Window):
         pyglet.gl.glEnable(pyglet.gl.GL_LINE_SMOOTH)
         pyglet.gl.glClearColor(0.5, 0.8, 0.4, 1)
         self.batch = pyglet.graphics.Batch()
-        self.description_lbl = pyglet.text.Label(
+        description_lbl = pyglet.text.Label(
             'Quit:\nSwitch mode:\nPrint level:\nSwitch track:\nDrive:\nRotate:', align='right',
-            x=870, y=685, width=80, font_size=8, multiline=True, batch=self.batch)
-        self.keys_lbl = pyglet.text.Label(
+            x=EDIT_LEVEL.width - ScoreBox.SCORE_BOX[0], y=EDIT_LEVEL.height - 20, width=80,
+            font_size=8, multiline=True, batch=self.batch)
+        pyglet.text.Label(
             "Esc\nSpace\np\nEnter\n↑↓← →\na / d",
-            x=960, y=685, width=100, font_size=8, multiline=True, batch=self.batch)
-        name_lbl = pyglet.text.Label('[ {} ]'.format(EDIT_LEVEL.name), batch=self.batch, color=NAME_COLOR, font_size=16)
-        name_lbl.x = EDIT_LEVEL.width / 2 - name_lbl.content_width / 2
-        name_lbl.y = 10
+            x=description_lbl.x + description_lbl.width + 10, y=description_lbl.y, width=100,
+            font_size=8, multiline=True, batch=self.batch)
+        pyglet.text.Label(
+            '[ {} ]'.format(EDIT_LEVEL.name), anchor_x='center',
+            x=EDIT_LEVEL.width / 2, y=10, color=NAME_COLOR, font_size=16, batch=self.batch)
 
         self.state = EditState(EDIT_LEVEL)
         self.modes = [AddPointMode(self.state),
@@ -39,11 +39,14 @@ class TrackBuilderWindow(pyglet.window.Window):
                       InsertPointMode(self.state, self.batch),
                       AddObstaclesMode(self.state, self.batch)]
         self.mode_ix = 0
-        self.mode_lbl = pyglet.text.Label(x=890, y=600, font_size=10, color=MODE_TXT_COLOR, batch=self.batch)
+        self.mode_lbl = pyglet.text.Label(x=description_lbl.x, y=description_lbl.y - description_lbl.content_height - 10,
+                                          font_size=10, color=MODE_TXT_COLOR, batch=self.batch)
         self.__next_mode()
 
-        self.mouse_coords = CoordinateLabel(self.batch, 'Mouse:', 890, 570)
-        self.car = CarAdapter(self.batch, EDIT_LEVEL, 890, 530)
+        self.mouse_coords = CoordinateLabel(self.batch, 'Mouse:',
+                                            self.mode_lbl.x, self.mode_lbl.y - self.mode_lbl.content_height - 10)
+        self.car = CarAdapter(self.batch, EDIT_LEVEL,
+                              self.mouse_coords.x, self.mouse_coords.y - self.mouse_coords.content_height - 10)
 
     @property
     def mode(self):
@@ -105,10 +108,15 @@ class TrackBuilderWindow(pyglet.window.Window):
 
 class CoordinateLabel:
     def __init__(self, batch, title, pos_x, pos_y):
+        self.x, self.y = pos_x, pos_y
         pyglet.text.Label(title, x=pos_x, y=pos_y, width=50, font_size=9, batch=batch)
         self.coords = pyglet.text.Label(
             coord_format(0, 0), font_name='Verdana', color=COORDS_COLOR,
             x=pos_x + 50, y=pos_y, width=50, font_size=10, multiline=True, batch=batch)
+
+    @property
+    def content_height(self):
+        return self.coords.content_height
 
     def update(self, x, y, rot=None):
         self.coords.text = coord_format(x, y)
