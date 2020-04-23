@@ -11,7 +11,7 @@
 	- [Configuration](#configuration)
 	- [Start training](#start-training)
 	- [Run race with stored players](#replay-stored-players)
-	- [Run race with top players](#replay-top-players)
+    - ~~[Run race with top players](#replay-top-players)~~ (temporarily not working)
 - [Build your own track](#track-builder)
 
 <table>
@@ -151,17 +151,19 @@ Showcases finished, waiting 3 seconds to exit...
 
 ### Replay stored players
 
-To run a showcase with players stored in directory `racer/player_store`, start with `play`: 
+To run a showcase with players stored in directory `racer/best_players`, start with `play`: 
 
 ```bash
-[project-root-dir] $ python3 racer play racer/player_store/20200418-165907_best.pd
+[project-root-dir] $ python3 racer play racer/best_players/20200418-165907_best.pd
 [2020-04-20 15:26:53] --- START ---
-genome file read: racer/player_store/20200418-165907_best.pd
+genome file read: racer/best_players/20200418-165907_best.pd
 Showcase: 5 players (fit/sps) 4506/49.8, 4505/49.7, 4500/49.2, 4499/49.5, 2268/50.5
 Showcases finished, waiting 3 seconds to exit...
 ```
 
 ### Replay top players
+
+**Temporarily not working due to changes in tracing lines (sensors for nn)**
 
 The player-store file [examples/top_players.pd](examples/top_players.pd) contains the top-10 players from all player-store files in [examples/](examples).
 A shortcut to run a random selection of these top players it `top`:

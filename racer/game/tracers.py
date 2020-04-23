@@ -7,21 +7,11 @@ from shapely.geometry import LineString
 from .racer_engine import create_obstacles_collision_boxes
 from .tracks import Level
 
-DEG_20 = math.pi / 9
-DEG_40 = math.pi / 9 * 2
-DEG_65 = math.pi / 36 * 13
+DEG_15 = math.pi / 12
+DEG_30 = math.pi / 6
+DEG_60 = math.pi / 3
 DEG_90 = math.pi / 2
-
-TRACE_LINE_ANGLES = [DEG_90, DEG_65, DEG_40, DEG_20, 0, -DEG_20, -DEG_40, -DEG_65, -DEG_90]
-
-
-# TODO train best players on new trace-lines:
-# DEG_15 = math.pi / 12
-# DEG_30 = math.pi / 6
-# DEG_60 = math.pi / 3
-# DEG_90 = math.pi / 2
-#
-# TRACE_LINE_ANGLES = [DEG_90, DEG_60, DEG_30, DEG_15, 0, -DEG_15, -DEG_30, -DEG_60, -DEG_90]
+TRACE_LINE_ANGLES = [DEG_90, DEG_60, DEG_30, DEG_15, 0, -DEG_15, -DEG_30, -DEG_60, -DEG_90]
 
 
 class TracerLines:
