@@ -1,6 +1,6 @@
 arcade==2.3.10
 matplotlib==3.2.1
 neat-python==0.92
-numpy==1.18.2
-pyglet==1.5.3
+numpy==1.18.3
+pyglet==1.5.4
 Shapely==1.7.0
