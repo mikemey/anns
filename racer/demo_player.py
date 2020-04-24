@@ -13,7 +13,7 @@ class DemoMaster:
         self.controller = DemoController()
 
     def run(self):
-        w = RacerWindow(self.controller, show_warmup_screen=False, show_traces=False)
+        w = RacerWindow(self.controller, show_warmup_screen=False)
         w.start()
 
 

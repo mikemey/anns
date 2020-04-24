@@ -7,8 +7,10 @@ from .racer_graphics import CarGraphics, TrackGraphics, ScoreBox, GameOverlay, \
     WarmupSequence, Indicators, RankingBox
 from .tracks import Level
 
+DEFAULT_WARMUP_SCREEN = True
+DEFAULT_SHOW_TRACES = False
+DEFAULT_SHOW_FPS = False
 ENABLE_INDICATORS = False
-SHOW_FPS = False
 
 
 class RaceController:
@@ -59,7 +61,10 @@ class RacerWindow(pyglet.window.Window):
     BG_COLOR = 0.5, 0.8, 0.4, 1
     WINDOW_POS = 20, 0
 
-    def __init__(self, controller: RaceController, show_warmup_screen=True, show_traces=True, show_fps=SHOW_FPS):
+    def __init__(self, controller: RaceController,
+                 show_warmup_screen=DEFAULT_WARMUP_SCREEN,
+                 show_traces=DEFAULT_SHOW_TRACES,
+                 show_fps=DEFAULT_SHOW_FPS):
         super().__init__(controller.level.width, controller.level.height, caption='Racer')
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)

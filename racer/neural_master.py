@@ -107,7 +107,7 @@ class ShowcaseController(RaceController):
         self.__neural_player = [NeuralPlayer(data.genome, data.config, level, limit, name=data.name)
                                 for data in players]
         self.__pool = pool
-        self.window = RacerWindow(self, show_traces=False, show_fps=True)
+        self.window = RacerWindow(self, show_fps=True)
         self.auto_close = auto_close
         self.seconds_to_close = self.DELAY_AUTO_CLOSE_SECS
         self.closing = False
