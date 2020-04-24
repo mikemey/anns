@@ -8,7 +8,7 @@ import neat
 
 from game.racer_engine import PlayerState
 from game.racer_window import RaceController, RacerWindow
-from game.tracks import TRAINING_LEVELS, SHOWCASE_FROM_FILE_LEVEL, Level
+from game.tracks import Level, Trainings, SHOWCASE_FROM_FILE_LEVEL
 from neural.best_player_keep import BestPlayerKeep, PlayerData, load_player_data
 from neural.neural_player import NeuralPlayer
 from neural.training_configs import load_configs
@@ -23,6 +23,7 @@ class NeuralMaster:
         self.neat_config, self.training_config = load_configs()
         self.reporter = TrainingReporter(self.training_config.showcase_batch_size)
         self.best_keep = BestPlayerKeep(self.training_config)
+        self.trainings = Trainings()
 
         self.pool = None
         signal(SIGINT, self.stop)
@@ -47,34 +48,42 @@ class NeuralMaster:
             print('process pool closed.')
             exit(0)
 
-    def eval_population(self, key_genomes, config: neat.config.Config):
-        genomes = list(zip(*key_genomes))[1]
-        highest_level = TRAINING_LEVELS[0]
-        for level, limit in TRAINING_LEVELS:
-            level_passed = self.eval_population_for_level(genomes, config, level, limit)
-            if level_passed:
-                highest_level = level, limit
+    def eval_population(self, key_genome_tuples, config: neat.config.Config):
+        genomes = list(zip(*key_genome_tuples))[1]
+        for genome in genomes:
+            genome.fitness = 0
+
+        remaining_genomes = list(genomes)
+        level_ix = 0
+        while len(remaining_genomes) and level_ix < self.trainings.count:
+            level, limit = self.trainings.get(level_ix)
+            remaining_genomes = self.evaluate_genomes_passing(remaining_genomes, config, level, limit)
+            level_ix += 1
 
         self.best_keep.add_population_result([(genome, config) for genome in genomes])
+        self.reporter.run_post_batch(self.showcase_best(genomes, config, level_ix))
 
-        def showcase_best():
-            sorted_genomes = sorted(genomes, key=lambda gen: gen.fitness, reverse=True)
-            top_players = [PlayerData(genome, config)
-                           for genome in sorted_genomes[:self.training_config.showcase_racer_count]]
-            self.showcase(top_players, highest_level[0], limit=highest_level[1])
-
-        self.reporter.run_post_batch(showcase_best)
-
-    def eval_population_for_level(self, genomes, config, level, limit):
+    def evaluate_genomes_passing(self, genomes, config, level, limit):
+        passing_genomes = []
         eval_params = [(genome, config, level, limit) for genome in genomes]
         eval_result = self.pool.starmap(NeuralPlayer.evaluate_genome, eval_params)
 
-        level_passed = False
         for fitness, genome in zip(eval_result, genomes):
-            genome.fitness = fitness if genome.fitness is None else genome.fitness + fitness
+            genome.fitness += fitness
             if fitness > limit:
-                level_passed = True
-        return level_passed
+                passing_genomes.append(genome)
+        return passing_genomes
+
+    def showcase_best(self, genomes, config, level_limit):
+        def showcase():
+            sorted_genomes = sorted(genomes, key=lambda gen: gen.fitness, reverse=True)
+            top_players = [PlayerData(genome, config)
+                           for genome in sorted_genomes[:self.training_config.showcase_racer_count]]
+            for level_ix in range(level_limit):
+                level, limit = self.trainings.get(level_ix)
+                self.showcase(top_players, level, limit=limit)
+
+        return showcase
 
     def showcase_from_files(self, player_files, select_random=False):
         players = [player_data for pl_file in player_files for player_data in load_player_data(pl_file)]

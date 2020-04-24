@@ -3,7 +3,7 @@ from datetime import datetime
 
 import neat
 
-FITNESS_FORMAT = '{:4.0f}'
+FITNESS_FORMAT = '{:5.0f}'
 TRAINING_STATS_TEMPLATE = 'g: {{:2}}, p/s: {{}}/{{:2}}, avg: {0}, max a/f: {0}[{{:3}}]/{0}[{{:3}}], ' \
                           'gen a/b: {0}/{0} ({{:2}}-{{:2}} #{{}})'.format(FITNESS_FORMAT)
 BATCH_STATS_TEMPLATE = '_' * 50 + '▏batch fitness: {:8,.0f}'

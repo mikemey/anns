@@ -171,14 +171,22 @@ EDIT_LEVEL = MANUAL_LEVELS[0]
 DEMO_LEVEL = Mercury_1
 SHOWCASE_FROM_FILE_LEVEL = Mercury_1
 
-TRAINING_LEVELS = [
-    (Mercury_1, 3100),
-    (Venus_1, 4500),
-    (Earth_1, 3750),
-    (Mercury_2, 3100),
-    (Venus_2, 4500),
-    (Earth_2, 3750),
-    (Mercury_3, 3100),
-    (Venus_3, 4500),
-    (Earth_3, 3750)
-]
+
+class Trainings:
+    def __init__(self):
+        self.__entries = [
+            (Mercury_1, 3100), (Mercury_2, 3100), (Mercury_3, 3100),
+            (Venus_1, 4500), (Venus_2, 4500), (Venus_3, 4500),
+            (Earth_1, 3750), (Earth_2, 3750), (Earth_3, 3750)
+        ]
+        self.__requested_ix = []
+
+    @property
+    def count(self):
+        return len(self.__entries)
+
+    def get(self, ix):
+        if ix not in self.__requested_ix:
+            self.__requested_ix.append(ix)
+            print('---------- Training level added:', self.__entries[ix][0].name)
+        return self.__entries[ix]
