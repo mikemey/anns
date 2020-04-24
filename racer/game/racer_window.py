@@ -148,7 +148,7 @@ class RacerWindow(pyglet.window.Window):
 
         self.score_box.update_text(self.controller.get_score_text())
         self.ranking.update(self.controller.get_ranking())
-        if self.indicator:
+        if self.indicator and not self.controller.show_paused_screen:
             self.indicator.update(player_states[-1])
 
 
