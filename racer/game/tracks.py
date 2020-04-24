@@ -44,7 +44,7 @@ __mercury_track = {
     'inner': [465, 390, 362, 358, 210, 260, 145, 139, 105, 128, 124, 584, 154, 607, 193, 591, 219, 558, 214,
               497, 154, 444, 128, 389, 151, 318, 232, 315, 359, 362, 477, 428, 516, 518, 591, 578, 696, 565,
               769, 436, 811, 304, 847, 159, 819, 129, 753, 123, 703, 166, 660, 252, 617, 326, 550, 378, 465, 390],
-    'two_cars': (TrackPosition(507, 357, 180), TrackPosition(502, 324, 180)),
+    'two_cars': (TrackPosition(507, 357, 180), TrackPosition(502, 324, 180))
 }
 __mercury_mod_1 = {
     'name': 'mercury 1', 'outer_track_offset': 3521.7, 'inner_track_offset': 2890,
@@ -63,24 +63,40 @@ __mercury_mod_3 = {
                   TrackPosition(882, 348, -15), TrackPosition(100, 450, 2)]
 }
 
-Venus = Level(
-    name='venus 1', width=1000, height=700,
-    outer_track=[359, 288, 554, 292, 599, 341, 614, 403, 551, 537, 481, 606, 384, 664, 287, 685, 14, 683, 20, 18,
-                 340, 17, 440, 28, 556, 29, 626, 15, 983, 16, 984, 366, 923, 457, 837, 609, 789, 667, 720, 684, 641,
-                 665, 572, 601, 565, 535, 587, 467, 640, 392, 719, 302, 719, 280, 713, 263, 657, 262, 563, 271, 370,
-                 267, 264, 242, 235, 265, 241, 286, 359, 288],
-    outer_track_offset=4618,
-    inner_track=[359, 410, 434, 410, 458, 424, 459, 443, 393, 503, 282, 571, 134, 568, 114, 536, 114, 136, 132, 118,
-                 277, 120, 416, 182, 560, 184, 703, 116, 863, 121, 876, 133, 875, 332, 801, 441, 740, 542, 718, 543,
-                 718, 526, 860, 332, 866, 282, 866, 190, 843, 152, 808, 142, 687, 134, 566, 190, 404, 188, 278, 130,
-                 147, 128, 121, 160, 120, 450, 158, 488, 236, 489, 305, 408, 359, 410],
-    inner_track_offset=3944,
-    single_car=TrackPosition(314, 348, 0), two_cars=(TrackPosition(314, 363, 0), TrackPosition(315, 333, 0)),
-    obstacles=[TrackPosition(141, 433, -2), TrackPosition(687, 281, -2), TrackPosition(33, 666, -2),
-               TrackPosition(552, 575, 98), TrackPosition(847, 139, 89), TrackPosition(265, 552, 89),
-               # TrackPosition(497, 90, 43)
-               ]
-)
+__venus_track = {
+    'width': 1000, 'height': 700,
+    'outer': [359, 288, 554, 292, 599, 341, 614, 403, 551, 537, 481, 606, 384, 664, 287, 685, 14, 683, 20, 18,
+              340, 17, 440, 28, 556, 29, 626, 15, 983, 16, 984, 366, 923, 457, 837, 609, 789, 667, 720, 684, 641,
+              665, 572, 601, 565, 535, 587, 467, 640, 392, 719, 302, 719, 280, 713, 263, 657, 262, 563, 271, 370,
+              267, 264, 242, 235, 265, 241, 286, 359, 288],
+    'inner': [359, 410, 434, 410, 458, 424, 459, 443, 393, 503, 282, 571, 134, 568, 114, 536, 114, 136, 132, 118,
+              277, 120, 416, 182, 560, 184, 703, 116, 863, 121, 876, 133, 875, 332, 801, 441, 740, 542, 718, 543,
+              718, 526, 860, 332, 866, 282, 866, 190, 808, 142, 687, 134, 566, 190, 404, 188, 278, 130,
+              147, 128, 121, 160, 120, 450, 158, 488, 236, 489, 305, 408, 359, 410],
+    'two_cars': (TrackPosition(314, 363, 0), TrackPosition(315, 333, 0))
+}
+__venus_mod_1 = {
+    'name': 'venus 1', 'outer_track_offset': 4618, 'inner_track_offset': 3938,
+    'single_car': TrackPosition(314, 348, 0),
+    'obstacles': [TrackPosition(265, 552, 89), TrackPosition(550, 574, 7), TrackPosition(694, 281, -2),
+                  TrackPosition(846, 140, 89)]
+}
+__venus_mod_2 = {
+    'name': 'venus 2', 'outer_track_offset': 4261, 'inner_track_offset': 3010,
+    'single_car': TrackPosition(486, 230, 180),
+    'obstacles': [TrackPosition(141, 383, -2), TrackPosition(176, 397, 0),
+                  TrackPosition(265, 590, 89), TrackPosition(300, 111, -26), TrackPosition(308, 577, 32),
+                  TrackPosition(695, 561, 2),
+                  TrackPosition(730, 560, 2)]
+}
+__venus_mod_3 = {
+    'name': 'venus 3', 'outer_track_offset': 1470, 'inner_track_offset': 793,
+    'single_car': TrackPosition(65, 270, 90),
+    'obstacles': [TrackPosition(33, 548, 0), TrackPosition(95, 328, 0), TrackPosition(219, 345, 0),
+                  TrackPosition(219, 290, 0), TrackPosition(430, 64, 0), TrackPosition(430, 100, 0),
+                  TrackPosition(705, 485, 56), TrackPosition(721, 98, -2), TrackPosition(730, 254, 20),
+                  TrackPosition(767, 534, 60)]
+}
 
 __earth_track = {
     'width': 1080, 'height': 800,
@@ -142,21 +158,27 @@ Mercury_1 = __track_with(__mercury_track, __mercury_mod_1)
 Mercury_2 = __track_with(__mercury_track, __mercury_mod_2)
 Mercury_3 = __track_with(__mercury_track, __mercury_mod_3)
 
+Venus_1 = __track_with(__venus_track, __venus_mod_1)
+Venus_2 = __track_with(__venus_track, __venus_mod_2)
+Venus_3 = __track_with(__venus_track, __venus_mod_3)
+
 Earth_1 = __track_with(__earth_track, __earth_mod_1)
 Earth_2 = __track_with(__earth_track, __earth_mod_2)
 Earth_3 = __track_with(__earth_track, __earth_mod_3)
 
-MANUAL_LEVELS = [Mercury_1, Venus, Earth_1, Mercury_2, Earth_2, Mercury_3, Earth_3]
+MANUAL_LEVELS = [Mercury_1, Venus_1, Earth_1, Mercury_2, Venus_2, Earth_2, Mercury_3, Venus_3, Earth_3]
 EDIT_LEVEL = MANUAL_LEVELS[0]
 DEMO_LEVEL = Mercury_1
 SHOWCASE_FROM_FILE_LEVEL = Mercury_1
 
 TRAINING_LEVELS = [
     (Mercury_1, 3100),
-    (Venus, 2000),
+    (Venus_1, 4500),
     (Earth_1, 3750),
     (Mercury_2, 3100),
+    (Venus_2, 4500),
     (Earth_2, 3750),
     (Mercury_3, 3100),
+    (Venus_3, 4500),
     (Earth_3, 3750)
 ]
