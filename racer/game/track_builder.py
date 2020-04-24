@@ -121,7 +121,7 @@ class CoordinateLabel:
     def update(self, x, y, rot=None):
         self.coords.text = coord_format(x, y)
         if rot:
-            self.coords.text += '\nr={:.0f}'.format(rot)
+            self.coords.text += '\nr={:.0f}'.format(round(rot) % 360)
 
 
 class CarAdapter:
