@@ -27,14 +27,13 @@ class BestPlayerKeep:
         self.min_ix = 0
 
     def add_population_result(self, population_result):
-        top_list_updated = self.__update_top_list(population_result)
-        if top_list_updated:
-            self.__store_player_data()
+        if self.__top_list_updated(population_result):
+            self.__store_top_list()
 
-    def __update_top_list(self, population_result):
+    def __top_list_updated(self, population_result):
         updated = False
-        for eval_result in filter(lambda result: result[0].fitness >= self.limit, population_result):
-            if self.__insert_result(*eval_result):
+        for genome, config in filter(lambda result: result[0].fitness >= self.limit, population_result):
+            if self.__insert_result(genome, config):
                 updated = True
         return updated
 
@@ -61,7 +60,7 @@ class BestPlayerKeep:
                 current_min = player_data.fitness
         self.genome_keys = [data.genome.key for data in self.top_list if data.genome]
 
-    def __store_player_data(self):
+    def __store_top_list(self):
         top_players = list(filter(lambda s: s.genome, self.top_list))
         with open(self.file_name, 'wb') as f:
             pickle.dump(top_players, f, protocol=pickle.HIGHEST_PROTOCOL)
