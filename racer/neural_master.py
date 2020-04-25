@@ -95,7 +95,7 @@ class NeuralMaster:
         self.showcase(players, SHOWCASE_FROM_FILE_LEVEL, auto_close=False)
 
     def showcase(self, players: List[PlayerData], level, limit=None, auto_close=True):
-        fitness_log = ['{:.0f}'.format(data.genome.fitness) for data in players]
+        fitness_log = ['{:.0f}'.format(data.fitness) for data in players]
         print('Showcase: {} players, fitness: {}'.format(len(players), ', '.join(fitness_log)))
         try:
             ShowcaseController(players, self.pool, level, limit, auto_close).showcase()
