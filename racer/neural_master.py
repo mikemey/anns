@@ -73,7 +73,7 @@ class NeuralMaster:
 
         for fitness, genome in zip(eval_result, genomes):
             genome.fitness += fitness
-            if fitness > limit:
+            if fitness >= limit:
                 passing_genomes.append(genome)
         return passing_genomes
 

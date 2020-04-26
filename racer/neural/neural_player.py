@@ -9,6 +9,9 @@ from .training_dts import random_dt
 MIN_SCORE_PER_SECOND = 20
 MIN_SPS_OFFSET = 3
 
+SCORE_CHECK_TIME = 2
+SCORE_CHECK_DIFF = 4
+
 
 class NeuralPlayer:
     STOPPING = False
@@ -34,6 +37,7 @@ class NeuralPlayer:
         self.time = 0
         self.score = 0
         self.score_limit = limit
+        self.score_history = ScoreHistory()
 
     def get_state(self):
         return self.engine.player_state
@@ -43,21 +47,24 @@ class NeuralPlayer:
             dt = random_dt()
             self.next_step(dt)
         fitness = self.score
-        if self.score >= self.score_limit:
-            fitness += round(self.__get_score_per_second() * 10)
         if self.__under_sps_limit():
-            fitness -= 10
-        return fitness
+            fitness /= 2
+        return round(fitness)
 
     def next_step(self, dt):
         self.time += dt
         state = self.engine.player_state
-        net_input = [dt] + self.tracers.get_trace_distances((state.x, state.y), state.rotation)
+        net_input = self.tracers.get_trace_distances((state.x, state.y), state.rotation)
         net_output = self.net.activate(net_input)
 
         self.__update_operations(*net_output)
         self.engine.update(dt, self.operations)
         self.score = self.engine.player_state.distance // 10
+
+        if not self.score_history.changed_score(dt, self.score):
+            self.score /= 2
+            self.engine.game_over = True
+
         if self.__under_sps_limit() or self.__score_out_of_bounds():
             self.engine.game_over = True
 
@@ -85,3 +92,18 @@ class NeuralPlayer:
         if self.time > MIN_SPS_OFFSET:
             return self.__get_score_per_second() < MIN_SCORE_PER_SECOND
         return False
+
+
+class ScoreHistory:
+    def __init__(self):
+        self.time = 0
+        self.prev_score = 0
+
+    def changed_score(self, dt, score):
+        self.time += dt
+        if self.time > SCORE_CHECK_TIME:
+            self.time -= SCORE_CHECK_TIME
+            if abs(score - self.prev_score) < SCORE_CHECK_DIFF:
+                return False
+            self.prev_score = score
+        return True
