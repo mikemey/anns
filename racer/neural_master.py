@@ -16,7 +16,7 @@ from neural.training_dts import LIMIT_HIGH
 from neural.training_reporter import TrainingReporter
 
 DT_IGNORE_LIMIT = LIMIT_HIGH
-
+LEVEL_COUNT_FMT = '[{:>10}]: {:5}'
 
 class NeuralMaster:
     def __init__(self):
@@ -55,11 +55,14 @@ class NeuralMaster:
 
         remaining_genomes = list(genomes)
         level_ix = 0
+        passing_counts = ['Levels played:']
         while len(remaining_genomes) and level_ix < self.trainings.count:
             level, limit = self.trainings.get(level_ix)
+            passing_counts.append(LEVEL_COUNT_FMT.format(level.name, len(remaining_genomes)))
             remaining_genomes = self.evaluate_genomes_passing(remaining_genomes, config, level, limit)
             level_ix += 1
 
+        print(' '.join(passing_counts))
         self.best_keep.add_population_result([(genome, config) for genome in genomes])
         self.reporter.run_post_batch(self.showcase_best(genomes, config, level_ix))
 
@@ -95,8 +98,8 @@ class NeuralMaster:
         self.showcase(players, SHOWCASE_FROM_FILE_LEVEL, auto_close=False)
 
     def showcase(self, players: List[PlayerData], level, limit=None, auto_close=True):
-        fitness_log = ['{:.0f}'.format(data.fitness) for data in players]
-        print('Showcase: {} players, fitness: {}'.format(len(players), ', '.join(fitness_log)))
+        fitness_log = ['{:.0f} (#{})'.format(data.fitness, data.genome.key) for data in players]
+        print('Showcase: {} players, fitness (key): {}'.format(len(players), ', '.join(fitness_log)))
         try:
             ShowcaseController(players, self.pool, level, limit, auto_close).showcase()
             print('Showcases finished, waiting {} seconds to exit...'.format(ShowcaseController.DELAY_AUTO_CLOSE_SECS))
