@@ -90,7 +90,7 @@ class NeuralMaster:
         if select_random:
             random.shuffle(players)
         else:
-            players = sorted(players, key=lambda data: data.genome.fitness, reverse=True)
+            players = sorted(players, key=lambda data: data.fitness, reverse=True)
         players = players[:self.training_config.showcase_racer_count]
         self.showcase(players, SHOWCASE_FROM_FILE_LEVEL, auto_close=False)
 
