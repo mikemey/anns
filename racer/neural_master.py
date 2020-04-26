@@ -16,7 +16,8 @@ from neural.training_dts import LIMIT_HIGH
 from neural.training_reporter import TrainingReporter
 
 DT_IGNORE_LIMIT = LIMIT_HIGH
-LEVEL_COUNT_FMT = '[{:>10}]: {:5}'
+LEVEL_COUNT_FMT = '[{:>9}]: {:2}'
+
 
 class NeuralMaster:
     def __init__(self):
@@ -55,11 +56,12 @@ class NeuralMaster:
 
         remaining_genomes = list(genomes)
         level_ix = 0
-        passing_counts = ['Levels played:']
-        while len(remaining_genomes) and level_ix < self.trainings.count:
-            level, limit = self.trainings.get(level_ix)
-            passing_counts.append(LEVEL_COUNT_FMT.format(level.name, len(remaining_genomes)))
+        passing_counts = ['Levels passed:']
+        self.trainings.reset()
+        while len(remaining_genomes) and self.trainings.has_next():
+            level, limit = self.trainings.next()
             remaining_genomes = self.evaluate_genomes_passing(remaining_genomes, config, level, limit)
+            passing_counts.append(LEVEL_COUNT_FMT.format(level.name, len(remaining_genomes)))
             level_ix += 1
 
         print(' '.join(passing_counts))
@@ -82,8 +84,9 @@ class NeuralMaster:
             sorted_genomes = sorted(genomes, key=lambda gen: gen.fitness, reverse=True)
             top_players = [PlayerData(genome, config)
                            for genome in sorted_genomes[:self.training_config.showcase_racer_count]]
+            self.trainings.reset()
             for level_ix in range(level_limit):
-                level, limit = self.trainings.get(level_ix)
+                level, limit = self.trainings.next()
                 self.showcase(top_players, level, limit=limit)
 
         return showcase

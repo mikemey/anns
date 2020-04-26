@@ -175,18 +175,18 @@ SHOWCASE_FROM_FILE_LEVEL = Mercury_1
 class Trainings:
     def __init__(self):
         self.__entries = [
-            (Mercury_1, 3100), (Mercury_2, 3100), (Mercury_3, 3100),
-            (Venus_1, 4500), (Venus_2, 4500), (Venus_3, 4500),
-            (Earth_1, 3750), (Earth_2, 3750), (Earth_3, 3750)
+            (Earth_1, 1500), (Mercury_1, 1500), (Venus_1, 1500),
+            (Earth_2, 1500), (Mercury_2, 1500), (Venus_2, 1500),
+            (Earth_3, 1500), (Mercury_3, 1500), (Venus_3, 1500)
         ]
-        self.__requested_ix = []
+        self.__ix = -1
 
-    @property
-    def count(self):
-        return len(self.__entries)
+    def has_next(self):
+        return self.__ix < len(self.__entries)
 
-    def get(self, ix):
-        if ix not in self.__requested_ix:
-            self.__requested_ix.append(ix)
-            print('---------- Training level added:', self.__entries[ix][0].name)
-        return self.__entries[ix]
+    def reset(self):
+        self.__ix = -1
+
+    def next(self):
+        self.__ix += 1
+        return self.__entries[self.__ix]
