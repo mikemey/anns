@@ -13,6 +13,7 @@
 	- [Run race with stored players](#replay-stored-players)
     - ~~[Run race with top players](#replay-top-players)~~ (temporarily not working)
 - [Build your own track](#track-builder)
+- [Show neural net as graph](#network-graph)
 
 <table>
     <tbody>
@@ -182,3 +183,25 @@ To start building your own track:
 [project-root-dir] $ python3 racer build
 ```
 
+### Network graph
+
+<p align="center"><img src="docs/visualize-network.png" width="800"/></p>
+
+To visualize a neural from a top-list player file, start with `visual` and type a genome-id from the available list:
+
+```bash
+[project-root-dir] $ python3 racer visual racer/best-players/20200424-193747_best.pd
+genome file read: racer/best-players/20200424-193747_best.pd
+Genome: 13744, fitness: 24781
+Genome: 12384, fitness: 29353
+Genome: 12537, fitness: 24736
+Genome: 10358, fitness: 28659
+Genome: 10252, fitness: 29358
+Genome: 12727, fitness: 23695
+Genome: 10428, fitness: 25466
+Genome: 12839, fitness: 29447
+Genome: 12151, fitness: 23861
+Genome: 12604, fitness: 29319
+-----------------------------------
+Select genome: 12604
+```
