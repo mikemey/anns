@@ -101,11 +101,10 @@ class NeuralMaster:
         self.showcase(players, SHOWCASE_FROM_FILE_LEVEL, auto_close=False)
 
     def showcase(self, players: List[PlayerData], level, limit=None, auto_close=True):
-        fitness_log = ['{:.0f} (#{})'.format(data.fitness, data.genome.key) for data in players]
-        print('Showcase: {} players, fitness (key): {}'.format(len(players), ', '.join(fitness_log)))
+        fitness_log = ['#{} ({:.0f})'.format(data.genome.key, data.fitness) for data in players]
+        print('Showcase: {} players, key (fitness): {}'.format(len(players), ', '.join(fitness_log)))
         try:
             ShowcaseController(players, self.pool, level, limit, auto_close).showcase()
-            print('Showcases finished, waiting {} seconds to exit...'.format(ShowcaseController.DELAY_AUTO_CLOSE_SECS))
         except Exception as e:
             if str(e) == 'list index out of range':
                 print('Showcase error: no screen available')
