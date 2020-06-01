@@ -11,7 +11,7 @@
 	- [Configuration](#configuration)
 	- [Start training](#start-training)
 	- [Run race with stored players](#replay-stored-players)
-    - ~~[Run race with top players](#replay-top-players)~~ (temporarily not working)
+    - ~~[Run race with top players](#replay-top-players)~~
 - [Build your own track](#track-builder)
 - [Show neural net as graph](#network-graph)
 
@@ -164,7 +164,7 @@ Showcases finished, waiting 3 seconds to exit...
 
 ### Replay top players
 
-**Temporarily not working due to changes in tracing lines (sensors for nn)**
+**not working due to changes in tracing lines (sensors for nn)**
 
 The player-store file [examples/top_players.pd](examples/top_players.pd) contains the top-10 players from all player-store files in [examples/](examples).
 A shortcut to run a random selection of these top players it `top`:
