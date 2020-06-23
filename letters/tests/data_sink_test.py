@@ -1,5 +1,7 @@
+import math
 import os
 import shutil
+import time
 import unittest
 
 from data_sink import DataSink
@@ -24,13 +26,13 @@ class DataSinkTestCase(unittest.TestCase):
         shutil.rmtree(TEST_LOG_DIR, ignore_errors=True)
 
     def test_creates_log_files(self):
-        run_test_id, graph_id_1, graph_id_2 = 'run-1', 'graph1', 'graph2'
-        sink = TestDataSink(run_test_id)
+        run_id, graph_id_1, graph_id_2 = 'run-1', 'graph1', 'graph2'
+        sink = TestDataSink(run_id)
         sink.add_graph_header(graph_id_1, (FIELD_X, FIELD_Y2))
         sink.add_graph_header(graph_id_2, (FIELD_X, FIELD_Y1, FIELD_Y2))
 
         def assert_header_line(graph_id, expected_header):
-            with open(test_log(run_test_id, graph_id)) as f:
+            with open(test_log(run_id, graph_id)) as f:
                 lines = f.readlines()
                 self.assertEqual(1, len(lines))
                 self.assertEqual(expected_header, lines[0])
@@ -109,8 +111,8 @@ class DataSinkTestCase(unittest.TestCase):
         self.assertIn(f'unknown graph: {g_1}', str(ctx.exception))
 
     def test_reject_invalid_field_count(self):
-        run_test_id, graph_id = 'run-6', 'graph'
-        sink = TestDataSink(run_test_id)
+        run_id, graph_id = 'run-6', 'graph'
+        sink = TestDataSink(run_id)
         sink.add_graph_header(graph_id, (FIELD_X, FIELD_Y2))
 
         with self.assertRaises(AssertionError) as ctx:
@@ -121,3 +123,16 @@ class DataSinkTestCase(unittest.TestCase):
         with open(test_log(run_id, graph_id)) as f:
             data_count = len(f.readlines()) - 1
             self.assertEqual(expected_data_lines, data_count)
+
+
+class DataPlotTestCase(unittest.TestCase):
+    @unittest.skip('run only manually')
+    def test_live_plot(self):
+        run_id, g_id = 'run-7', 'graph'
+        sink = TestDataSink(run_id)
+        sink.add_graph_header(g_id, ('step', 'v1', 'v2'))
+
+        for i in range(20):
+            data = i, i + 10, math.sin(i % 20) * 10 + 5
+            sink.add_data(g_id, data)
+            time.sleep(1)
