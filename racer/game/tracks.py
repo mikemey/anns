@@ -175,9 +175,9 @@ SHOWCASE_FROM_FILE_LEVEL = Mercury_1
 class Trainings:
     def __init__(self):
         self.__entries = [
-            (Earth_1, 1500), (Mercury_1, 1500), (Venus_1, 1500),
-            (Earth_2, 1500), (Mercury_2, 1500), (Venus_2, 1500),
-            (Earth_3, 1500), (Mercury_3, 1500), (Venus_3, 1500)
+            (Mercury_1, 1500), (Venus_1, 1500), (Earth_1, 1500),
+            (Mercury_2, 1500), (Venus_2, 1500), (Earth_2, 1500),
+            (Mercury_3, 1500), (Venus_3, 1500), (Earth_3, 1500)
         ]
         self.__ix = -1
 

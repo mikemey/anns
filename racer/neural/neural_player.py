@@ -12,6 +12,8 @@ MIN_SPS_OFFSET = 3
 SCORE_CHECK_TIME = 2
 SCORE_CHECK_DIFF = 4
 
+UPDATE_FREQUENCY = 0.1
+
 
 class NeuralPlayer:
     STOPPING = False
@@ -34,7 +36,7 @@ class NeuralPlayer:
         self.tracers = TracerLines(level)
         self.net = neat.nn.FeedForwardNetwork.create(genome, config)
         self.operations = PlayerOperation()
-        self.time = 0
+        self.check_time = self.time = 0
         self.score = 0
         self.score_limit = limit
         self.score_history = ScoreHistory()
@@ -53,33 +55,35 @@ class NeuralPlayer:
 
     def next_step(self, dt):
         self.time += dt
-        state = self.engine.player_state
-        net_input = self.tracers.get_trace_distances((state.x, state.y), state.rotation)
-        net_output = self.net.activate(net_input)
+        self.check_time += dt
+        if self.check_time > UPDATE_FREQUENCY:
+            self.check_time -= UPDATE_FREQUENCY
+            state = self.engine.player_state
+            # net_input = self.tracers.get_trace_distances((state.x, state.y), state.rotation)
+            net_input = [dt] + self.tracers.get_trace_distances((state.x, state.y), state.rotation)
+            net_output = self.net.activate(net_input)
+            self.__update_operations(*net_output)
 
-        self.__update_operations(*net_output)
         self.engine.update(dt, self.operations)
         self.score = self.engine.player_state.distance // 10
 
         if not self.score_history.changed_score(dt, self.score):
-            self.score /= 2
+            self.score *= 0.75
             self.engine.game_over = True
 
         if self.__under_sps_limit() or self.__score_out_of_bounds():
             self.engine.game_over = True
 
-    def __update_operations(self, fwd, back, left, right):
+    def __update_operations(self, acc_break, right_left):
         self.operations.stop_all()
-        if fwd > 0.5 or back > 0.5:
-            if fwd > back:
-                self.operations.accelerate()
-            else:
-                self.operations.reverse()
-        if left > 0.5 or right > 0.5:
-            if left > right:
-                self.operations.turn_left()
-            else:
-                self.operations.turn_right()
+        if acc_break > 0.5:
+            self.operations.accelerate()
+        if acc_break < -0.5:
+            self.operations.reverse()
+        if right_left > 0.5:
+            self.operations.turn_right()
+        if right_left < -0.5:
+            self.operations.turn_left()
 
     def __score_out_of_bounds(self):
         return self.score < 0 or \

@@ -9,9 +9,22 @@ from .tracks import Level
 
 DEG_15 = math.pi / 12
 DEG_30 = math.pi / 6
+DEG_45 = DEG_15 * 3
 DEG_60 = math.pi / 3
+# DEG_50 = math.pi / 18 * 5
+# DEG_70 = math.pi / 18 * 7
 DEG_90 = math.pi / 2
-TRACE_LINE_ANGLES = [DEG_90, DEG_60, DEG_30, DEG_15, 0, -DEG_15, -DEG_30, -DEG_60, -DEG_90]
+# TRACE_LINE_ANGLES = [DEG_90, DEG_60, DEG_30, DEG_15, 0, -DEG_15, -DEG_30, -DEG_60, -DEG_90]
+# TRACE_LINE_ANGLES = [DEG_90, DEG_70, DEG_50, DEG_3d0, DEG_15, 0, -DEG_15, -DEG_30, -DEG_50, -DEG_70, -DEG_90]
+DEG_120 = DEG_60 * 2
+DEG_150 = DEG_30 * 2
+DEG_180 = DEG_60 * 2
+
+DEG_10 = math.pi / 18
+TRACE_LINE_ANGLES = [DEG_10 * f for f in [-9, -7.5, -6, -4.5, -3, -1.8, -1, 0, 1, 1.8, 3, 4.5, 6, 7.5, 9]]
+
+
+# TRACE_LINE_ANGLES = [DEG_60, DEG_45, DEG_30, DEG_15, 0, -DEG_15, -DEG_30, -DEG_45, -DEG_60]
 
 
 class TracerLines:
@@ -35,8 +48,9 @@ class TracerLines:
     def __closest_distance_on_line(self, pos, rot):
         cross_pts = self.__cross_points_on_line(pos, rot)
         if len(cross_pts) == 0:
-            return self.trace_len
-        return min(np.sum((np.abs(np.array(cross_pts) - pos)), axis=1))
+            return 1
+        min_dist = min(np.sum((np.abs(np.array(cross_pts) - pos)), axis=1))
+        return min_dist / self.trace_len
 
     def __closest_point_on_line(self, pos, rot):
         cross_pts = self.__cross_points_on_line(pos, rot)
