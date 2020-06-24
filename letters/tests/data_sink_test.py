@@ -1,7 +1,5 @@
-import math
 import os
 import shutil
-import time
 import unittest
 
 from data_sink import DataSink
@@ -123,16 +121,3 @@ class DataSinkTestCase(unittest.TestCase):
         with open(test_log(run_id, graph_id)) as f:
             data_count = len(f.readlines()) - 1
             self.assertEqual(expected_data_lines, data_count)
-
-
-class DataPlotTestCase(unittest.TestCase):
-    @unittest.skip('run only manually')
-    def test_live_plot(self):
-        run_id, g_id = 'run-7', 'graph'
-        sink = TestDataSink(run_id)
-        sink.add_graph_header(g_id, ('step', 'v1', 'v2'))
-
-        for i in range(20):
-            data = i, i + 10, math.sin(i % 20) * 10 + 5
-            sink.add_data(g_id, data)
-            time.sleep(1)
