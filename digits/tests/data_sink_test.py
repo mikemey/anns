@@ -5,7 +5,7 @@ import unittest
 from data_sink import DataSink
 
 TEST_BATCH_SIZE = 3
-TEST_LOG_DIR = f'{os.path.dirname(__file__)}/log'
+TEST_LOG_DIR = f'{os.path.dirname(__file__)}/test_log'
 FIELD_X, FIELD_Y1, FIELD_Y2 = 'field_x', 'field_y_1', 'field_y_2'
 
 

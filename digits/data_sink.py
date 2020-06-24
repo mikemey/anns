@@ -1,8 +1,8 @@
 import pathlib
 from typing import Any, Iterable
 
-LOG_DIR = 'log'
-BATCH_SIZE = 10
+DEFAULT_LOG_DIR = 'log'
+DEFAULT_BATCH_SIZE = 10
 
 FILE_KEY = 'file'
 VALS_KEY = 'values'
@@ -15,7 +15,7 @@ def csv_line(values):
 
 
 class DataSink:
-    def __init__(self, run_id, log_dir=LOG_DIR, batch_size=BATCH_SIZE):
+    def __init__(self, run_id, log_dir=DEFAULT_LOG_DIR, batch_size=DEFAULT_BATCH_SIZE):
         self.__log_dir = f'{log_dir}/{run_id}'
         self.__graphs = {}
         self.__batch_size = batch_size
