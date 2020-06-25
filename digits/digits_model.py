@@ -1,5 +1,5 @@
 import os
-
+import pandas as pd
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers, Input, Model, optimizers
@@ -21,8 +21,14 @@ class DigitsModel:
                  train_valid_p=DEFAULT_VALIDATION_RATIO,
                  batch_size=DEFAULT_BATCH_SIZE
                  ):
-        imgs = tf.data.experimental.make_csv_dataset(
-            source_file, batch_size=1, label_name=LABEL_COLUMN, column_names=CSV_COLUMNS)
+        # tf.keras.utils.get_file(source_file, )
+        # imgs = tf.data.experimental.make_csv_dataset(
+        #     source_file, batch_size=1, header=True,
+        #     label_name=LABEL_COLUMN, column_names=CSV_COLUMNS)
+
+        # for i in dataset:
+        #     print(i)
+
 
         # img_iter = iter(imgs)
         # for i in range(1):
@@ -44,31 +50,41 @@ class DigitsModel:
         x = layers.Reshape(IMAGE_SHAPE, input_shape=LINE_SHAPE)(x)
         outputs = layers.Dense(10, input_shape=IMAGE_SHAPE, activation="softmax")(x)
         model = Model(inputs, outputs)
-
-        inputs = Input(shape=(150, 150, 3))
-        # Rescale images to [0, 1]
-        x = layers.experimental.preprocessing.Normalization()(inputs)
-        x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(x)
-        x = layers.MaxPooling2D(pool_size=(3, 3))(x)
-        x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(x)
-        x = layers.MaxPooling2D(pool_size=(3, 3))(x)
-        x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(x)
-
-        x = layers.GlobalAveragePooling2D()(x)
-        outputs = layers.Dense(10, activation="softmax")(x)
-
-        model = Model(inputs=inputs, outputs=outputs)
         model.summary()
+
+        # inputs = Input(shape=(150, 150, 3))
+        # # Rescale images to [0, 1]
+        # x = layers.experimental.preprocessing.Normalization()(inputs)
+        # x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(x)
+        # x = layers.MaxPooling2D(pool_size=(3, 3))(x)
+        # x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(x)
+        # x = layers.MaxPooling2D(pool_size=(3, 3))(x)
+        # x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(x)
+        #
+        # x = layers.GlobalAveragePooling2D()(x)
+        # outputs = layers.Dense(10, activation="softmax")(x)
+        #
+        # model = Model(inputs=inputs, outputs=outputs)
+        # model.summary()
 
         # show_batch(imgs)
 
-        model.compile(
-            optimizer=optimizers.Adam(1e-3),
-            loss="binary_crossentropy",
-            metrics=["accuracy"],
-        )
-        history = model.fit(imgs, epochs=1)
-        print(history.history)
+        train_df = pd.read_csv(source_file)
+        target_ds = train_df[[LABEL_COLUMN]]
+        input_ds = train_df.drop(columns=[LABEL_COLUMN])
+
+        print(target_ds.describe())
+        print(input_ds.describe())
+        # print(target_ds.head())
+        # print(input_ds.head())
+        print('-- done --')
+        # model.compile(
+        #     optimizer=optimizers.Adam(1e-3),
+        #     loss="binary_crossentropy",
+        #     metrics=["accuracy"],
+        # )
+        # history = model.fit(input_ds, target_ds, epochs=1)
+        # print(history.history)
 
         # ================================================================================
         # inputs = Input(shape=(784 ,))
