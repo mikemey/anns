@@ -1,10 +1,12 @@
+.DS_Store
+.idea
+*.pyc
+
 logs
 *.log
 log
 test_log
-.DS_Store
-.idea
+data
 
-*.pyc
 trainings
 best-players
