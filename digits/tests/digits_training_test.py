@@ -3,7 +3,7 @@ import unittest
 
 from digits_model import DigitsModel
 
-TEST_TRAINING_DATA = f'{os.path.dirname(__file__)}/test_data/digits_training.csv'
+TEST_TRAINING_DATA = f'{os.path.dirname(__file__)}/test_data/digits_model.csv'
 
 
 # dataset = keras.preprocessing.image.(/

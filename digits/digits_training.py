@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers, Input, Model, optimizers, utils
+
 # from tensorflow.python.keras.layers.preprocessing import image_preprocessing
 DEFAULT_SOURCE_FILE = f'{os.path.dirname(__file__)}/data/test.csv'
 DEFAULT_IMAGE_COUNT = 42000
@@ -26,38 +27,39 @@ class DigitsModel:
         # x = layers.Reshape(IMAGE_SHAPE, input_shape=LINE_SHAPE)(x)
         # outputs = layers.Dense(10, input_shape=IMAGE_SHAPE, activation="softmax")(x)
 
-        inputs = Input(shape=(9,))
-        layers.experimental.preprocessing.RandomFlip("horizontal")
-        x = image_preprocessing.Rescaling(1./255)(inputs)
-        # normalizer = layers.experimental.preprocessing.Normalization(input_shape=(9,))
-        # x = normalizer(inputs)
-        # x = layers.BatchNormalization()
-        x = layers.Reshape((3, 3, 1))(inputs)
-        # x = layers.Conv2D(filters=5, kernel_size=2, activation="relu")(x)
+        inputs = Input(shape=(794,))
+        x = layers.experimental.preprocessing.Rescaling(1 / 255)(inputs)
+        x = layers.Reshape((28, 28, 1))(x)
+        x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(x)
+        x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(x)
+        x = layers.MaxPooling2D(pool_size=2)(x)
+        x = layers.Dropout(0.1)(x)
         x = layers.Flatten()(x)
-        # x = layers.MaxPooling2D(pool_size=2)(x)
-        # outputs = layers.Dense(2,
-        #                        kernel_initializer='zeros',
-        #                        # kernel_initializer='ones',
-        #                        # bias_initializer='zeros',
-        #                        use_bias=0.5,
-        #                        activation="softmax")(x)
-        model = Model(inputs, x)
+        x = layers.Dense(128, activation='relu')(x)
+        outputs = layers.Dense(10, activation="softmax")(x)
+        model = Model(inputs, outputs)
+
         model.summary()
 
-        # df = pd.read_csv(source_file)
-        # target_ds = df[[LABEL_COLUMN]]
-        # input_ds = df.drop(columns=[LABEL_COLUMN])
+        df = pd.read_csv(source_file)
+        input_ds = df.drop(columns=[LABEL_COLUMN])
+        target_ds = df[[LABEL_COLUMN]]
+        target_ds = utils.to_categorical(target_ds, 10)
 
-        # utils.to_categorical()
+        print('-- IS COMPILED --')
+        print(model.layers)
+        model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=['accuracy'])
+        print(model._is_compiled)
+        # history = model.fit(input_ds, target_ds, epochs=1, verbose=1)
+        # print(model.predict(input_ds))
 
-        test_d = [[7, 1, 2, 3, 4, 5, 6, 7, 18],
-                  [100, 100, 100, 100, 100, 100, 100, 100, 100],
-                  [255, 255, 255, 255, 255, 255, 255, 255, 255]]
-        print(model.predict(test_d))
+        # test_d = [list(range(0, 250, 30)),
+        #           [100, 100, 100, 100, 100, 100, 100, 100, 100],
+        #           [255, 255, 255, 255, 255, 255, 255, 255, 255]]
+        # print(model.predict(test_d))
 
         # history = model.fit(input_ds, target_ds, epochs=1)
-        # print(history.history)
+        print(history.history)
         print('-- done --')
 
         # ================================================================================
