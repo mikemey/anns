@@ -2,8 +2,8 @@ import os
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import layers, Input, Model, optimizers
-
+from tensorflow.keras import layers, Input, Model, optimizers, utils
+# from tensorflow.python.keras.layers.preprocessing import image_preprocessing
 DEFAULT_SOURCE_FILE = f'{os.path.dirname(__file__)}/data/test.csv'
 DEFAULT_IMAGE_COUNT = 42000
 DEFAULT_BATCH_SIZE = 10
@@ -21,37 +21,46 @@ class DigitsModel:
                  train_valid_p=DEFAULT_VALIDATION_RATIO,
                  batch_size=DEFAULT_BATCH_SIZE
                  ):
-        # tf.keras.utils.get_file(source_file, )
-        # imgs = tf.data.experimental.make_csv_dataset(
-        #     source_file, batch_size=1, header=True,
-        #     label_name=LABEL_COLUMN, column_names=CSV_COLUMNS)
+        # inputs = Input(shape=LINE_SHAPE, dtype='float32')
+        # x = layers.experimental.preprocessing.Normalization()(inputs)
+        # x = layers.Reshape(IMAGE_SHAPE, input_shape=LINE_SHAPE)(x)
+        # outputs = layers.Dense(10, input_shape=IMAGE_SHAPE, activation="softmax")(x)
 
-        # for i in dataset:
-        #     print(i)
-
-
-        # img_iter = iter(imgs)
-        # for i in range(1):
-        #     data_tensors, labels = next(img_iter)
-        #     print(len(labels), labels[0])
-        #     for name, prop in data_tensors.items():
-        #         print(name, '->', prop)
-
-        # def show_batch(dataset):
-        #     for batch, label in dataset.take(1):
-        #         for key, value in batch.items():
-        #             print("{:20s}: {}".format(key, value.numpy()))
-
-        # Build a simple model
-        # ================================================================================
-
-        inputs = Input(shape=LINE_SHAPE)
-        x = layers.experimental.preprocessing.Normalization()(inputs)
-        x = layers.Reshape(IMAGE_SHAPE, input_shape=LINE_SHAPE)(x)
-        outputs = layers.Dense(10, input_shape=IMAGE_SHAPE, activation="softmax")(x)
-        model = Model(inputs, outputs)
+        inputs = Input(shape=(9,))
+        layers.experimental.preprocessing.RandomFlip("horizontal")
+        x = image_preprocessing.Rescaling(1./255)(inputs)
+        # normalizer = layers.experimental.preprocessing.Normalization(input_shape=(9,))
+        # x = normalizer(inputs)
+        # x = layers.BatchNormalization()
+        x = layers.Reshape((3, 3, 1))(inputs)
+        # x = layers.Conv2D(filters=5, kernel_size=2, activation="relu")(x)
+        x = layers.Flatten()(x)
+        # x = layers.MaxPooling2D(pool_size=2)(x)
+        # outputs = layers.Dense(2,
+        #                        kernel_initializer='zeros',
+        #                        # kernel_initializer='ones',
+        #                        # bias_initializer='zeros',
+        #                        use_bias=0.5,
+        #                        activation="softmax")(x)
+        model = Model(inputs, x)
         model.summary()
 
+        # df = pd.read_csv(source_file)
+        # target_ds = df[[LABEL_COLUMN]]
+        # input_ds = df.drop(columns=[LABEL_COLUMN])
+
+        # utils.to_categorical()
+
+        test_d = [[7, 1, 2, 3, 4, 5, 6, 7, 18],
+                  [100, 100, 100, 100, 100, 100, 100, 100, 100],
+                  [255, 255, 255, 255, 255, 255, 255, 255, 255]]
+        print(model.predict(test_d))
+
+        # history = model.fit(input_ds, target_ds, epochs=1)
+        # print(history.history)
+        print('-- done --')
+
+        # ================================================================================
         # inputs = Input(shape=(150, 150, 3))
         # # Rescale images to [0, 1]
         # x = layers.experimental.preprocessing.Normalization()(inputs)
@@ -66,26 +75,6 @@ class DigitsModel:
         #
         # model = Model(inputs=inputs, outputs=outputs)
         # model.summary()
-
-        # show_batch(imgs)
-
-        train_df = pd.read_csv(source_file)
-        target_ds = train_df[[LABEL_COLUMN]]
-        input_ds = train_df.drop(columns=[LABEL_COLUMN])
-
-        print(target_ds.describe())
-        print(input_ds.describe())
-        # print(target_ds.head())
-        # print(input_ds.head())
-        print('-- done --')
-        # model.compile(
-        #     optimizer=optimizers.Adam(1e-3),
-        #     loss="binary_crossentropy",
-        #     metrics=["accuracy"],
-        # )
-        # history = model.fit(input_ds, target_ds, epochs=1)
-        # print(history.history)
-
         # ================================================================================
         # inputs = Input(shape=(784 ,))
         # x = layers.experimental.preprocessing.Normalization()(inputs)
