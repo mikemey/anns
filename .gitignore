@@ -6,7 +6,6 @@ logs
 *.log
 log
 test_log
-data
 
 trainings
 best-players

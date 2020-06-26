@@ -48,8 +48,22 @@ input_ds, target_ds = get_trainings_data()
 history = model.fit(input_ds, target_ds, epochs=1, validation_split=0.1)
 print(history.history)
 
-predictions = model.predict(input_ds.take(list(range(9))))
-i = 0
-for pred in predictions:
-    print(f'{i:2}:', np.argmax(pred))
-    i += 1
+
+def output_to_value(prediction):
+    return np.argmax(prediction)
+
+
+from PIL import Image
+
+print('predictions:')
+files = [('data/weird_5.png', 5), ('data/an_8.png', 8), ('data/a_3.png', 3)]
+
+
+def load_and_convert(img_file):
+    return list(Image.open(img_file).convert('L').getdata())
+
+
+for file, expectation in files:
+    data = tf.convert_to_tensor([load_and_convert(file)])
+    prediction = model.predict(data)
+    print(f'expected: {expectation} - prediction: {output_to_value(prediction)}')
