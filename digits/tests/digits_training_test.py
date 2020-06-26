@@ -1,28 +1,18 @@
 import os
 import unittest
 
-from digits_training import DigitsModel, build_model
+import numpy as np
 import tensorflow as tf
 
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
+import digits_training as dt
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
 TEST_TRAINING_DATA = f'{os.path.dirname(__file__)}/test_data/digits.csv'
 
 
-# dataset = keras.preprocessing.image.(/
-#     'path/to/main_directory', batch_size=64, image_size=(200, 200))
-
-# For demonstration, iterate over the batches yielded by the dataset.
-# for data, labels in dataset:
-#     print(data.shape)  # (64, 200, 200, 3)
-#     print(data.dtype)  # float32
-#     print(labels.shape)  # (64,)
-#     print(labels.dtype)  # int32
-
 class TrainingTestCase(unittest.TestCase):
     def test_build_model(self):
-        model = build_model()
+        model = dt.build_model()
         self.assertTrue(model._is_compiled, 'model not compiled')
 
         first_layer = model.layers[0]
@@ -32,16 +22,26 @@ class TrainingTestCase(unittest.TestCase):
         self.assertEqual((None, 10), final_layer.output_shape)
         self.assertEqual(tf.nn.softmax, final_layer.activation)
 
+    # Test trainings-data:
+    #   label,pixel0,pixel1,pixel2
+    #   1,99,0,255
+    #   0,98,0,255
+    #   4,97,0,255
+    #   9,96,0,255
+    def test_trainings_data(self):
+        input_ds, target_ds = dt.get_trainings_data(TEST_TRAINING_DATA)
 
-    # def test_creates_dataset(self):
-    #     model = DigitsModel(TEST_TRAINING_DATA, 0.8)
-        # self.__assert_dataset(model.training_ds, 3, [0.0, 1.0, 0.0], [9, 4, 0])
-        # self.__assert_dataset(model.validation_ds, 1, [0.0], [1])
+        self.assertEqual((4, 3), input_ds.shape)
+        self.__assert_data_vals(input_ds.values, [
+            [99, 0, 255], [98, 0, 255], [97, 0, 255], [96, 0, 255]
+        ])
 
-    @staticmethod
-    def __assert_dataset(dataset, exp_len, exp_first_vals, exp_labels):
-        data, labels = dataset
-        print(data.shape)  # (64, 200, 200, 3)
-        print(data.dtype)  # float32
-        print(labels.shape)  # (64,)
-        print(labels.dtype)  # int32
+        self.assertEqual((4, 10), target_ds.shape)
+        self.__assert_data_vals(target_ds, [
+            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+        ])
+
+    def __assert_data_vals(self, data, expected_data):
+        eq_matrix = tf.math.equal(expected_data, data)
+        self.assertTrue(np.all(eq_matrix), 'data mismatch')
