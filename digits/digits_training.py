@@ -41,3 +41,15 @@ def get_trainings_data(source_file=DEFAULT_SOURCE_FILE):
     label_ds = df[[LABEL_COLUMN]]
     label_ds = utils.to_categorical(label_ds, NUM_CLASSES)
     return in_ds, label_ds
+
+
+model = build_model()
+input_ds, target_ds = get_trainings_data()
+history = model.fit(input_ds, target_ds, epochs=1, validation_split=0.1)
+print(history.history)
+
+predictions = model.predict(input_ds.take(list(range(9))))
+i = 0
+for pred in predictions:
+    print(f'{i:2}:', np.argmax(pred))
+    i += 1
