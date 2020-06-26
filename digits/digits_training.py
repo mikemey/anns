@@ -1,17 +1,39 @@
 import os
-import pandas as pd
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras import layers, Input, Model, optimizers, utils
 
-# from tensorflow.python.keras.layers.preprocessing import image_preprocessing
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from tensorflow.keras import layers, Input, Model, utils, optimizers, losses
+
 DEFAULT_SOURCE_FILE = f'{os.path.dirname(__file__)}/data/test.csv'
 DEFAULT_IMAGE_COUNT = 42000
 DEFAULT_BATCH_SIZE = 10
 DEFAULT_VALIDATION_RATIO = 0.9
 
 IMAGE_SHAPE = 28, 28
-LINE_SHAPE = np.multiply(*IMAGE_SHAPE),
+LINE_SHAPE = (np.multiply(*IMAGE_SHAPE),)
+
+
+def build_model():
+    inputs = Input(shape=LINE_SHAPE)
+    x = layers.experimental.preprocessing.Rescaling(1 / 255)(inputs)
+    x = layers.Reshape(IMAGE_SHAPE + (1,))(x)
+    x = layers.Conv2D(filters=32, kernel_size=3, activation=tf.nn.relu)(x)
+    x = layers.Dropout(0.1)(x)
+    x = layers.Conv2D(filters=32, kernel_size=3, activation=tf.nn.relu)(x)
+    x = layers.MaxPooling2D(pool_size=2)(x)
+    x = layers.MaxPooling2D(pool_size=2)(x)
+    x = layers.Flatten()(x)
+    x = layers.Dense(128, activation=tf.nn.relu)(x)
+    outputs = layers.Dense(10, activation=tf.nn.softmax)(x)
+
+    model = Model(inputs, outputs)
+    model.compile(optimizer=optimizers.Adam(),
+                  loss=losses.categorical_crossentropy,
+                  metrics=['accuracy'])
+    return model
+
+
 LABEL_COLUMN = 'label'
 CSV_COLUMNS = [LABEL_COLUMN] + [f'pixel{i}' for i in range(LINE_SHAPE[0])]
 
@@ -27,29 +49,14 @@ class DigitsModel:
         # x = layers.Reshape(IMAGE_SHAPE, input_shape=LINE_SHAPE)(x)
         # outputs = layers.Dense(10, input_shape=IMAGE_SHAPE, activation="softmax")(x)
 
-        inputs = Input(shape=(794,))
-        x = layers.experimental.preprocessing.Rescaling(1 / 255)(inputs)
-        x = layers.Reshape((28, 28, 1))(x)
-        x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(x)
-        x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(x)
-        x = layers.MaxPooling2D(pool_size=2)(x)
-        x = layers.Dropout(0.1)(x)
-        x = layers.Flatten()(x)
-        x = layers.Dense(128, activation='relu')(x)
-        outputs = layers.Dense(10, activation="softmax")(x)
-        model = Model(inputs, outputs)
-
-        model.summary()
-
+        # model.summary()
         df = pd.read_csv(source_file)
         input_ds = df.drop(columns=[LABEL_COLUMN])
         target_ds = df[[LABEL_COLUMN]]
         target_ds = utils.to_categorical(target_ds, 10)
 
-        print('-- IS COMPILED --')
-        print(model.layers)
-        model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=['accuracy'])
-        print(model._is_compiled)
+        # print('input dtype:', inputs.dtype)
+
         # history = model.fit(input_ds, target_ds, epochs=1, verbose=1)
         # print(model.predict(input_ds))
 
@@ -59,7 +66,7 @@ class DigitsModel:
         # print(model.predict(test_d))
 
         # history = model.fit(input_ds, target_ds, epochs=1)
-        print(history.history)
+        # print(history.history)
         print('-- done --')
 
         # ================================================================================
