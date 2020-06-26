@@ -7,7 +7,7 @@ import tensorflow as tf
 import digits_training as dt
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
-TEST_TRAINING_DATA = f'{os.path.dirname(__file__)}/test_data/digits.csv'
+TEST_TRAINING_DATA = os.path.join(os.path.dirname(__file__), 'test_data', 'digits.csv')
 
 
 class TrainingTestCase(unittest.TestCase):

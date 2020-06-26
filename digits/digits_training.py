@@ -5,7 +5,7 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import layers, Input, Model, utils, optimizers, losses
 
-DEFAULT_SOURCE_FILE = f'{os.path.dirname(__file__)}/data/test.csv'
+DEFAULT_SOURCE_FILE = os.path.join(os.path.dirname(__file__), 'data', 'train.csv')
 DEFAULT_BATCH_SIZE = 10
 DEFAULT_VALIDATION_RATIO = 0.9
 
@@ -37,7 +37,7 @@ def build_model():
 
 def get_trainings_data(source_file=DEFAULT_SOURCE_FILE):
     df = pd.read_csv(source_file)
-    input_ds = df.drop(columns=[LABEL_COLUMN])
-    target_ds = df[[LABEL_COLUMN]]
-    target_ds = utils.to_categorical(target_ds, NUM_CLASSES)
-    return input_ds, target_ds
+    in_ds = df.drop(columns=[LABEL_COLUMN])
+    label_ds = df[[LABEL_COLUMN]]
+    label_ds = utils.to_categorical(label_ds, NUM_CLASSES)
+    return in_ds, label_ds
