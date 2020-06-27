@@ -7,8 +7,6 @@ from PIL import Image
 from tensorflow.keras import layers, Input, Model, utils, optimizers, losses
 
 DEFAULT_SOURCE_FILE = os.path.join(os.path.dirname(__file__), 'data', 'train.csv')
-DEFAULT_BATCH_SIZE = 10
-DEFAULT_VALIDATION_RATIO = 0.9
 
 IMAGE_SHAPE = 28, 28
 LINE_SHAPE = (np.multiply(*IMAGE_SHAPE),)
@@ -24,9 +22,8 @@ def build_model():
     x = layers.Dropout(0.1)(x)
     x = layers.Conv2D(filters=32, kernel_size=3, activation=tf.nn.relu)(x)
     x = layers.MaxPooling2D(pool_size=2)(x)
-    x = layers.MaxPooling2D(pool_size=2)(x)
     x = layers.Flatten()(x)
-    x = layers.Dense(128, activation=tf.nn.relu)(x)
+    x = layers.Dense(64, activation=tf.nn.relu)(x)
     outputs = layers.Dense(NUM_CLASSES, activation=tf.nn.softmax)(x)
 
     model = Model(inputs, outputs)
