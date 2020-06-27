@@ -44,7 +44,9 @@ def get_trainings_data(source_file=DEFAULT_SOURCE_FILE):
     return in_ds, label_ds
 
 
-def train_model(model=build_model()):
+def train_model(model=None):
+    if not model:
+        model = build_model()
     input_ds, target_ds = get_trainings_data()
     history = model.fit(input_ds, target_ds, epochs=1, validation_split=0.2)
     print(history.history)
