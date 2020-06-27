@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from PIL import Image
 from tensorflow.keras import layers, Input, Model, utils, optimizers, losses
 
 DEFAULT_SOURCE_FILE = os.path.join(os.path.dirname(__file__), 'data', 'train.csv')
@@ -43,27 +44,26 @@ def get_trainings_data(source_file=DEFAULT_SOURCE_FILE):
     return in_ds, label_ds
 
 
-model = build_model()
-input_ds, target_ds = get_trainings_data()
-history = model.fit(input_ds, target_ds, epochs=1, validation_split=0.1)
-print(history.history)
-
-
-def output_to_value(prediction):
-    return np.argmax(prediction)
-
-
-from PIL import Image
-
-print('predictions:')
-files = [('data/weird_5.png', 5), ('data/an_8.png', 8), ('data/a_3.png', 3)]
+def train_model(model=build_model()):
+    input_ds, target_ds = get_trainings_data()
+    history = model.fit(input_ds, target_ds, epochs=1, validation_split=0.2)
+    print(history.history)
+    return model
 
 
 def load_and_convert(img_file):
     return list(Image.open(img_file).convert('L').getdata())
 
 
-for file, expectation in files:
-    data = tf.convert_to_tensor([load_and_convert(file)])
-    prediction = model.predict(data)
-    print(f'expected: {expectation} - prediction: {output_to_value(prediction)}')
+def predict_digits_with(model):
+    print('predictions:')
+    files = [('data/weird_5.png', 5), ('data/an_8.png', 8), ('data/a_3.png', 3)]
+    for file, expectation in files:
+        data = tf.convert_to_tensor([load_and_convert(file)])
+        pred = model.predict(data)
+        print(f'expected: {expectation} - prediction: {np.argmax(pred)}')
+
+
+if __name__ == '__main__':
+    m = train_model()
+    predict_digits_with(m)
