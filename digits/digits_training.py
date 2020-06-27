@@ -60,10 +60,11 @@ def predict_digits_with(model):
     files = [('data/weird_5.png', 5), ('data/an_8.png', 8), ('data/a_3.png', 3)]
     for file, expectation in files:
         data = tf.convert_to_tensor([load_and_convert(file)])
-        pred = model.predict(data)
-        print(f'expected: {expectation} - prediction: {np.argmax(pred)}')
+        prediction = model.predict(data)
+        print(f'expected: {expectation} - prediction: {prediction.argmax()}')
 
 
 if __name__ == '__main__':
+    # m = build_model()
     m = train_model()
     predict_digits_with(m)
