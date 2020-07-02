@@ -12,19 +12,6 @@ TEST_TRAINING_DATA = os.path.join(os.path.dirname(__file__), 'test_data', 'all_p
 
 
 class TrainingTestCase(unittest.TestCase):
-    # def setUp(self):
-    #     self.gan = gan.DigitsGan(TEST_TRAINING_DATA, 3)
-
-    # def test_build_generator(self):
-    #     model = gan.build_generator()
-    #
-    #     first_layer = model.layers[0]
-    #     self.assertEqual([(None, 200)], first_layer.input_shape)
-    #
-    #     final_layer = model.layers[-1]
-    #     self.assertEqual((None, 784), final_layer.output_shape)
-    #     self.assertEqual(tf.nn.relu, final_layer.activation)
-
     # Test trainings-data:
     #   label,pixel0,...
     #   1,0,...
@@ -44,7 +31,17 @@ class TrainingTestCase(unittest.TestCase):
         self.assertEqual((5, 784), real_imgs.shape)
 
         eq_matrix = tf.math.equal([0, 0.2, 0.4, 0.6, 0.8], real_imgs['pixel0'].values)
-        self.assertTrue(np.all(eq_matrix))
+        self.assertTrue(np.all(eq_matrix), eq_matrix)
+
+    def test_build_generator(self):
+        model = gan.build_generator()
+
+        first_layer = model.layers[0]
+        self.assertEqual([(None, 200)], first_layer.input_shape)
+
+        final_layer = model.layers[-1]
+        self.assertEqual((None, 784), final_layer.output_shape)
+        self.assertEqual(tf.nn.relu, final_layer.activation)
 
     # def test_build_discriminator(self):
     #     model = gan.build_discriminator()
