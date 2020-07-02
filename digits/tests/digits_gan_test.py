@@ -43,13 +43,12 @@ class TrainingTestCase(unittest.TestCase):
         self.assertEqual((None, 784), final_layer.output_shape)
         self.assertEqual(tf.nn.relu, final_layer.activation)
 
-    # def test_build_discriminator(self):
-    #     model = gan.build_discriminator()
-    #     self.assertTrue(model._is_compiled, 'model not compiled')
-    #
-    #     first_layer = model.layers[0]
-    #     self.assertEqual([(None, 784)], first_layer.input_shape)
-    #
-    #     final_layer = model.layers[-1]
-    #     self.assertEqual((None, 10, 1), final_layer.output_shape)
-    #     self.assertEqual(tf.nn.softmax, final_layer.activation)
+    def test_build_discriminator(self):
+        model = gan.build_discriminator()
+
+        first_layer = model.layers[0]
+        self.assertEqual([(None, 784)], first_layer.input_shape)
+
+        final_layer = model.layers[-1]
+        self.assertEqual((None, 1), final_layer.output_shape)
+        self.assertEqual(tf.nn.sigmoid, final_layer.activation)

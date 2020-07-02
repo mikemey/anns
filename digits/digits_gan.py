@@ -53,7 +53,7 @@ def build_discriminator():
     x = layers.Flatten()(x)
     x = layers.Dense(64, activation=tf.nn.relu)(x)
     # outputs = layers.Dense(NUM_CLASSES, activation=tf.nn.softmax)(x)
-    is_real = Dense(1, activation="sigmoid")(x)
+    is_real = Dense(1, activation=tf.nn.sigmoid)(x)
 
     model = Model(inputs, is_real, name='Discriminator')
     # model.summary()
