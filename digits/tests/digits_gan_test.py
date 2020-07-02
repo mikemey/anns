@@ -25,13 +25,19 @@ class TrainingTestCase(unittest.TestCase):
     #   5,0,...
     def test_create_discriminator_batches(self):
         np.random.seed(0)
-        gan_training = gan.DigitsGanTraining(TEST_TRAINING_DATA, 5)
-        real_imgs, gen_imgs = gan_training.create_discriminator_batches()
-        self.assertEqual((5, 784), gen_imgs.shape)
-        self.assertEqual((5, 784), real_imgs.shape)
 
-        eq_matrix = tf.math.equal([0, 0.2, 0.4, 0.6, 0.8], real_imgs['pixel0'].values)
-        self.assertTrue(np.all(eq_matrix), eq_matrix)
+        batch_size = 5
+        gan_training = gan.DigitsGanTraining(TEST_TRAINING_DATA, batch_size)
+        img_data, rf_ind = gan_training.create_discriminator_batches()
+        self.assertEqual((batch_size * 2, 784), img_data.shape)
+
+        real_pixels_col0 = img_data[:batch_size, 0]
+        self.__assert_matrix([0, 0.2, 0.4, 0.6, 0.8], real_pixels_col0)
+        self.__assert_matrix([1, 1, 1, 1, 1, 0, 0, 0, 0, 0], rf_ind)
+
+    def __assert_matrix(self, expected, actual):
+        eq_matrix = tf.math.equal(expected, actual)
+        self.assertTrue(np.all(eq_matrix), f'\tExpected:\n{expected}\n\tActual:\n{actual}')
 
     def test_build_generator(self):
         model = gan.build_generator()

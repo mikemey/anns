@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from tensorflow.keras import layers, Model, utils
+from tensorflow.keras import layers, Model, utils, optimizers, losses
 from tensorflow.keras.layers import Input, Dense
 
 DEFAULT_SOURCE_FILE = os.path.join(os.path.dirname(__file__), 'data', 'train.csv')
@@ -85,14 +85,23 @@ class DigitsGanTraining:
         real_imgs = self.real_trainings_data.sample(self.batch_size)
         random_input = np.random.normal(0, 1, (self.batch_size, 200))
         gen_imgs = self.generator.predict(random_input)
-        return real_imgs, gen_imgs
+
+        comb = np.concatenate([real_imgs, gen_imgs])
+        rf_indicator = np.ones(2 * self.batch_size)
+        rf_indicator[self.batch_size:] = 0
+        return comb, rf_indicator
 
     def train(self, epochs=1, batch_size=32):
+        # discriminator = build_discriminator()
+        # discriminator.compile(optimizer=optimizers.Adam(),
+        #                       loss=losses.binary_crossentropy,
+        #                       metrics=['accuracy'])
+        #
         # generator = build_generator()
+        # discriminator.trainable = False
 
         # real_indicators = np.ones((batch_size, 1))
         # fake_indicators = np.zeros((batch_size, 1))
         #
-        # discriminator = build_discriminator()
         # for epoch in range(epochs):
         pass
