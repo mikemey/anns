@@ -23,31 +23,25 @@ class TrainingTestCase(unittest.TestCase):
         real_pixels_col0 = img_data[:batch_size, 0, 0]
         self.__assert_matrix([[0], [0.2], [0.4], [0.6], [0.8]], real_pixels_col0)
         self.__assert_matrix([1, 1, 1, 1, 1, 0, 0, 0, 0, 0], rf_ind)
-        expected_labels = [0, 7, 0, 0, 4, 9, 2, 0, 3, 5]
+
+        expected_labels = [0, 7, 0, 0, 4, 5, 2, 9, 8, 6]
         self.__assert_matrix(tf.keras.utils.to_categorical(expected_labels, 10), labels)
 
     def __assert_matrix(self, expected, actual):
         eq_matrix = tf.math.equal(expected, actual)
         self.assertTrue(np.all(eq_matrix), f'\tExpected:\n{expected}\n\tActual:\n{actual}')
 
-    # def test_build_generator(self):
-    #     model = gan.build_generator()
-    #
-    #     self.assertEqual((None, 200), model.get_input_shape_at(0))
-    #     self.assertEqual((None, 10), model.get_input_shape_at(1))
-    #     self.assertEqual((None, 28, 28, 1), model.get_output_shape_at(0))
-    #
-    #     rf_ind_out = model.output
-    #     print('\n===============')
-    #     print(rf_ind_out)
-    #     print(dir(rf_ind_out))
-    # self.assertEqual([None, 28, 28, 1], rf_ind_out.shape)
-    # print(rf_ind_out.shape)
-    # print(dir(rf_ind_out))
+    def test_build_generator(self):
+        model = gan.build_generator()
 
-    # final_layer = model.output
-    # self.assertEqual((None, 28, 28, 1), final_layer.shape)
-    # self.assertEqual(tf.nn.sigmoid, final_layer.activation)
+        noise_input = model.layers[0]
+        label_input = model.layers[1]
+        self.assertEqual([(None, 200)], noise_input.input_shape)
+        self.assertEqual([(None, 10)], label_input.input_shape)
+
+        gen_img_output = model.layers[-1]
+        self.assertEqual((None, 28, 28, 1), gen_img_output.output_shape)
+        self.assertEqual(tf.nn.sigmoid, gen_img_output.activation)
 
     def test_build_discriminator(self):
         model = gan.build_discriminator()

@@ -22,11 +22,11 @@ FLAT_IMAGE_SHAPE = (np.multiply(*IMAGE_SHAPE),)
 
 def build_generator():
     noise_in = layers.Input(shape=(200,), name='noise_in')
-    # label = Input(shape=(NUM_CLASSES,), name='label_in')
-    # combined_in = [noise_in, label]
-    # inputs = layers.concatenate(combined_in)
+    label = layers.Input(shape=(NUM_CLASSES,), name='label_in')
+    combined_in = [noise_in, label]
+    inputs = layers.concatenate(combined_in)
 
-    x = layers.Dense(7 * 7 * 128, activation=tf.nn.relu)(noise_in)
+    x = layers.Dense(7 * 7 * 128, activation=tf.nn.relu)(inputs)
     x = layers.Reshape((7, 7, 128))(x)
     x = layers.BatchNormalization(momentum=0.8)(x)
     x = layers.UpSampling2D(size=2)(x)
@@ -37,8 +37,7 @@ def build_generator():
     x = layers.BatchNormalization(momentum=0.8)(x)
     image_output = layers.Conv2D(filters=1, kernel_size=3, padding='same', activation=tf.nn.sigmoid)(x)
 
-    # return Model(combined_in, image_output)
-    return Model(noise_in, image_output, name='Generator')
+    return Model(combined_in, image_output, name='Generator')
 
 
 def build_discriminator():
@@ -91,8 +90,10 @@ class DigitsGanTraining:
         real_imgs = real_imgs.values.reshape(self.batch_size, 28, 28, 1)
         real_labels = self.real_labels.take(idx)
 
-        gen_imgs = self.generator.predict(self.noise_for_batch())
         gen_labels = np.random.randint(0, 10, self.batch_size)
+        gen_imgs = self.generator.predict([
+            self.noise_for_batch(), utils.to_categorical(gen_labels, NUM_CLASSES)
+        ])
 
         all_imgs = np.concatenate([real_imgs, gen_imgs])
         rf_indicator = np.ones(2 * self.batch_size)
