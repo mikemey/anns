@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
 
-if [[ -n $1 ]]; then
-  python3 -m unittest -v "$1"
-else
-  python3 -m unittest discover -v -p "*_test.py"
-fi
+python3 -m pytest -p no:warnings -s "$*"
 
