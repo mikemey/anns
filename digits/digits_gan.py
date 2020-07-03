@@ -36,9 +36,6 @@ def build_generator():
     x = layers.Conv2D(filters=64, kernel_size=3, padding='same', activation=tf.nn.relu)(x)
     x = layers.BatchNormalization(momentum=0.8)(x)
     image_output = layers.Conv2D(filters=1, kernel_size=3, padding='same', activation=tf.nn.sigmoid)(x)
-    # x = layers.Flatten()(x)
-    # image_output = layers.Dense(FLAT_IMAGE_SHAPE[0], activation=tf.nn.relu)(x)
-    # image_output = layers.Dense(FLAT_IMAGE_SHAPE[0], activation=tf.nn.tanh)(x)
 
     # return Model(combined_in, image_output)
     return Model(noise_in, image_output, name='Generator')

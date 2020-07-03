@@ -34,6 +34,8 @@ class TrainingTestCase(unittest.TestCase):
     #     model = gan.build_generator()
     #
     #     self.assertEqual((None, 200), model.get_input_shape_at(0))
+    #     self.assertEqual((None, 10), model.get_input_shape_at(1))
+    #     self.assertEqual((None, 28, 28, 1), model.get_output_shape_at(0))
     #
     #     rf_ind_out = model.output
     #     print('\n===============')
@@ -47,13 +49,16 @@ class TrainingTestCase(unittest.TestCase):
     # self.assertEqual((None, 28, 28, 1), final_layer.shape)
     # self.assertEqual(tf.nn.sigmoid, final_layer.activation)
 
-    # def __assert_all_shapes(self, expected, ):
-    # def test_build_discriminator(self):
-    #     model = gan.build_discriminator()
-    #
-    #     first_layer = model.layers[0]
-    #     self.assertEqual([(None, 28, 28, 1)], first_layer.input_shape)
-    #
-    #     final_layer = model.output
-    #     self.assertEqual((None, 1), final_layer.output_shape)
-    #     self.assertEqual(tf.nn.sigmoid, final_layer.activation)
+    def test_build_discriminator(self):
+        model = gan.build_discriminator()
+
+        first_layer = model.layers[0]
+        self.assertEqual([(None, 28, 28, 1)], first_layer.input_shape)
+
+        rf_ind_layer = model.layers[-2]
+        label_layer = model.layers[-1]
+
+        self.assertEqual((None, 1), rf_ind_layer.output_shape)
+        self.assertEqual(tf.nn.sigmoid, rf_ind_layer.activation)
+        self.assertEqual((None, 10), label_layer.output_shape)
+        self.assertEqual(tf.nn.softmax, label_layer.activation)
