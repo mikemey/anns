@@ -3,6 +3,7 @@ import unittest
 
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.utils import to_categorical
 
 import digits_gan as gan
 
@@ -17,7 +18,7 @@ class TrainingTestCase(unittest.TestCase):
         batch_size = 5
         gan_training = gan.DigitsGanTraining(TEST_TRAINING_DATA, batch_size)
 
-        sampled_labels = [1, 2, 3, 4, 5]
+        sampled_labels = to_categorical([1, 2, 3, 4, 5], 10)
         noise = np.array([[0.5] * 200] * batch_size)
         img_data, rf_ind, labels = gan_training.create_discriminator_batches(noise, sampled_labels)
 
@@ -27,8 +28,8 @@ class TrainingTestCase(unittest.TestCase):
         self.__assert_matrix([[0], [0.2], [0.4], [0.6], [0.8]], real_pixels_col0)
         self.__assert_matrix([1, 1, 1, 1, 1, 0, 0, 0, 0, 0], rf_ind)
 
-        expected_labels = [0, 7, 0, 0, 4] + sampled_labels
-        self.__assert_matrix(tf.keras.utils.to_categorical(expected_labels, 10), labels)
+        expected_labels = np.concatenate([to_categorical([0, 7, 0, 0, 4], 10), sampled_labels])
+        self.__assert_matrix(expected_labels, labels)
 
     def __assert_matrix(self, expected, actual):
         eq_matrix = tf.math.equal(expected, actual)

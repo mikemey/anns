@@ -23,10 +23,11 @@ FLAT_IMAGE_SHAPE = (np.multiply(*IMAGE_SHAPE),)
 def build_generator():
     noise_in = layers.Input(shape=(200,), name='noise_in')
     label = layers.Input(shape=(NUM_CLASSES,), name='label_in')
-    combined_in = [noise_in, label]
-    inputs = layers.concatenate(combined_in)
+    # combined_in =
+    # inputs = layers.concatenate(combined_in)
 
-    x = layers.Dense(7 * 7 * 128, activation=tf.nn.relu)(inputs)
+    x = layers.Concatenate()([noise_in, label])  # (7 * 7 * 128, activation=tf.nn.relu)(inputs)
+    x = layers.Dense(7 * 7 * 128, activation=tf.nn.relu)(x)
     x = layers.Reshape((7, 7, 128))(x)
     x = layers.BatchNormalization(momentum=0.8)(x)
     x = layers.UpSampling2D(size=2)(x)
@@ -37,7 +38,7 @@ def build_generator():
     x = layers.BatchNormalization(momentum=0.8)(x)
     image_output = layers.Conv2D(filters=1, kernel_size=3, padding='same', activation=tf.nn.sigmoid)(x)
 
-    return Model(combined_in, image_output, name='Generator')
+    return Model([noise_in, label], image_output, name='Generator')
 
 
 def build_discriminator():
@@ -90,40 +91,42 @@ class DigitsGanTraining:
             count = self.batch_size
         return np.random.normal(0, 1, (count, 200))
 
-    def create_discriminator_batches(self, noise, gen_labels):
+    def create_discriminator_batches(self, noise, gen_label_cats):
         idx = np.random.randint(0, self.real_trainings_data.shape[0], self.batch_size)
         real_imgs = self.real_trainings_data.take(idx)
         real_imgs = real_imgs.values.reshape(self.batch_size, 28, 28, 1)
         real_labels = self.real_labels.take(idx)
 
-        gen_imgs = self.generator.predict([noise, utils.to_categorical(gen_labels, NUM_CLASSES)])
+        gen_imgs = self.generator.predict([noise, gen_label_cats])
 
         all_imgs = np.concatenate([real_imgs, gen_imgs])
         rf_indicator = np.ones(2 * self.batch_size)
         rf_indicator[self.batch_size:] = 0
-        all_labels = np.concatenate([real_labels.values[:, 0], gen_labels])
-        all_labels = utils.to_categorical(all_labels, NUM_CLASSES)
+        all_labels = utils.to_categorical(real_labels.values[:, 0], NUM_CLASSES)
+        all_labels = np.concatenate([all_labels, gen_label_cats])
 
         return all_imgs, rf_indicator, all_labels
 
     def train(self, iterations):
-        gan = Model(self.generator.input, self.discriminator(self.generator.output))
+        gan = Model(self.generator.inputs, self.discriminator(self.generator.output))
         gan.compile(optimizer=optimizers.Adam(),
                     loss=losses.binary_crossentropy)
 
         valid = np.ones(self.batch_size)
 
         for it in range(iterations):
+            noise = self.noise_for_batch()
             gen_labels = np.random.randint(0, 10, self.batch_size)
 
-            img_data, rf_indicator, labels = self.create_discriminator_batches()
+            img_data, rf_indicator, labels = self.create_discriminator_batches(noise, gen_labels)
             self.discriminator.trainable = True
-            _, rf_loss, label_loss = self.discriminator.train_on_batch(img_data, [rf_indicator, labels])
+            _, rf_loss, disc_label_loss = self.discriminator.train_on_batch(img_data, [rf_indicator, labels])
 
             self.discriminator.trainable = False
-            g_loss = gan.train_on_batch(self.noise_for_batch(), valid)
+            _, valid_loss, gen_label_loss = gan.train_on_batch([noise, gen_labels], [valid, gen_labels])
 
-            print(f'{it:4} D:[rf-loss: {rf_loss:7.3f}, lbl-loss: {label_loss:7.3f}]')
+            print(f'{it:4} D:[rf-loss: {rf_loss:7.3f}, lbl-loss: {disc_label_loss:7.3f}] --'
+                  f'G:[valid-loss: {valid_loss:7.3f}, lbl-loss: {gen_label_loss:7.3f}')
 
             # print(f'{it:4} [D-L: {d_loss:7.3f}, [G-L: {g_loss:7.3f}]')
             # if g_loss < 0.5:
@@ -164,5 +167,5 @@ def store_image_from_prediction(prediction):
 
 if __name__ == '__main__':
     training = DigitsGanTraining()
-    training.train(2)
+    training.train(20)
     training.predict_own_digits()
