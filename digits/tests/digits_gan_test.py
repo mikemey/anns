@@ -19,7 +19,7 @@ class TrainingTestCase(unittest.TestCase):
         gan_training = gan.DigitsGanTraining(TEST_TRAINING_DATA, batch_size)
 
         sampled_labels = to_categorical([1, 2, 3, 4, 5], 10)
-        noise = np.array([[0.5] * 200] * batch_size)
+        noise = np.array([[0.5] * 100] * batch_size)
         img_data, rf_ind, labels = gan_training.create_discriminator_batches(noise, sampled_labels)
 
         self.assertEqual((batch_size * 2, 28, 28, 1), img_data.shape)
@@ -40,7 +40,7 @@ class TrainingTestCase(unittest.TestCase):
 
         noise_input = model.layers[0]
         label_input = model.layers[1]
-        self.assertEqual([(None, 200)], noise_input.input_shape)
+        self.assertEqual([(None, 100)], noise_input.input_shape)
         self.assertEqual([(None, 10)], label_input.input_shape)
 
         gen_img_output = model.layers[-1]

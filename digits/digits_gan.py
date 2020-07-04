@@ -1,6 +1,8 @@
 from __future__ import print_function, division
 
 import os
+import pathlib
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,19 +11,31 @@ import tensorflow as tf
 from PIL import Image
 from tensorflow.keras import layers, Model, utils, optimizers, losses
 
-DEFAULT_SOURCE_FILE = os.path.join(os.path.dirname(__file__), 'data', 'train.csv')
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+LOG_DIR = os.path.join(os.path.dirname(__file__), 'log', f'run_{int(time.time())}')
+
+
+def data_file_path(file_name):
+    return os.path.join(DATA_DIR, file_name)
+
+
+def log_file_path(file_name):
+    return os.path.join(LOG_DIR, file_name)
+
+
 LABEL_COLUMN = 'label'
 
 NUM_CLASSES = 10
-NOISE_INPUT_SHAPE = (None, 200)
+NOISE_INPUT_LEN = 100
 LABEL_INPUT_SHAPE = (None, NUM_CLASSES)
 
 IMAGE_SHAPE = 28, 28
+IMAGE_SHAPE_3D = (*IMAGE_SHAPE, 1)
 FLAT_IMAGE_SHAPE = (np.multiply(*IMAGE_SHAPE),)
 
 
 def build_generator():
-    noise_in = layers.Input(shape=(200,), name='noise_in')
+    noise_in = layers.Input(shape=(NOISE_INPUT_LEN,), name='noise_in')
     label = layers.Input(shape=(NUM_CLASSES,), name='label_in')
 
     x = layers.Concatenate()([noise_in, label])
@@ -40,7 +54,7 @@ def build_generator():
 
 
 def build_discriminator():
-    inputs = layers.Input(shape=(28, 28, 1))
+    inputs = layers.Input(shape=IMAGE_SHAPE_3D)
     x = layers.Reshape(IMAGE_SHAPE + (1,))(inputs)
     x = layers.Conv2D(filters=32, kernel_size=3, activation=tf.nn.relu)(x)
     x = layers.Dropout(0.2)(x)
@@ -57,7 +71,7 @@ def build_discriminator():
 
 def show_image(img_data):
     if np.shape(img_data) == FLAT_IMAGE_SHAPE:
-        img_data = np.reshape(img_data, (28, 28))
+        img_data = np.reshape(img_data, IMAGE_SHAPE)
     plt.imshow(img_data, cmap='gray')
     plt.show()
 
@@ -71,12 +85,12 @@ def get_real_trainings_data(source_file):
 
 def load_and_convert(img_file):
     img_data = list(Image.open(img_file).convert('L').getdata())
-    img_data = np.reshape(img_data, (28, 28, 1))
+    img_data = np.reshape(img_data, IMAGE_SHAPE_3D)
     return tf.convert_to_tensor([img_data])
 
 
 class DigitsGanTraining:
-    def __init__(self, source_file=DEFAULT_SOURCE_FILE, batch_size=32):
+    def __init__(self, source_file=data_file_path('train.csv'), batch_size=32):
         self.batch_size = batch_size
         self.real_trainings_data, self.real_labels = get_real_trainings_data(source_file)
 
@@ -91,7 +105,7 @@ class DigitsGanTraining:
     def create_discriminator_batches(self, noise, gen_label_cats):
         idx = np.random.randint(0, self.real_trainings_data.shape[0], self.batch_size)
         real_imgs = self.real_trainings_data.take(idx)
-        real_imgs = real_imgs.values.reshape(self.batch_size, 28, 28, 1)
+        real_imgs = real_imgs.values.reshape(self.batch_size, *IMAGE_SHAPE_3D)
         real_labels = self.real_labels.take(idx)
 
         gen_imgs = self.generator.predict([noise, gen_label_cats])
@@ -108,7 +122,7 @@ class DigitsGanTraining:
         valid = np.ones(self.batch_size)
 
         for it in range(iterations):
-            noise = np.random.normal(0, 1, (self.batch_size, 200))
+            noise = np.random.normal(0, 1, (self.batch_size, NOISE_INPUT_LEN))
             gen_labels = utils.to_categorical(np.random.randint(0, 10, self.batch_size), NUM_CLASSES)
 
             img_data, rf_indicator, labels = self.create_discriminator_batches(noise, gen_labels)
@@ -122,11 +136,11 @@ class DigitsGanTraining:
                   f'Gen [tot-l: {gan_tot_l:7.3f}, rf-l: {gan_rf_l:7.3f}, lbl-l: {gan_label_l:7.3f}')
 
             if (it % show_case_every) == (show_case_every - 1):
-                self.sample_images()
+                self.store_images(it)
 
-    def sample_images(self):
+    def store_images(self, identifier):
         rows, cols = 10, 10
-        noise = np.random.normal(0, 1, (rows * cols, 200))
+        noise = np.random.normal(0, 1, (rows * cols, NOISE_INPUT_LEN))
         labels = utils.to_categorical([num for _ in range(rows) for num in range(cols)])
         gen_imgs = self.generator.predict([noise, labels])
 
@@ -134,16 +148,18 @@ class DigitsGanTraining:
         cnt = 0
         for row in range(rows):
             for col in range(cols):
-                img = np.reshape(gen_imgs[cnt], (28, 28))
+                img = np.reshape(gen_imgs[cnt], IMAGE_SHAPE)
                 axs[row, col].imshow(img, cmap='gray')
                 axs[row, col].axis('off')
                 cnt += 1
-        plt.show()
+        fig.savefig(log_file_path(f'it_{identifier}.png'))
+        plt.close(fig)
+        # plt.show()
 
     def predict_own_digits(self):
         print('predictions:')
-        files = [('data/weird_5.png', True, 5), ('data/an_8.png', True, 8),
-                 ('data/a_3.png', True, 3), ('data/random.png', False, -1)]
+        files = [(data_file_path('weird_5.png'), True, 5), (data_file_path('an_8.png'), True, 8),
+                 (data_file_path('a_3.png'), True, 3), (data_file_path('random.png'), False, -1)]
 
         for file, expect_rf, expect_label in files:
             rf_ind, label_pred = self.discriminator.predict(load_and_convert(file))
@@ -154,12 +170,13 @@ class DigitsGanTraining:
 
 
 def store_image_from_prediction(prediction):
-    prediction = np.reshape(prediction, (28, 28))
+    prediction = np.reshape(prediction, IMAGE_SHAPE)
     img = Image.fromarray(prediction, mode='I;16')
     img.save('data/random.png')
 
 
 if __name__ == '__main__':
+    pathlib.Path(LOG_DIR).mkdir(parents=True, exist_ok=False)
     training = DigitsGanTraining()
-    training.train(2000)
+    training.train(2000, show_case_every=25)
     training.predict_own_digits()
