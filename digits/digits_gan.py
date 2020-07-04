@@ -60,11 +60,10 @@ def build_generator():
 def build_discriminator():
     inputs = layers.Input(shape=IMAGE_SHAPE_3D)
     x = layers.Reshape(IMAGE_SHAPE + (1,))(inputs)
-    x = layers.Conv2D(filters=64, kernel_size=3, activation=tf.nn.relu)(x)
+    x = layers.Conv2D(filters=32, kernel_size=3, activation=tf.nn.relu)(x)
     x = layers.Dropout(0.2)(x)
     x = layers.Conv2D(filters=32, kernel_size=3, activation=tf.nn.relu)(x)
     x = layers.MaxPooling2D(pool_size=2)(x)
-    x = layers.Dropout(0.2)(x)
     x = layers.Flatten()(x)
     x = layers.Dense(128, activation=tf.nn.relu)(x)
     is_real = layers.Dense(1, name='real-fake-indicator', activation=tf.nn.sigmoid)(x)
@@ -164,7 +163,6 @@ class DigitsGanTraining:
                 cnt += 1
         fig.savefig(log_file_path(f'it_{identifier}.png'))
         plt.close(fig)
-        # plt.show()
 
     def predict_own_digits(self):
         print('predictions:')
