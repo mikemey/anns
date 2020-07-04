@@ -50,8 +50,8 @@ def build_discriminator():
     x = layers.Dropout(0.2)(x)
     x = layers.Flatten()(x)
     x = layers.Dense(64, activation=tf.nn.relu)(x)
-    is_real = layers.Dense(1, activation=tf.nn.sigmoid)(x)
-    label_out = layers.Dense(NUM_CLASSES, activation=tf.nn.softmax)(x)
+    is_real = layers.Dense(1, name='real-fake-indicator', activation=tf.nn.sigmoid)(x)
+    label_out = layers.Dense(NUM_CLASSES, name='predicted_label', activation=tf.nn.softmax)(x)
 
     return Model(inputs, [is_real, label_out], name='Discriminator')
 
@@ -68,6 +68,12 @@ def get_real_trainings_data(source_file):
     in_ds = df.drop(columns=[LABEL_COLUMN]) / 255
     label_ds = df[[LABEL_COLUMN]]
     return in_ds, label_ds
+
+
+def load_and_convert(img_file):
+    img_data = list(Image.open(img_file).convert('L').getdata())
+    img_data = np.reshape(img_data, (28, 28, 1))
+    return tf.convert_to_tensor([img_data])
 
 
 class DigitsGanTraining:
@@ -90,44 +96,40 @@ class DigitsGanTraining:
         real_imgs = real_imgs.values.reshape(self.batch_size, 28, 28, 1)
         real_labels = self.real_labels.take(idx)
 
-        gen_labels = np.random.randint(0, 10, self.batch_size)
-        gen_imgs = self.generator.predict([
-            self.noise_for_batch(), utils.to_categorical(gen_labels, NUM_CLASSES)
-        ])
+        # gen_labels = np.random.randint(0, 10, self.batch_size)
+        # gen_imgs = self.generator.predict([
+        #     self.noise_for_batch(), utils.to_categorical(gen_labels, NUM_CLASSES)
+        # ])
 
-        all_imgs = np.concatenate([real_imgs, gen_imgs])
-        rf_indicator = np.ones(2 * self.batch_size)
-        rf_indicator[self.batch_size:] = 0
-        all_labels = np.concatenate([real_labels.values[:, 0], gen_labels])
-        all_labels = utils.to_categorical(all_labels, NUM_CLASSES)
+        rf_indicator = np.ones(self.batch_size)
+        # all_imgs = np.concatenate([real_imgs, gen_imgs])
+        # rf_indicator = np.ones(2 * self.batch_size)
+        # rf_indicator[self.batch_size:] = 0
+        # all_labels = np.concatenate([real_labels.values[:, 0], gen_labels])
+        all_labels = utils.to_categorical(real_labels, NUM_CLASSES)
 
-        return all_imgs, rf_indicator, all_labels
+        return real_imgs, rf_indicator, all_labels
 
-    # def train(self, iterations):
-    #     self.discriminator.trainable = False
-    #     gan = Model(self.generator.input, self.discriminator(self.generator.output))
-    #     gan.compile(optimizer=optimizers.Adam(),
-    #                 loss=losses.binary_crossentropy)
-    #
-    #     valid = np.ones(self.batch_size)
-    #
-    #     # print()
-    #     # print('=================== GENERATOR =====================')
-    #     # self.generator.summary()
-    #     # print('=================== DISCRIMINATOR =====================')
-    #     # self.discriminator.summary()
-    #     # print('=================== COMBINED =====================')
-    #     # gan.summary()
-    #     for it in range(iterations):
-    #         img_data, rf_indicator = self.create_discriminator_batches()
-    #         self.discriminator.trainable = True
-    #         d_loss = self.discriminator.train_on_batch(img_data, rf_indicator)
-    #         self.discriminator.trainable = False
-    #         g_loss = gan.train_on_batch(self.noise_for_batch(), valid)
-    #
-    #         print(f'{it:4} [D-L: {d_loss:7.3f}, [G-L: {g_loss:7.3f}]')
-    #         if g_loss < 0.5:
-    #             self.sample_images()
+    def train(self, iterations):
+        gan = Model(self.generator.input, self.discriminator(self.generator.output))
+        gan.compile(optimizer=optimizers.Adam(),
+                    loss=losses.binary_crossentropy)
+
+        valid = np.ones(self.batch_size)
+
+        for it in range(iterations):
+            img_data, rf_indicator, labels = self.create_discriminator_batches()
+            self.discriminator.trainable = True
+            _, rf_loss, label_loss = self.discriminator.train_on_batch(img_data, [rf_indicator, labels])
+
+            self.discriminator.trainable = False
+            g_loss = gan.train_on_batch(self.noise_for_batch(), valid)
+
+            print(f'{it:4} D:[rf-loss: {rf_loss:7.3f}, lbl-loss: {label_loss:7.3f}]')
+
+            # print(f'{it:4} [D-L: {d_loss:7.3f}, [G-L: {g_loss:7.3f}]')
+            # if g_loss < 0.5:
+            #     self.sample_images()
 
     # def sample_images(self, grid=(5, 5)):
     #     gen_imgs = self.generator.predict(self.noise_for_batch(25))
@@ -143,6 +145,17 @@ class DigitsGanTraining:
     #             cnt += 1
     #     plt.show()
     #     plt.close()
+    def predict_own_digits(self):
+        print('predictions:')
+        files = [('data/weird_5.png', True, 5), ('data/an_8.png', True, 8),
+                 ('data/a_3.png', True, 3), ('data/random.png', False, -1)]
+
+        for file, expect_rf, expect_label in files:
+            rf_ind, label_pred = self.discriminator.predict(load_and_convert(file))
+            rf_ind = rf_ind[0][0] > 0.5
+            label_pred = label_pred.reshape((10,)).argmax()
+            print(f'expected [real: {expect_rf}, label: {expect_label}] - '
+                  f'predicted [real: {rf_ind}, label: {label_pred}]')
 
 
 def store_image_from_prediction(prediction):
@@ -151,21 +164,7 @@ def store_image_from_prediction(prediction):
     img.save('data/random.png')
 
 
-def load_and_convert(img_file):
-    return list(Image.open(img_file).convert('L').getdata())
-
-
-def predict_digits_with(model):
-    print('predictions:')
-    files = [('data/weird_5.png', 5), ('data/an_8.png', 8), ('data/a_3.png', 3), ('data/random.png', -1)]
-    for file, expectation in files:
-        data = tf.convert_to_tensor([load_and_convert(file)])
-        prediction = model.predict(data)
-        print(f'expected: {expectation} - prediction: {prediction}')
-
-
 if __name__ == '__main__':
-    training = DigitsGanTraining(batch_size=5)
-    # training.create_discriminator_batches()
-    # training.train(2000)
-    # predict_digits_with(training.discriminator)
+    training = DigitsGanTraining()
+    training.train(2)
+    training.predict_own_digits()
