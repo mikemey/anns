@@ -29,7 +29,7 @@ def log_file_path(file_name):
 LABEL_COLUMN = 'label'
 
 NUM_CLASSES = 10
-NOISE_INPUT_LEN = 100
+NOISE_INPUT_LEN = 128
 LABEL_INPUT_SHAPE = (None, NUM_CLASSES)
 
 IMAGE_SHAPE = 28, 28
@@ -45,6 +45,7 @@ def build_generator():
     x = layers.Dense(7 * 7 * 128, activation=tf.nn.relu)(x)
     x = layers.Reshape((7, 7, 128))(x)
     x = layers.BatchNormalization(momentum=0.8)(x)
+    x = layers.Dropout(0.2)(x)
     x = layers.UpSampling2D(size=2)(x)
     x = layers.Conv2D(filters=128, kernel_size=3, padding='same', activation=tf.nn.relu)(x)
     x = layers.BatchNormalization(momentum=0.8)(x)
@@ -59,13 +60,13 @@ def build_generator():
 def build_discriminator():
     inputs = layers.Input(shape=IMAGE_SHAPE_3D)
     x = layers.Reshape(IMAGE_SHAPE + (1,))(inputs)
-    x = layers.Conv2D(filters=32, kernel_size=3, activation=tf.nn.relu)(x)
-    x = layers.Dropout(0.2)(x)
     x = layers.Conv2D(filters=64, kernel_size=3, activation=tf.nn.relu)(x)
+    x = layers.Dropout(0.2)(x)
+    x = layers.Conv2D(filters=32, kernel_size=3, activation=tf.nn.relu)(x)
     x = layers.MaxPooling2D(pool_size=2)(x)
     x = layers.Dropout(0.2)(x)
     x = layers.Flatten()(x)
-    x = layers.Dense(64, activation=tf.nn.relu)(x)
+    x = layers.Dense(128, activation=tf.nn.relu)(x)
     is_real = layers.Dense(1, name='real-fake-indicator', activation=tf.nn.sigmoid)(x)
     label_out = layers.Dense(NUM_CLASSES, name='predicted_label', activation=tf.nn.softmax)(x)
 
@@ -118,6 +119,8 @@ class DigitsGanTraining:
         all_imgs = np.concatenate([real_imgs, gen_imgs])
         rf_indicator = np.ones(2 * self.batch_size)
         rf_indicator[self.batch_size:] = 0
+        rf_indicator += 0.05 * tf.random.uniform(tf.shape(rf_indicator))
+
         all_labels = utils.to_categorical(real_labels.values[:, 0], NUM_CLASSES)
         all_labels = np.concatenate([all_labels, gen_label_cats])
 
@@ -179,7 +182,7 @@ class DigitsGanTraining:
 def store_image_from_prediction(prediction):
     prediction = np.reshape(prediction, IMAGE_SHAPE)
     img = Image.fromarray(prediction, mode='I;16')
-    img.save('data/random.png')
+    img.save(data_file_path('random.png'))
 
 
 if __name__ == '__main__':
