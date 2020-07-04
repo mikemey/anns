@@ -17,7 +17,24 @@ Python 3,
 [project-root-dir] $ pip3 install -r requirements.txt
 ```
 
-### Trainings
+### Trainings using Keras/TensorFlow
+
+<table>
+    <tbody>
+        <tr></tr>
+        <tr>
+            <td align="left"><a href="digits#readme"><b>Digits recognition + generation</b></a></td>
+        </tr>
+        <tr>
+            <td align="center">
+                <a href="digits#readme"><img src="digits/docs/generate-samples.gif"/></a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
+### Trainings using NEAT
 
 <table>
     <tbody>
