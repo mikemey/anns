@@ -2,21 +2,6 @@
 
 A few neural network training experiments.
 
-#### Requirements
-Python 3, 
-[Arcade](https://pypi.org/project/arcade/),
-[NEAT-Python](https://pypi.org/project/neat-python/), 
-[NumPy](https://pypi.org/project/numpy/), 
-[pyglet](http://pyglet.org/),
-[Shapely](https://pypi.org/project/Shapely/)
-
-
-#### Install dependencies
-
-```bash
-[project-root-dir] $ pip3 install -r requirements.txt
-```
-
 ### Trainings using Keras / TensorFlow
 
 <table>
@@ -40,17 +25,6 @@ Python 3,
     <tbody>
         <tr></tr>
         <tr>
-            <td colspan="2" align="left"><a href="boxpusher#readme"><b>Box pusher</b></a></td>
-        </tr>
-        <tr>
-            <td align="center" height="360">
-                <a href="boxpusher#readme"><img src="boxpusher/docs/manual-run.png" height="320"/></a>
-            </td>
-            <td align="center">
-                <a href="boxpusher#readme"><img src="boxpusher/docs/train-expert.gif" height="320"/></a>
-            </td>
-        </tr>
-        <tr>
             <td colspan="2" align="left"><a href="racer#readme"><b>Track race</b></a></td>
         </tr>
         <tr>
@@ -59,6 +33,17 @@ Python 3,
             </td>
             <td align="center">
                 <a href="racer#readme"><img src="racer/docs/net-run-2.gif"/></a>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" align="left"><a href="boxpusher#readme"><b>Box pusher</b></a></td>
+        </tr>
+        <tr>
+            <td align="center" height="360">
+                <a href="boxpusher#readme"><img src="boxpusher/docs/manual-run.png" height="320"/></a>
+            </td>
+            <td align="center">
+                <a href="boxpusher#readme"><img src="boxpusher/docs/train-expert.gif" height="320"/></a>
             </td>
         </tr>
         <tr>
