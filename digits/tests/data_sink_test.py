@@ -9,12 +9,11 @@ TEST_LOG_DIR = f'{os.path.dirname(__file__)}/test_log'
 FIELD_X, FIELD_Y1, FIELD_Y2 = 'field_x', 'field_y_1', 'field_y_2'
 
 
-class TestDataSink(DataSink):
-    def __init__(self, run_id):
-        super().__init__(run_id, TEST_LOG_DIR, TEST_BATCH_SIZE)
+def create_data_sink(run_id):
+    return DataSink(run_id, TEST_LOG_DIR, TEST_BATCH_SIZE)
 
 
-def test_log(run_id, graph_id):
+def graph_file(run_id, graph_id):
     return f'{TEST_LOG_DIR}/{run_id}/{graph_id}.csv'
 
 
@@ -25,12 +24,12 @@ class DataSinkTestCase(unittest.TestCase):
 
     def test_creates_log_files(self):
         run_id, graph_id_1, graph_id_2 = 'run-1', 'graph1', 'graph2'
-        sink = TestDataSink(run_id)
+        sink = create_data_sink(run_id)
         sink.add_graph_header(graph_id_1, (FIELD_X, FIELD_Y2))
         sink.add_graph_header(graph_id_2, (FIELD_X, FIELD_Y1, FIELD_Y2))
 
         def assert_header_line(graph_id, expected_header):
-            with open(test_log(run_id, graph_id)) as f:
+            with open(graph_file(run_id, graph_id)) as f:
                 lines = f.readlines()
                 self.assertEqual(1, len(lines))
                 self.assertEqual(expected_header, lines[0])
@@ -40,13 +39,13 @@ class DataSinkTestCase(unittest.TestCase):
 
     def test_reject_duplicate_run_id(self):
         dup_run_id = 'duplicate-name'
-        TestDataSink(dup_run_id)
+        create_data_sink(dup_run_id)
         with self.assertRaises(AssertionError) as ctx:
-            TestDataSink(dup_run_id)
+            create_data_sink(dup_run_id)
         self.assertIn(f'{dup_run_id}', str(ctx.exception))
 
     def test_reject_duplicate_graph_id(self):
-        sink = TestDataSink('run-2')
+        sink = create_data_sink('run-2')
         dup_graph_id = 'dup-graph'
         sink.add_graph_header(dup_graph_id, ('x',))
         with self.assertRaises(AssertionError) as ctx:
@@ -55,9 +54,9 @@ class DataSinkTestCase(unittest.TestCase):
 
     def test_writes_data_in_batches(self):
         run_id, graph_id = 'run-3', 'graph'
-        log_file = test_log(run_id, graph_id)
+        log_file = graph_file(run_id, graph_id)
         expected = []
-        sink = TestDataSink(run_id)
+        sink = create_data_sink(run_id)
         sink.add_graph_header(graph_id, (FIELD_X, FIELD_Y2))
 
         def add_test_data(line_id):
@@ -81,7 +80,7 @@ class DataSinkTestCase(unittest.TestCase):
 
     def test_drain_batches(self):
         run_id, g_1, g_2, g_3 = 'run-4', 'graph1', 'graph2', 'graph3'
-        sink = TestDataSink(run_id)
+        sink = create_data_sink(run_id)
         sink.add_graph_header(g_1, (FIELD_X, FIELD_Y2))
         sink.add_graph_header(g_2, (FIELD_X, FIELD_Y1, FIELD_Y2))
         sink.add_graph_header(g_3, (FIELD_X, FIELD_Y1, FIELD_Y2, FIELD_X))
@@ -103,14 +102,14 @@ class DataSinkTestCase(unittest.TestCase):
 
     def test_reject_invalid_graph_id(self):
         run_id, g_1 = 'run-5', 'graph1'
-        sink = TestDataSink(run_id)
+        sink = create_data_sink(run_id)
         with self.assertRaises(AssertionError) as ctx:
             sink.add_data(g_1, (42,))
         self.assertIn(f'unknown graph: {g_1}', str(ctx.exception))
 
     def test_reject_invalid_field_count(self):
         run_id, graph_id = 'run-6', 'graph'
-        sink = TestDataSink(run_id)
+        sink = create_data_sink(run_id)
         sink.add_graph_header(graph_id, (FIELD_X, FIELD_Y2))
 
         with self.assertRaises(AssertionError) as ctx:
@@ -118,6 +117,6 @@ class DataSinkTestCase(unittest.TestCase):
         self.assertIn(f'expected 2 values, received: (42,)', str(ctx.exception))
 
     def __assert_data_lines(self, run_id, graph_id, expected_data_lines):
-        with open(test_log(run_id, graph_id)) as f:
+        with open(graph_file(run_id, graph_id)) as f:
             data_count = len(f.readlines()) - 1
             self.assertEqual(expected_data_lines, data_count)
