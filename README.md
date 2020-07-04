@@ -17,7 +17,7 @@ Python 3,
 [project-root-dir] $ pip3 install -r requirements.txt
 ```
 
-### Trainings using Keras/TensorFlow
+### Trainings using Keras / TensorFlow
 
 <table>
     <tbody>
