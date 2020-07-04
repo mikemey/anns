@@ -90,25 +90,21 @@ class DigitsGanTraining:
             count = self.batch_size
         return np.random.normal(0, 1, (count, 200))
 
-    def create_discriminator_batches(self):
+    def create_discriminator_batches(self, noise, gen_labels):
         idx = np.random.randint(0, self.real_trainings_data.shape[0], self.batch_size)
         real_imgs = self.real_trainings_data.take(idx)
         real_imgs = real_imgs.values.reshape(self.batch_size, 28, 28, 1)
         real_labels = self.real_labels.take(idx)
 
-        # gen_labels = np.random.randint(0, 10, self.batch_size)
-        # gen_imgs = self.generator.predict([
-        #     self.noise_for_batch(), utils.to_categorical(gen_labels, NUM_CLASSES)
-        # ])
+        gen_imgs = self.generator.predict([noise, utils.to_categorical(gen_labels, NUM_CLASSES)])
 
-        rf_indicator = np.ones(self.batch_size)
-        # all_imgs = np.concatenate([real_imgs, gen_imgs])
-        # rf_indicator = np.ones(2 * self.batch_size)
-        # rf_indicator[self.batch_size:] = 0
-        # all_labels = np.concatenate([real_labels.values[:, 0], gen_labels])
-        all_labels = utils.to_categorical(real_labels, NUM_CLASSES)
+        all_imgs = np.concatenate([real_imgs, gen_imgs])
+        rf_indicator = np.ones(2 * self.batch_size)
+        rf_indicator[self.batch_size:] = 0
+        all_labels = np.concatenate([real_labels.values[:, 0], gen_labels])
+        all_labels = utils.to_categorical(all_labels, NUM_CLASSES)
 
-        return real_imgs, rf_indicator, all_labels
+        return all_imgs, rf_indicator, all_labels
 
     def train(self, iterations):
         gan = Model(self.generator.input, self.discriminator(self.generator.output))
@@ -118,6 +114,8 @@ class DigitsGanTraining:
         valid = np.ones(self.batch_size)
 
         for it in range(iterations):
+            gen_labels = np.random.randint(0, 10, self.batch_size)
+
             img_data, rf_indicator, labels = self.create_discriminator_batches()
             self.discriminator.trainable = True
             _, rf_loss, label_loss = self.discriminator.train_on_batch(img_data, [rf_indicator, labels])

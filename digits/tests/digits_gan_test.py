@@ -14,17 +14,20 @@ TEST_TRAINING_DATA = os.path.join(os.path.dirname(__file__), 'test_data', 'all_p
 class TrainingTestCase(unittest.TestCase):
     def test_create_discriminator_batches(self):
         np.random.seed(34)
-
         batch_size = 5
         gan_training = gan.DigitsGanTraining(TEST_TRAINING_DATA, batch_size)
-        img_data, rf_ind, labels = gan_training.create_discriminator_batches()
+
+        sampled_labels = [1, 2, 3, 4, 5]
+        noise = np.array([[0.5] * 200] * batch_size)
+        img_data, rf_ind, labels = gan_training.create_discriminator_batches(noise, sampled_labels)
+
         self.assertEqual((batch_size * 2, 28, 28, 1), img_data.shape)
 
         real_pixels_col0 = img_data[:batch_size, 0, 0]
         self.__assert_matrix([[0], [0.2], [0.4], [0.6], [0.8]], real_pixels_col0)
         self.__assert_matrix([1, 1, 1, 1, 1, 0, 0, 0, 0, 0], rf_ind)
 
-        expected_labels = [0, 7, 0, 0, 4, 5, 2, 9, 8, 6]
+        expected_labels = [0, 7, 0, 0, 4] + sampled_labels
         self.__assert_matrix(tf.keras.utils.to_categorical(expected_labels, 10), labels)
 
     def __assert_matrix(self, expected, actual):
