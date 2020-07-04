@@ -11,8 +11,11 @@ import tensorflow as tf
 from PIL import Image
 from tensorflow.keras import layers, Model, utils, optimizers, losses
 
+from data_sink import DataSink
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 LOG_DIR = os.path.join(os.path.dirname(__file__), 'log', f'run_{int(time.time())}')
+LOSS_DATA_ID = 'loss'
 
 
 def data_file_path(file_name):
@@ -93,6 +96,8 @@ class DigitsGanTraining:
     def __init__(self, source_file=data_file_path('train.csv'), batch_size=32):
         self.batch_size = batch_size
         self.real_trainings_data, self.real_labels = get_real_trainings_data(source_file)
+        self.sink = DataSink('stats', log_dir=LOG_DIR)
+        self.sink.add_graph_header(LOSS_DATA_ID, ['iteration', 'd-loss', 'g-loss'])
 
         comb_losses = [losses.binary_crossentropy, losses.categorical_crossentropy]
         self.generator = build_generator()
@@ -135,8 +140,10 @@ class DigitsGanTraining:
             print(f'{it:4} Dis [tot-l: {d_tot_l:7.3f}, rf-l: {d_rf_l:7.3f}, lbl-l: {d_label_l:7.3f}] -- '
                   f'Gen [tot-l: {gan_tot_l:7.3f}, rf-l: {gan_rf_l:7.3f}, lbl-l: {gan_label_l:7.3f}')
 
+            self.sink.add_data(LOSS_DATA_ID, [it, d_tot_l, gan_tot_l])
             if (it % show_case_every) == (show_case_every - 1):
                 self.store_images(it)
+        self.sink.drain_data()
 
     def store_images(self, identifier):
         rows, cols = 10, 10
