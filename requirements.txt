@@ -1,5 +1,5 @@
 arcade==2.3.10
 neat-python==0.92
-numpy==1.18.3
+numpy==1.22.0
 pyglet==1.5.4
 Shapely==1.7.0
